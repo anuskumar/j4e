@@ -1,0 +1,1358 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\AddressModel;
+use App\Models\ArtistField;
+use App\Models\ArtistModel;
+use App\Models\Bankmodel;
+use App\Models\BankTransferDetail;
+use App\Models\CityModel;
+use App\Models\CountryModel;
+use App\Models\Currency;
+use App\Models\EventImages;
+use App\Models\Events;
+use App\Models\EventTickets;
+use App\Models\EventTiming;
+use App\Models\EventType;
+use App\Models\LocationModel;
+use App\Models\MobileApplication;
+use App\Models\ResellerModel;
+use App\Models\ResellerSuccess;
+use App\Models\RestrictionModel;
+use App\Models\SellerPostalAddress;
+use App\Models\SplitTypeModel;
+use App\Models\TicketsGenerated;
+use App\Models\TicketType;
+use App\Models\User;
+use App\Models\VenueModel;
+use App\Models\VenueSeating;
+use App\Models\VenueType;
+use Carbon\Carbon;
+use Faker\Provider\ar_EG\Address;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+
+class ResellerController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
+            ->select('*', 'users.id as id', 'resellers.id as resellers_id')->where('users.user_type', 'reseller')
+            // ->paginate(2);
+            ->get();
+        // dd($data);
+        return view('admin.reseller.list', compact('data'));
+    }
+    public function eventlisting()
+    {
+        $eventdatas = EventType::select('event_type_name', 'id')->where('is_active', 1)->get();
+        foreach ($eventdatas as $val) {
+            $val['tags'] = Events::leftjoin('event_tags', 'event_tags.id', 'event.event_tag')->select('event_tags.id', 'event_tags.tag_name')->where('event_type', $val->id)->groupBy('event.event_tag')->whereNotNull('event.event_tag')->get();
+        }
+
+        //   dd($eventdatas);
+
+        return view('reseller.event_listing_inner', compact('eventdatas'));
+    }
+    public function eventdata(Request $request)
+    {
+        $id             = $request->id;
+        $eventdatalists = Events::join('event_type', 'event_type.id', 'event.event_type')->where('event.event_type', $id)->get();
+        return view('reseller.event_datalisting', compact('eventdatalists'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        $reseller_create = User::get();
+        //  dd($customer_create);
+        return view('admin.reseller.create', compact('reseller_create'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $user          = new User();
+        $user->name    = $request->name;
+        $user->email   = $request->email;
+        $user->phone   = $request->phone;
+        $user->address = $request->address;
+
+        $user->user_type = 'reseller';
+        $user->password  = Hash::make($request->password);
+        $user->is_active = $request->is_active;
+        $user->save();
+
+        $reseller          = new ResellerModel();
+        $reseller->user_id = $user->id;
+        $reseller->save();
+
+        return redirect('reseller/list');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
+            ->select('*', 'users.id as id', 'resellers.id as customer_id')->where('users.id', $id)->first();
+        // ->paginate(2);
+
+        return view('admin.reseller.view', compact('data'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')->select('*', 'users.id as id')->find($id);
+        // dd($data);
+        return view('admin.reseller.edit', compact('data'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request)
+    {
+        $request->validate([
+            'name'  => 'required',
+            'email' => 'required',
+        ]);
+
+        $data            = User::find($request->id);
+        $data->name      = $request->name;
+        $data->email     = $request->email;
+        $data->phone     = $request->phone;
+        $data->address   = $request->address;
+        $data->is_active = $request->is_active;
+        $data->save();
+
+        $val                    = ResellerModel::where('user_id', $request->id)->first();
+        $val->is_admin_approved = $request->is_admin_approved;
+        $val->is_trusted        = $request->is_trusted;
+        $val->save();
+
+        return redirect('/reseller/list');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
+    public function delete(string $id)
+    {
+        $user = User::find($id);
+
+        if ($user) {
+            ResellerModel::where('user_id', $id)->delete();
+            $user->delete();
+        }
+
+        return redirect('/reseller/list');
+    }
+
+    public function profile()
+    {
+        $authdata = User::leftJoin('reseller_profiles', 'reseller_profiles.reseller_id', '=', 'users.id')
+            ->select('users.*', 'reseller_profiles.reseller_id', 'reseller_profiles.reseller_image')
+            ->where('users.id', Auth::user()->id)
+            ->first();
+        //  dd($authdata);
+        $bankData   = Bankmodel::where('resellerid', Auth::user()->id)->first();
+        $adreesdata = SellerPostalAddress::where('resellerid', Auth::user()->id)->first();
+
+        $country = CountryModel::get();
+
+        return view('reseller.profile', compact('authdata', 'bankData', 'adreesdata', 'country'));
+    }
+    public function updateprofile(Request $request)
+    {
+
+        $profiledata        = User::where('id', $request->authid)->first();
+        $profiledata->name  = $request->name;
+        $profiledata->email = $request->company_email;
+        $profiledata->phone = $request->contact_number;
+
+        if ($request->hasFile('profile')) {
+            $imageName = time() . '.' . $request->profile->extension();
+            $request->profile->move(storage_path('uploads/images'), $imageName);
+            $profiledata->profile = $imageName;
+        }
+        $profiledata->save();
+        return redirect()->back();
+    }
+
+    public function updatebankdata(Request $request)
+    {
+
+        // return $request->all();
+        $data = Bankmodel::where('resellerid', Auth::user()->id)->first();
+        // return $data;
+        if ($data == '') {
+            $bankData = new Bankmodel;
+        } else {
+
+            $bankData = Bankmodel::find($data->id);
+        }
+
+        $bankData->resellerid   = Auth::user()->id;
+        $bankData->bank_name    = $request->name;
+        $bankData->bank_email   = $request->bankname;
+        $bankData->bank_country = $request->bank_country;
+        $bankData->accnt_no     = $request->bankaccno;
+        $bankData->bic          = $request->bankbic;
+        $bankData->comments     = $request->bankcomments;
+        $bankData->save();
+        return redirect()->back()->with('success', 'Bank Details updated successfully.');
+    }
+
+    public function updateaddressdata(Request $request)
+    {
+
+        $data = SellerPostalAddress::where('resellerid', Auth::user()->id)->first();
+        if ($data == '') {
+            $addressdata = new SellerPostalAddress;
+        } else {
+
+            $addressdata = SellerPostalAddress::find($data->id);
+        }
+
+        //  $addressdata=AddressModel::where('resellerid',Auth::user()->id)->first();
+        $addressdata->name          = $request->name;
+        $addressdata->address_line1 = $request->address_line1;
+        $addressdata->address_line2 = $request->address_line2;
+        $addressdata->city          = $request->city;
+        $addressdata->postcode      = $request->postcode;
+        $addressdata->country       = $request->country;
+        $addressdata->resellerid    = Auth::user()->id;
+        $addressdata->phone         = $request->phone;
+        $addressdata->save();
+        return redirect()->back()->with('success', 'Address Details updated successfully.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'oldpassword'      => 'required',
+            'newpassword'      => 'required|string|min:8|different:oldpassword',
+            'confirm_password' => 'required|string|same:newpassword',
+        ]);
+
+        $user = User::findOrFail($request->id);
+
+        // Check if the old password matches
+        if (! password_verify($request->oldpassword, $user->password)) {
+            return redirect()->back()->withErrors(['oldpassword' => 'The old password is incorrect.']);
+        }
+
+        // Update the password
+        $user->password = bcrypt($request->newpassword);
+        $user->save();
+
+        return redirect()->back()->with('success', 'Password updated successfully.');
+    }
+
+    public function manage_event()
+    {
+
+        $data = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('*', 'event.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name');
+        $all       = $data->paginate(10);
+        $upcomming = $data->whereDate('event_to_date', '>=', Carbon::now())->paginate(10);
+
+        //    dd($data);
+        return view('reseller.manage_event', compact('all', 'upcomming'));
+    }
+    public function manage_event_create()
+    {
+
+        // dd("hello");
+
+        $event_type = EventType::get();
+        $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        // dd($event_type);
+        return view('reseller.create_event', compact('event_type', 'venue', 'artists'));
+    }
+
+    public function manage_event_store(Request $request)
+    {
+        // dd($request->request);
+        $validated = $request->validate([
+            'event_name'      => 'required',
+            'event_is_active' => 'required',
+        ]);
+
+        $event                  = new Events();
+        $event->event_name      = $request->event_name;
+        $event->event_type      = $request->event_type;
+        $event->venue           = $request->venue;
+        $event->artists         = json_encode($request->artists);
+        $event->event_from_date = $request->event_from_date;
+        $event->event_to_date   = $request->event_to_date;
+        $event->event_desc      = $request->event_desc;
+        $event->event_added_by  = Auth::user()->id;
+        // $event->event_image = $request->event_image;
+        if ($request->hasFile('event_image')) {
+            $imageName = time() . '.' . $request->event_image->extension();
+            $request->event_image->move(storage_path('uploads/events'), $imageName);
+            $event->event_image = $imageName;
+        }
+        $event->event_is_active = $request->event_is_active;
+
+        $event->save();
+
+        return redirect('reseller/manage_event');
+    }
+
+    public function event_show($id)
+    {
+        $data = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('*', 'event.id as id', 'venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->find($id);
+        $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+
+        //    dd($data);
+        return view('reseller.event_view', compact('data', 'artists'));
+    }
+
+    public function event_edit(string $id)
+    {
+        $event_type = EventType::get();
+        $data       = Events::find($id);
+        $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        return view('reseller.event_edit', compact('data', 'event_type', 'artists', 'venue'));
+    }
+
+    public function event_update(Request $request)
+    {
+
+        // dd($request->request);
+
+        $validated = $request->validate([
+            'event_name' => 'required',
+            // 'event_is_active' => 'required'
+        ]);
+
+        $data                  = Events::find($request->id);
+        $data->event_name      = $request->event_name;
+        $data->event_type      = $request->event_type;
+        $data->event_desc      = $request->event_desc;
+        $data->venue           = $request->venue;
+        $data->artists         = json_encode($request->artists);
+        $data->event_from_date = $request->event_from_date;
+        $data->event_to_date   = $request->event_to_date;
+        // $data->event_added_by =Auth::user()->id;
+        $data->event_is_active = $request->event_is_active;
+
+        // $event->event_image = $request->event_image;
+        if ($request->hasFile('event_image')) {
+            $imageName = time() . '.' . $request->event_image->extension();
+            $request->event_image->move(storage_path('uploads/events'), $imageName);
+            $data->event_image = $imageName;
+        }
+        // $data->event_is_active = $request->event_is_active;
+
+        $data->save();
+
+        return redirect('reseller/manage_event');
+    }
+
+    public function delete_event($id)
+    {
+        $data = Events::find($id);
+        $data->delete();
+        return redirect('/reseller/manage_event');
+    }
+
+    public function multi_images($id)
+    {
+
+        $data = EventImages::where('event', $id)->get();
+        return view('reseller.event_images', compact('data', 'id'));
+    }
+    public function upload_event_images(Request $request)
+    {
+
+        // //    dd($request->request);
+
+        //     if($request->hasFile('image')){
+        //         // dd('helllo');
+        //         foreach ($request->File('image') as $key) {
+
+        //             $val = new EventImages();
+        //             $val->event = $request->event;
+
+        //             $imageName = time().'.'.Str::random(9).$key->extension();
+        //             $key->move(storage_path('uploads/events'), $imageName);
+        //             $val->image =  $imageName;
+        //             $val->save();
+
+        //     }
+
+        //     return redirect()->back();
+        //    }else{
+
+        //     return redirect()->back();
+
+        //    }
+
+    }
+    public function event_timings($id)
+    {
+
+        $data = EventTiming::where('event', $id)->get();
+        return view('reseller.event_timings', compact('data', 'id'));
+    }
+    public function store_timings(Request $request)
+    {
+
+        // dd($request->request);
+
+        $val             = new EventTiming();
+        $val->event      = $request->event;
+        $val->event_date = $request->event_date;
+        $val->from_time  = $request->from_time;
+        $val->to_time    = $request->to_time;
+        $val->is_active  = $request->is_active;
+        $val->save();
+
+        return back();
+    }
+    public function edit_timings(string $id)
+    {
+        $data = EventTiming::find($id);
+
+        return view('reseller.edit_eventtimings', compact('data', 'id'));
+    }
+    public function update_timings(Request $request)
+    {
+
+        // dd($request->request);
+        $validated = $request->validate([
+
+            'event_date' => 'required',
+            'from_time'  => 'required',
+
+        ]);
+
+        $data             = EventTiming::find($request->id);
+        $data->id         = $request->id;
+        $data->event_date = $request->event_date;
+        $data->from_time  = $request->from_time;
+        $data->to_time    = $request->to_time;
+
+        $data->is_active = $request->is_active;
+        //    $data->image = $request->image;
+
+        $data->save();
+
+        return redirect('reseller/event_timings' . '/' . $data->event);
+        //  return redirect()->back();
+
+    }
+    public function delete_timings($id)
+    {
+        $data = EventTiming::find($id);
+        $data->delete();
+        return redirect('/reseller/event_timings' . '/' . $data->event);
+    }
+
+    public function manage_artist()
+    {
+
+        $data = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id', 'field_name')->get();
+        // dd($data);
+        return view('reseller.manage_artist', compact('data'));
+    }
+
+    public function artist_create()
+    {
+        //
+        $artist_create = ArtistField::get();
+        //  dd($customer_create);
+        $artist = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        return view('reseller.artist_create', compact('artist_create', 'artist'));
+    }
+
+    public function artist_store(Request $request)
+    {
+        // dd($request->request);
+
+        $validated = $request->validate([
+            'artist_name' => 'required',
+
+        ]);
+
+        $artistuser                 = new ArtistModel();
+        $artistuser->artist_name    = $request->artist_name;
+        $artistuser->field          = $request->field;
+        $artistuser->contact_number = $request->contact_number;
+        $artistuser->about          = $request->about;
+        $artistuser->save();
+        return redirect('reseller/manage_artist');
+    }
+
+    public function artist_show(string $id)
+    {
+
+        $data   = ArtistModel::find($id);
+        $artist = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id', 'field_name')->get();
+        // dd($data);
+        return view('reseller.artist_view', compact('data', 'artist'));
+
+        // $data = VenueModel::find($id);
+        // return view('admin.venue.view',compact('data'));
+    }
+
+    public function artist_edit($id)
+    {
+        $data          = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->find($id);
+        $artist_create = ArtistField::get();
+
+        return view('reseller.artist_edit', compact('artist_create', 'data'));
+    }
+
+    public function artist_update(Request $request)
+    {
+
+        $validated = $request->validate([
+            'id'          => 'required',
+            'artist_name' => 'required',
+
+        ]);
+
+        $data                 = ArtistModel::find($request->id);
+        $data->artist_name    = $request->artist_name;
+        $data->field          = $request->field;
+        $data->contact_number = $request->contact_number;
+        $data->about          = $request->about;
+
+        //   $data->status=$request->status;
+
+        $data->save();
+        return redirect('reseller/manage_artist');
+    }
+
+    public function delete_artist($id)
+    {
+        $data = ArtistModel::find($id);
+        $data->delete($id);
+        return redirect('/reseller/manage_artist');
+    }
+
+    public function manage_artistfield()
+    {
+
+        $data = ArtistField::get();
+        // dd($data);
+        return view('reseller.manage_artistfield', compact('data'));
+    }
+
+    public function artistfield_create()
+    {
+        //
+        $artistfield_create = ArtistField::get();
+        //  dd($customer_create);
+        return view('reseller.manage_artistfield', compact('artistfield_create'));
+    }
+    public function artistfield_store(Request $request)
+    {
+        // dd($request->request);
+
+        $validated = $request->validate([
+            'field_name' => 'required',
+
+        ]);
+
+        $artistfielduser             = new ArtistField();
+        $artistfielduser->field_name = $request->field_name;
+
+        $artistfielduser->save();
+        return redirect('artistfield/manage_artistfield');
+    }
+
+    public function manage_venue()
+    {
+
+        $data = VenueModel::leftjoin('venue_type', 'venue_type.id', 'venue.venue_type')->leftjoin('location', 'location.id', 'venue.location')->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')->select("*", "venue.id as id", "venue.name as venue_name")->get();
+
+        foreach ($data as $val) {
+            $val['total_seats']      = VenueSeating::where('venue', $val->id)->sum('number_of_seats');
+            $val['total_seat_types'] = VenueSeating::where('venue', $val->id)->count();
+        }
+        // dd($data)
+        return view('reseller.manage_venue', compact('data'));
+    }
+
+    public function venue_create()
+    {
+        // $venue_create=VenueModel::get();
+        //  dd($customer_create);
+        $venue_type = VenueType::get();
+        $location   = LocationModel::leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('*', 'location.id as id')
+            ->get();
+        return view('reseller.venue_create', compact('venue_type', 'location'));
+    }
+    public function venue_store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'     => 'required',
+            'location' => 'required',
+        ]);
+        // dd($request->request);
+        $venue                  = new VenueModel();
+        $venue->venue_type      = $request->venue_type;
+        $venue->name            = $request->name;
+        $venue->location        = $request->location;
+        $venue->google_map_link = $request->google_map_link;
+        $venue->latitude        = $request->latitude;
+        $venue->longitude       = $request->longitude;
+        // $venue->image = $request->image;
+        if ($request->hasFile('image')) {
+            $imageName = time() . '.' . $request->image->extension();
+            $request->image->move(storage_path('uploads/venue'), $imageName);
+            $venue->image = $imageName;
+        }
+        $venue->save();
+
+        return redirect('reseller/manage_venue');
+    }
+
+    public function venue_show(string $id)
+    {
+
+        $data = VenueModel::leftjoin('venue_type', 'venue_type.id', 'venue.venue_type')->leftjoin('location', 'location.id', 'venue.location')->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')->select("*", "venue.id as id", "venue.name as venue_name")->find($id);
+        // dd($data);
+        return view('reseller.venue_view', compact('data'));
+
+        // $data = VenueModel::find($id);
+        // return view('admin.venue.view',compact('data'));
+    }
+
+    public function venue_edit(string $id)
+    {
+        $data       = VenueModel::find($id);
+        $venue_type = VenueType::get();
+        $location   = LocationModel::leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('*', 'location.id as id')
+            ->get();
+        return view('reseller.venue_edit', compact('venue_type', 'location', 'data'));
+    }
+
+    public function venue_update(Request $request)
+    {
+
+        $validated = $request->validate([
+            'id' => 'required',
+
+        ]);
+
+        $data                  = VenueModel::find($request->id);
+        $data->venue_type      = $request->venue_type;
+        $data->name            = $request->name;
+        $data->location        = $request->location;
+        $data->google_map_link = $request->google_map_link;
+        $data->image           = $request->image;
+        if ($request->hasFile('image')) {
+            $imageName = time() . '.' . $request->image->extension();
+            $request->image->move(storage_path('uploads/venue'), $imageName);
+            $data->image = $imageName;
+        }
+        $data->save();
+        return redirect('reseller/manage_venue');
+    }
+
+    public function venue_delete($id)
+    {
+        $data = VenueModel::find($id);
+        $data->delete();
+        return redirect('/reseller/manage_venue');
+    }
+
+    public function ticket_index()
+    {
+        //
+        // dd('hello');
+
+        $data_all = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city');
+
+        if (! Auth::user()->user_type == "superadmin") {
+
+            $data_all->where('event.event_added_by', Auth::user()->id);
+        }
+
+        $data = $data_all->select('*', 'event.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        //    dd($data);
+        return view('reseller.ticket_events', compact('data'));
+    }
+    public function manage_tickets($id)
+    {
+
+        $data_all = EventTickets::leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->leftjoin('event', 'event.id', 'event_tickets.event')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
+            ->leftjoin('event_timings', 'event_timings.id', 'event_tickets.event_timing')
+            ->leftjoin('ticket_status', 'ticket_status.id', 'event_tickets.ticket_status')
+            ->where('event_tickets.event', $id);
+        if (! Auth::user()->user_type == "reseller") {
+
+            // $data_all->where('event.event_added_by',Auth::user()->id);
+            $data_all->where('event_tickets.created_by', Auth::user()->id);
+        }
+
+        $data = $data_all->select('*', 'event_tickets.id as id', 'event_tickets.is_admin_approved as is_admin_approved')->get();
+
+        $event          = Events::find($id);
+        $ticket_type    = TicketType::get();
+        $event_timing   = EventTiming::where('event', $id)->get();
+        $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
+            ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
+        $currency = Currency::get();
+        // dd($data);
+        return view('reseller.manage_tickets', compact('data', 'id', 'ticket_type', 'event_timing', 'venue_seatings', 'currency'));
+    }
+    public function store_ticket(Request $request)
+    {
+        //
+        $validated = $request->validate([
+            'event'           => 'required|numeric',
+            'ticket_name'     => 'required',
+            'event_timing'    => 'required|numeric',
+            'no_of_tickets'   => 'required|numeric',
+            'ticket_amount'   => 'required|numeric',
+            'amount_currency' => 'required|numeric',
+
+        ]);
+
+        $data                            = new EventTickets();
+        $data->ticket_name               = $request->ticket_name;
+        $data->unique_id                 = Str::random(16);
+        $data->ticket_type               = $request->ticket_type;
+        $data->event                     = $request->event;
+        $data->event_timing              = $request->event_timing;
+        $data->no_of_tickets             = $request->no_of_tickets;
+        $data->booking_expiry_date_time  = $request->booking_expiry_date_time;
+        $data->no_of_tickets             = $request->no_of_tickets;
+        $data->venue_seating             = $request->venue_seating;
+        $data->ticket_amount             = $request->ticket_amount;
+        $data->amount_currency           = $request->amount_currency;
+        $data->cancellation_policy_notes = $request->cancellation_policy_notes;
+        $data->disclaimer_note           = $request->disclaimer_note;
+
+        if ($request->hasFile('image')) {
+            $imageName = rand() . '.' . $request->image->extension();
+            $request->image->move(storage_path('uploads/ticket_images'), $imageName);
+            $data->image = $imageName;
+        }
+
+        if ($request->hasFile('cover_image')) {
+            $imageName = rand() . '.' . $request->cover_image->extension();
+            $request->cover_image->move(storage_path('uploads/ticket_images'), $imageName);
+            $data->cover_image = $imageName;
+        }
+
+        if ($request->hasFile('map_layout')) {
+            $imageName = rand() . '.' . $request->map_layout->extension();
+            $request->map_layout->move(storage_path('uploads/ticket_images'), $imageName);
+            $data->map_layout = $imageName;
+        }
+
+        $data->is_admin_approved = 0;
+        $data->ticket_status     = 1;
+        $data->created_by        = Auth::user()->id;
+        $data->save();
+
+        // dd($request->request);
+
+        return redirect('reseller/manage_tickets' . '/' . $request->event)->with('success', 'Ticket Created successfully');
+    }
+
+    public function ticket_create()
+    {
+
+        $data_all = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city');
+
+        if (! Auth::user()->user_type == "superadmin") {
+
+            $data_all->where('event.event_added_by', Auth::user()->id);
+        }
+
+        $data = $data_all->select('*', 'event.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        //    dd($data);
+        return view('reseller/ticket_create', compact('data'));
+    }
+
+    public function event_list_withtag($id)
+    {
+
+        // dd('hello');
+        $events = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select(
+                '*',
+                'event.id as id',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'venue.name as venue_name',
+                'event.event_image'
+            )
+            ->where('event_tag', $id)->get();
+
+        foreach ($events as $val) {
+
+            $val['timings'] = EventTiming::where('event', $val->id)->get();
+
+            $artistIds = json_decode($val->artists, true);
+
+            if (! empty($artistIds)) {
+                $val->artist_names = ArtistModel::whereIn('id', $artistIds)->pluck('artist_name')->toArray();
+            } else {
+                $val->artist_names = [];
+            }
+        }
+
+        return view('reseller.event_list_withtag', compact('events'));
+    }
+
+    public function selltickets(Request $request)
+    {
+        $id       = $request->id;
+        $data_all = Events::leftJoin('venue', 'venue.id', '=', 'event.venue')
+            ->leftJoin('location', 'location.id', '=', 'venue.location')
+            ->leftJoin('countries', 'countries.id', '=', 'location.country')
+            ->leftJoin('cities', 'cities.id', '=', 'location.city')
+            ->where('event.id', $id);
+        if (! Auth::user()->user_type == "superadmin") {
+            $data_all->where('event.event_added_by', Auth::user()->id);
+        }
+        $data = $data_all->select(
+            'event.id as id',
+            'countries.country_name',
+            'cities.name as city_name',
+            'location.location_name',
+            'venue.name as venue_name',
+        )->first();
+        $event          = Events::find($id);
+        $ticket_type    = TicketType::get();
+        $mobile_applications = MobileApplication::get();
+        $event_timing   = EventTiming::where('event', $id)->first();
+        $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
+            ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
+        // dd($event->venue);
+        $currency     = Currency::get();
+        $restrictions = RestrictionModel::get();
+        $splittypes   = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
+        return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
+    }
+
+    public function currencycodelist(Request $request)
+    {
+        $id     = $request->currency_code;
+        $result = Currency::where('id', $id)->where('is_active', 1)->first();
+        return response()->json($result);
+    }
+    public function savesellticket(Request $request, $id)
+    {
+        // Validate the form data with new field names
+        $validated = $request->validate([
+            'ticket_count'      => 'required|numeric|min:1|max:30',
+            'venue_seating'     => 'required',
+            'row'               => 'nullable|string',
+            'seat_from'         => 'nullable|numeric',
+            'seat_to'           => 'nullable|numeric',
+            'seat_reason'       => 'nullable|in:not_provided,other',
+            'sell_together'     => 'required|numeric',
+            'currency'          => 'required|numeric',
+            'amount'            => 'required|numeric|min:0',
+            'cents'             => 'nullable|numeric|min:0|max:99',
+            'ticket_type'       => 'required|exists:ticket_type,id',
+            'mobile_app'        => 'nullable|exists:ticket_type,id',
+        ]);
+
+        if ($request->ticket_type == 4) { // Assuming '4' is the ID for mobile ticket transfer
+            $rules['mobile_app'] = 'required|exists:mobile_applications,id';
+        } else {
+            $rules['mobile_app'] = 'nullable|exists:mobile_applications,id';
+        }
+
+        // Validate the form data
+        $validated = $request->validate($rules);
+
+        // Retrieve event timing based on event ID
+        $eventTiming = EventTiming::where('event', $id)->first();
+        if (!$eventTiming) {
+            // Handle the case where the event timing is not found
+            return back()->withErrors(['event_timing' => 'Event timing not found for the given event ID.']);
+        }
+
+        // dd($eventTiming);
+
+        // Create new ticket record
+        $data = new EventTickets();
+
+        // Basic ticket information
+        $data->event = $id;
+        $data->unique_id = Str::random(16);
+        $data->ticket_name = "Ticket for Event #" . $id;
+        $data->event_timing = $eventTiming->event;
+        $data->no_of_tickets = $request->ticket_count;
+
+        // Ticket details
+        $data->ticket_type = $request->ticket_type;
+        $data->venue_seating = $request->venue_seating;
+        $data->row = $request->row;
+        $data->seat_from = $request->seat_from;
+        $data->seat_to = $request->seat_to;
+        $data->split_type = $request->sell_together;
+
+        // Price information
+        $cents = $request->cents ?? 00;
+        $totalAmount = $request->amount + ($cents / 100); // Convert cents to decimal
+        $data->ticket_amount = $totalAmount; // This should be selling price if different from face value
+        $data->amount_currency = $request->currency;
+        $data->face_value = $totalAmount; // Using the same amount as face value
+
+        // Process restrictions (checkboxes)
+        $restrictions = $request->restrictions ?? [];
+        $data->ticket_restrictions = json_encode($restrictions);
+        // Process features (checkboxes)
+        $features = [];
+        $featureFields = [
+            'limitedView',
+            'vipPass',
+            'mealPackage',
+            'parking',
+            'standingOnly',
+            'aisleSeat'
+        ];
+
+        foreach ($featureFields as $field) {
+            if ($request->has($field)) {
+                $features[] = $field;
+            }
+        }
+
+        // Combine restrictions and features into a single JSON field
+        $allRestrictions = [
+            'features' => $features
+        ];
+
+        $data->features = json_encode($allRestrictions);
+
+        // Mobile app information if applicable
+        if ($request->ticket_type == 4 && $request->has('mobile_app')) {
+            $data->mobile_application_id = $request->mobile_app;
+        }
+
+
+        // Default values
+        $data->booking_expiry_date_time = $eventTiming->event_date; // Set default or calculate based on business rules
+        $data->cancellation_policy_notes = "Standard cancellation policy applies."; // Default value
+        $data->disclaimer_note = "No refunds or exchanges."; // Default value
+
+        // Approval status
+        $data->is_admin_approved = 0;
+        $data->ticket_status = 1;
+        $data->created_by = Auth::user()->id;
+
+        // Save the record
+        $data->save();
+        Log::info('Ticket submission data:', $request->all());
+
+        // Get the last inserted ID
+        $lastRecordId = $data->id;
+
+        // Redirect to the next step
+        return redirect()->route('reseller.savesecond', ['id' => $lastRecordId]);
+    }
+
+    public function savesellticketsecond(Request $request)
+    {
+
+        $eventid   = $request->id;
+        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
+        //fetching event name
+        $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
+            ->leftjoin('event_timings', 'event_timings.event', 'event.id')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->leftjoin('split_types', 'split_types.id', 'event_tickets.split_type')
+            ->leftjoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->leftjoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
+            ->leftjoin('mobile_applications', 'mobile_applications.id', 'event_tickets.mobile_application_id')
+
+            ->where('event_tickets.id', $eventid)
+            ->select(
+                'event.event_name',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time',
+                'event_timings.is_active',
+                'venue.name',
+                'location.location_name',
+                'cities.name as cname',
+                'countries.country_name',
+                'ticket_type.ticket_type_name',
+                'event_tickets.split_type',
+                'event_tickets.row',
+                'event_tickets.seat_from',
+                'event_tickets.seat_to',
+                'event_tickets.no_of_tickets',
+                'event_tickets.face_value',
+                'event_tickets.amount_currency',
+                'event_tickets.ticket_amount',
+                'split_types.split_name',
+                'currency.short_name as currency_name',
+                'venue_seating.seating_type_name as venue_seating_name',
+                'mobile_applications.name as mobile_applications_name'
+            )
+            ->first();
+        return view('reseller.event_savesecond', compact('currencys', 'data'));
+    }
+    public function showsellticketsecond(Request $request)
+    {
+        $lastRecord = EventTickets::where('id', $request->id)->first();
+        $eventid    = $lastRecord->event;
+        $currencys  = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
+        $data       = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
+            ->leftjoin('event_timings', 'event_timings.event', 'event.id')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->where('event_tickets.event', $eventid)
+            ->select(
+                'event.event_name',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time',
+                'event_timings.is_active',
+                'venue.name',
+                'location.location_name',
+                'cities.name as cname',
+                'countries.country_name',
+                'ticket_type.ticket_type_name',
+                'event_tickets.split_type',
+                'event_tickets.row',
+                'event_tickets.seat_from',
+                'event_tickets.seat_to',
+                'event_tickets.no_of_tickets',
+                'event_tickets.face_value',
+                'event_tickets.amount_currency',
+                'event_tickets.ticket_amount',
+                'venue_seating.seating_type_name'
+            )
+            ->first();
+        return view('reseller.event_savesecond', compact('currencys', 'data', 'eventid'));
+    }
+
+    public function updatesavefunction(Request $request, $id)
+    {
+        $request->validate([
+            'currency' => 'required|exists:currency,id',
+            'amount'   => 'required|numeric|min:0',
+            'cents'    => 'nullable|numeric|min:0|max:99',
+        ]);
+
+        $ticket = EventTickets::findOrFail($id);
+
+        // Update fields
+        $ticket->update([
+            'amount_currency'  => $request->currency,
+            'ticket_amount'    => $request->converted_price_per_ticket,
+            'web_price'        => $request->converted_website_price,
+            'seller_fee'       => $request->converted_seller_fee,
+            'recive_perticket' => $request->converted_price_per_ticket,
+            'total_recive'     => $request->converted_total_receive,
+        ]);
+
+        if ($request->hasFile('proof_of_id')) {
+            $imageName = time() . '.' . $request->proof_of_id->extension();
+            $request->proof_of_id->move(storage_path('uploads/ticket_proof/proof_of_id'), $imageName);
+            $ticket->proof_of_id = $imageName;
+        }
+
+        if ($request->hasFile('proof_of_purchase')) {
+            $imageName = time() . '.' . $request->proof_of_purchase->extension();
+            $request->proof_of_purchase->move(storage_path('uploads/ticket_proof/proof_of_purchase'), $imageName);
+            $ticket->proof_of_purchase = $imageName;
+        }
+
+        // Fetch the required data for the sellticket_card_data view
+        // $singleaddress = ResellerSuccess::leftjoin('seller_address', 'seller_address.id', 'reseller_final_proccess.address_id')
+        //     ->where('reseller_final_proccess.reseller_id', Auth::user()->id)
+        //     ->select('reseller_final_proccess.id as uniqid', 'seller_address.*')
+        //     ->first();
+
+        return redirect()->route('reseller.conformation', ['id' => $ticket->id])
+            ->with('success', 'Ticket updated successfully.');
+    }
+
+    //Unnecessary methods, no longer needed as per the client requirements (Public function showaddresform method)
+
+    // public function showaddresform(Request $request)
+    // {
+
+    //     $id       = $request->id;
+    //     $countrys = CountryModel::select('country_name', 'id')->get();
+    //     $authname = Auth::user()->name;
+
+    //     $oldaddress   = AddressModel::where('ticketid', $id)->get();
+    //     $country_name = CountryModel::get();
+    //     $city         = CityModel::leftjoin('countries', 'countries.id', 'cities.country_id')->select('cities.id', 'name', 'country_name')->paginate(10);
+    //     return view('reseller.event_savethird', compact('authname', 'oldaddress', 'country_name', 'city', 'id', 'countrys'));
+    // }
+
+    // //Unnecessary methods, no longer needed as per the client requirements (public function saveselltickethird method)
+    // public function savesellticketthird(Request $request)
+    // {
+    //     // Debugging: Check the request data
+
+    //     $address = $request->input('address_checkbox');
+
+    //     if ($address) {
+    //         $singleaddress = ResellerSuccess::where('address_id', $address)->first();
+
+    //         if ($singleaddress) {
+
+    //             $singleaddress->reseller_id = Auth::user()->id;
+    //             $singleaddress->save();
+    //         } else {
+    //             $successAddress              = new ResellerSuccess();
+    //             $successAddress->address_id  = $address;
+    //             $successAddress->reseller_id = Auth::user()->id;
+
+    //             $successAddress->save();
+    //         }
+    //         return redirect()->route('reseller.conformation');
+    //     } else {
+
+    //         $address                = new AddressModel();
+    //         $address->address_line1 = $request->input('address_line1');
+    //         $address->address_line2 = $request->input('address_line2');
+    //         $address->city          = $request->input('city');
+    //         $address->postcode      = $request->input('postcode');
+    //         $address->country       = $request->input('country');
+    //         $address->ticketid      = $request->id;
+    //         $address->resellerid    = Auth::user()->id;
+    //         $address->name          = $request->input('name');
+    //         $address->phone         = $request->input('phone');
+    //         $address->save();
+    //         return redirect()->back()->with('success', 'Your Address is added');
+    //     }
+
+    //     //
+    // }
+
+
+
+    public function savesellconformation(Request $request)
+    {
+        $eventid   = $request->id;
+        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
+        //fetching event name
+        $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
+            ->leftjoin('event_timings', 'event_timings.event', 'event.id')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->leftjoin('split_types', 'split_types.id', 'event_tickets.split_type')
+            ->leftjoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->leftjoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
+            ->leftjoin('mobile_applications', 'mobile_applications.id', 'event_tickets.mobile_application_id')
+
+            ->where('event_tickets.id', $eventid)
+            ->select(
+                'event.event_name',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time',
+                'event_timings.is_active',
+                'venue.name',
+                'location.location_name',
+                'cities.name as cname',
+                'countries.country_name',
+                'ticket_type.ticket_type_name',
+                'event_tickets.split_type',
+                'event_tickets.row',
+                'event_tickets.seat_from',
+                'event_tickets.seat_to',
+                'event_tickets.no_of_tickets',
+                'event_tickets.ticket_amount',
+                'event_tickets.seller_fee',
+                'event_tickets.web_price',
+                'event_tickets.total_recive',
+                'split_types.split_name',
+                'currency.short_name as currency_name',
+                'currency.symbol',
+                'venue_seating.seating_type_name as venue_seating_name',
+                'mobile_applications.name as mobile_applications_name'
+            )
+            ->first();
+        $bankDetails = BankTransferDetail::with('currency')->where('reseller_id', auth()->id())->get();
+        // dd($bankDetails->toArray());
+        return view('reseller.sellticket_card_data', compact('eventid', 'data', 'currencys', 'bankDetails'));
+    }
+
+    public function finalprocess(Request $request)
+    {
+        //return $request->cardname;
+
+        $updateco = ResellerSuccess::find($request->uniqid);
+        // return($request->uniqid);
+
+        $updateco->card_name   = $request->cardname;
+        $updateco->card_number = $request->cardnumber;
+        $updateco->card_cvv    = $request->cvv;
+        $updateco->exp_month   = $request->expmnth;
+        $updateco->card_year   = $request->expyr;
+        $updateco->save();
+        //  Mail::to('sheebarobert18@gmail.com')->send(new uploadticketMail());
+
+        return redirect('tickets')->with('success', 'Your Ticket Has been created');
+    }
+
+    public function countrycode(Request $request)
+    {
+        $id        = $request->country_code;
+        $countryId = $request->country_code;
+        $cities    = CityModel::where('country_id', $countryId)->get();
+        return response()->json($cities);
+    }
+
+    public function mylistings(Request $request){
+
+
+        $data_all = EventTickets::
+        leftjoin('event','event.id','event_tickets.event')->
+        leftjoin('event_type','event_type.id','event.event_type')
+        ->leftjoin('users','users.id','event.event_added_by')
+        ->leftjoin('venue','venue.id','event.venue')->
+        leftjoin('location','location.id','venue.location')
+        ->leftjoin('countries','countries.id','location.country')
+        ->leftjoin('cities','cities.id','location.city')
+        ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
+        ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
+        ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ;
+
+        // if(!Auth::user()->user_type=="superadmin"){
+
+            $data_all->where('event_tickets.created_by',Auth::user()->id);
+        // }
+
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+       ->get();
+
+       foreach($data as $val){
+
+        $val['waiting_for_approval'] = EventTickets::where('event_tickets.event',$val->id)->where('is_admin_approved',0)->count();
+        $val['my_tickets'] = EventTickets::where('event_tickets.event',$val->id)->where('created_by',Auth::user()->id)->count();
+
+       }
+
+    //    dd($data);
+
+     return view('reseller.mylistings',compact('data'));
+    }
+
+    public function reseller_manage_eventticket(Request $request,$id){
+
+        $data_all = EventTickets::
+        leftjoin('event','event.id','event_tickets.event')->
+        leftjoin('event_type','event_type.id','event.event_type')
+        ->leftjoin('users','users.id','event.event_added_by')
+        ->leftjoin('venue','venue.id','event.venue')->
+        leftjoin('location','location.id','venue.location')
+        ->leftjoin('countries','countries.id','location.country')
+        ->leftjoin('cities','cities.id','location.city')
+        ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
+        ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
+        ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
+        ;
+
+        $data_all->find($id);
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+       ->get()->toArray();
+
+        $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();
+        $data['my_tickets'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('created_by',Auth::user()->id)->count();
+        $data['tickets'] = TicketsGenerated::where('event_tickets',$data[0]['id'])
+        ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
+        ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')->select('*','event_ticket_tickets.id as id')
+        ->get()->toArray();
+        // $data['restrictions'] = RestrictionModel::where('id',$data[0]['ticket_restrictions'])->get()->toArray();
+        // dd($data);
+        $ticket_type = TicketType::all();
+      return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
+
+    }
+}

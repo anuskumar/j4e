@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    p {
+      color: #666;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="https://www.w3schools.com/html/pic_trulli.jpg" alt="Trulli" width="200" height="100">
+    <h1>Your Ticket has been Expired</h1>
+    <p>Dear {{$resellername}},</p>
+    <p>Your ticket(s) for {{$ticket_name}} are no longer on sale on Just 4 Entertainment</p>
+    <p>You can download your unsold e-tickets and they can be used to attend the event.</p>
+
+    <!--<ul>-->
+    <!--  <li>Order Number: [Order Number]</li>-->
+    <!--  <li>Event: [Event Name]</li>-->
+    <!--  <li>Date: [Event Date]</li>-->
+    <!--  <li>Quantity: [Number of Tickets]</li>-->
+    <!--  <li>Total Amount: $[Total Amount]</li>-->
+    <!--</ul>-->
+
+    <!--<p>We look forward to seeing you at the event. If you have any questions or concerns, feel free to <a href="#">contact us</a>.</p>-->
+    <h3>Thank you for using Just for Entertaintment</h3>
+    <!--<p>Dear [Customer Name],</p>-->
+    <!--<p>Best regards,<br> [Your Company Name]</p>-->
+
+      </div>
+
+</body>
+</html>
