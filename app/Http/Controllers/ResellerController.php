@@ -1355,4 +1355,26 @@ class ResellerController extends Controller
       return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
 
     }
+
+    public function update_ticket_type(Request $request){
+        $id = $request->ticket_id;
+        $tickey_type = $request->ticket_type;
+        $data = EventTickets::find($id);
+        if($data){
+            $data->ticket_type = $tickey_type;
+            $data->save();
+            return back()->with('success','ticket type changed');
+        }else{
+            return back()->with('error','Error Occured');
+
+        }
+    }
+        public function destroy_ticket($id)
+        {
+            $item = EventTickets::findOrFail($id);
+            $item->delete();
+
+            return redirect()->route('reseller.mylistings')->with('success', 'Tickets deleted successfully.');
+        }
+
 }

@@ -24,7 +24,13 @@ $val = $data[0];
 
             </div>
             <div class="col-md-3">
-                <button class="btn btn-danger">Delete Listing</button>
+                @if($val['is_admin_approved'] <> 1)
+                <button class="btn btn-danger" onclick="confirmDelete({{ $val['id'] }})">Delete Listing</button>
+                <form id="delete-form-{{ $val['id'] }}" action="{{ route('ticket.listing.destroy', $val['id']) }}" method="POST" style="display: none;">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                @endif
             </div>
         </div>
         <div class="row">
@@ -93,11 +99,11 @@ $val = $data[0];
                                                 role="switch"
                                                 id="switchCheckChecked_{{ $tickets['id'] }}"
                                                 data-id="{{ $tickets['id'] }}"
-                                                data-status="{{ $tickets['is_active']}}"
+                                                data-status="{{ $tickets['on_sale']}}"
                                                 onchange="confirmToggleStatus(this)"
-                                                {{ $tickets['is_active'] == 1 ? 'checked':'' }}
+                                                {{ $tickets['on_sale'] == 1 ? 'checked':'' }}
 
-                                                ticketsue="{{ $tickets['is_active'] }}">
+                                                value="{{ $tickets['on_sale'] }}">
 
                                             </div>
                             </td>
@@ -112,8 +118,9 @@ $val = $data[0];
               <div class="card border-light mb-3" style="max-width: 50rem;">
                 <div class="card-body">
                 <div class="d-grid">
+                    @if($val['ticket_type'] == 2 )
                 <button class="btn btn-primary" type="button">Upload Tickets</button>
-
+                    @endif
                 </div>
                 </div>
                 </div>
@@ -123,14 +130,16 @@ $val = $data[0];
                         <div class="card" style="width: 25rem;">
                         <div class="card-header">
                           <b> Price per Ticket </b>
+ @if($val['is_admin_approved'] <> 1)
+                            <button type="button" class="btn btn-light float-right">
+           <i class="fa fa-pencil"></i>
+           </button>
+@endif
                         </div>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><b>Original Price : {{ $val['ticket_amount'].' '.$val['short_name'] }}</b>   <button type="button" class="btn btn-light">
-           <i class="fa fa-pencil"></i>
-           </button></li>
-                            <li class="list-group-item"><b>Your Sale Price :  {{ $val['face_value'].' '.$val['short_name'] }}</b>   <button type="button" class="btn btn-light">
-           <i class="fa fa-pencil"></i>
-           </button></li>
+                            <li class="list-group-item"><b>Original Price : {{ $val['ticket_amount'].' '.$val['short_name'] }}</b>
+           </li>
+                            <li class="list-group-item"><b>Your Sale Price :  {{ $val['face_value'].' '.$val['short_name'] }}</b> </li>
                         </ul>
                         </div>
 
@@ -181,26 +190,28 @@ $val = $data[0];
 
 <div class="modal fade" id="tickcet-type-change-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
+    <form action="{{ route('update.ticket.type') }}" method="POST" >
+        <input type="hidden" name="ticket_id" value="{{ $val['id'] }}">
+        @csrf
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5" id="exampleModalLabel">Ticket Type</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-       <select class="form-select" aria-label="Default select example">
+       <select class="form-select" aria-label="Default select example" name="ticket_type">
             <option>Select Ticket Type</option>
             @foreach ($ticket_type as $type)
             <option {{ $type['id'] == $val['ticket_type'] ? 'selected':'' }} value="{{ $type['id'] }}">{{ $type['ticket_type_name'] }}</option>
-
             @endforeach
-
-            </select>
+        </select>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Update</button>
+        <button type="submit" class="btn btn-primary">Update</button>
       </div>
     </div>
+    </form>
   </div>
 </div>
 
@@ -211,5 +222,78 @@ $val = $data[0];
 $('#tickcet-type-change-modal').modal('show');
 
     }
+
+    function confirmDelete(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('delete-form-' + id).submit();
+        }
+    });
+}
+
+
+function confirmToggleStatus(el) {
+    const ticketId = el.getAttribute('data-id');
+    const currentStatus = el.getAttribute('data-status');
+    const newStatus = el.checked ? 1 : 0;
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `You are about to ${newStatus ? 'activate' : 'deactivate'} this ticket.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, change it!',
+        cancelButtonText: 'No, cancel',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed to update status
+            updateTicketStatus(newStatus, ticketId);
+        } else {
+            // Revert the toggle switch to previous state
+            el.checked = !el.checked;
+        }
+    });
+}
+
+function updateTicketStatus(newStatus, ticketId) {
+    // Example AJAX
+    fetch(`/tickets/update-ticket-sale-status/${ticketId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Updated!', data.message, 'success').then(function(){
+            window.location.reload();
+
+            });
+            // Optionally refresh or update the badge
+        } else {
+            Swal.fire('Failed!', data.message, 'error').then(function(){
+            window.location.reload();
+
+            });
+
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error!', 'Something went wrong.', 'error');
+    });
+}
 </script>
 @endsection

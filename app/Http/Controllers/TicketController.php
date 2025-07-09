@@ -528,14 +528,9 @@ class TicketController extends Controller
 
 public function updateStatus(Request $request, $id)
 {
-    // Validate input
-    // $request->validate([
-    //     'status' => 'required|boolean',
-    // ]);
 
-    // Find the ticket
     $ticket = EventTickets::find($id);
-    // dd($ticket);
+
     if (!$ticket) {
         return response()->json([
             'success' => false,
@@ -543,7 +538,6 @@ public function updateStatus(Request $request, $id)
         ], 404);
     }
 
-    // Update status
     $ticket->ticket_status = ! $ticket->ticket_status;
 
     $ticket->save();
@@ -552,6 +546,29 @@ public function updateStatus(Request $request, $id)
         'success' => true,
         'message' => 'Ticket status updated successfully.',
         'status'  => $ticket->ticket_status
+    ]);
+}
+
+public function updatesaleStatus(Request $request, $id)
+{
+
+    $ticket = TicketsGenerated::find($id);
+
+    if (!$ticket) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Ticket not found.',
+        ], 404);
+    }
+
+    $ticket->on_sale = ! $ticket->on_sale;
+
+    $ticket->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Ticket status updated successfully.',
+        'status'  => $ticket->on_sale
     ]);
 }
 

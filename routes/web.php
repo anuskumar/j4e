@@ -185,8 +185,8 @@ Route::group(['prefix' => 'reseller'], function () {
      Route::get('mylistings', [ResellerController::class, 'mylistings'])->name('reseller.mylistings');
 
      Route::get('reseller-manage-eventticket/{id}', [ResellerController::class, 'reseller_manage_eventticket'])->name('reseller.manage.eventticket');
-
-
+     Route::post('update-ticket-type', [ResellerController::class, 'update_ticket_type'])->name('update.ticket.type');
+     Route::delete('reseller-delete-listing/{id}', [ResellerController::class, 'destroy_ticket'])->name('ticket.listing.destroy');
 
 
 });
@@ -293,6 +293,7 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::post('outsidesell.store', [TicketController::class, 'outsidesell'])->name('tickets.outsidesell.store');
     Route::get('get-outsidesell_data/{outsidesell_id}', [TicketController::class, 'get_outsidesell_data']);
     Route::post('update-ticket-status/{id}', [TicketController::class, 'updateStatus']);
+    Route::post('update-ticket-sale-status/{id}', [TicketController::class, 'updatesaleStatus']);
 });
 
 Route::group(['prefix' => 'location'], function () {

@@ -123,7 +123,7 @@
                                     </td>
                                     <td>{{ $val['ticket_type_name'] }}</td>
                                     <td>{{ $val['ticket_type_name'] }}</td>
-                                    <td> 1 &times; {{ $val['no_of_tickets'] }}</td>
+                                    <td> {{ $val['no_of_tickets'] }}</td>
                                     <td>
                                         Ticket Amount : {{ $val['ticket_amount'].' '.$val['short_name'] }} <br>
                                         Face Value : {{ $val['face_value'].' '.$val['short_name'] }} <br>
