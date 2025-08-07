@@ -90,7 +90,7 @@ $val = $data[0];
                             <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
                             <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
                             <td><b> <span class="text-muted">{{ $tickets['seat_number'] }}</span></b></td>
-                            <td><button class="btn btn-primary btn-sm"><b>Add Seat</b></button>
+                            <td><button class="btn btn-primary btn-sm" onclick="editTicketData($tickets['id'])"><b>Add Seat</b></button>
                             <button class="btn btn-danger btn-sm"><b>Delete</b></button></td>
                             <td>
                                   <div class="form-check form-switch">
