@@ -1376,5 +1376,15 @@ class ResellerController extends Controller
 
             return redirect()->route('reseller.mylistings')->with('success', 'Tickets deleted successfully.');
         }
+    public function update_ticket_seating(Request $request){
+
+        $ticket = TicketsGenerated::find($request->generated_ticket_id);
+        $ticket->seat_number = $request->seat_number;
+        $ticket->ticket_serial_number = $request->seat_serial_number;
+        $ticket->save();
+
+        return redirect()->back()->with('success', 'Tickets Updated successfully.');
+        // dd($request->all());
+    }
 
 }

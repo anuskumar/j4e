@@ -3,6 +3,7 @@ $val = $data[0];
 ?>
 @extends('layouts.reseller_app')
 @section('content')
+
     <div class="container mt-3">
         <div class="row">
             <div class="col-md-3">
@@ -90,7 +91,7 @@ $val = $data[0];
                             <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
                             <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
                             <td><b> <span class="text-muted">{{ $tickets['seat_number'] }}</span></b></td>
-                            <td><button class="btn btn-primary btn-sm" onclick="editTicketData($tickets['id'])"><b>Add Seat</b></button>
+                            <td><button class="btn btn-primary btn-sm" onclick="editTicketData({{ $tickets['id'] }})"><b>Add Seat</b></button>
                             <button class="btn btn-danger btn-sm"><b>Delete</b></button></td>
                             <td>
                                   <div class="form-check form-switch">
@@ -119,7 +120,7 @@ $val = $data[0];
                 <div class="card-body">
                 <div class="d-grid">
                     @if($val['ticket_type'] == 2 )
-                <button class="btn btn-primary" type="button">Upload Tickets</button>
+                <button class="btn btn-primary" type="button" onclick="uploadTicketImages()">Upload Tickets</button>
                     @endif
                 </div>
                 </div>
@@ -216,8 +217,78 @@ $val = $data[0];
 </div>
 
 
+<div class="modal fade" id="tickcet-data-change-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="{{ route('update.ticket.seating') }}" method="POST" >
+        <input type="hidden" name="generated_ticket_id" id="generated-ticket-id" >
+        @csrf
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Ticket</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
 
+         <span>Seat Number</span>
+         <input type="number" class="form-control" name="seat_number" id="seat-number">
+        <span>Serial Number</span>
+         <input type="text" class="form-control" name="seat_serial_number" id="seat-serial-number">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="ticket-image-upload" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+
+        <input type="hidden" name="ticket_id" value="{{ $val['id'] }}">
+        @csrf
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Upload Tickets</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+    <div class="modal-body">
+  <table class="table table-bordered">
+    @foreach ($data['tickets'] as $tickets)
+      <tr>
+        <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
+        <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
+      </tr>
+    @endforeach
+    <tr>
+      <td colspan="2">
+        <div class="container">
+          <h4>Upload PDF & Split Pages</h4>
+          <input type="file" id="pdfInput" accept="application/pdf" class="form-control mb-3">
+          <div class="page-links" id="output"></div>
+          <button id="uploadBtn" class="btn btn-primary btn-sm mt-3">Upload Selected</button>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Required for Laravel
+        }
+    });
+
     function openTicketTypechangeModal(){
 $('#tickcet-type-change-modal').modal('show');
 
@@ -295,5 +366,141 @@ function updateTicketStatus(newStatus, ticketId) {
         Swal.fire('Error!', 'Something went wrong.', 'error');
     });
 }
+
+function editTicketData(id){
+
+     $.ajax({
+            url: '/tickets/get-ticket-data',
+            type: 'GET',
+            data: {
+               id:id,
+            },
+            success: function(response) {
+            console.log(response);
+
+                 $('#seat-number').val(response.data.seat_number);
+                 $('#seat-serial-number').val(response.data.ticket_serial_number);
+                 $('#generated-ticket-id').val(response.data.id);
+
+                $('#tickcet-data-change-modal').modal('show');
+                // console.log('Success:', response);
+                // alert(response.message);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+            }
+        });
+
+
+}
+
+function uploadTicketImages(){
+
+                $('#ticket-image-upload').modal('show');
+}
+</script>
+
+<script>
+  let splitPages = []; // store pages in memory
+
+  document.getElementById("pdfInput").addEventListener("change", async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      alert("Please upload a valid PDF file.");
+      return;
+    }
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+
+    const outputDiv = document.getElementById("output");
+    outputDiv.innerHTML = "";
+    splitPages = [];
+
+    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+      const newPdf = await PDFLib.PDFDocument.create();
+      const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+      newPdf.addPage(copiedPage);
+
+      const pdfBytes = await newPdf.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Save in memory
+      splitPages.push({ blob, page: i+1, ticket: null });
+
+      // Create wrapper
+      const pageItem = document.createElement("div");
+      pageItem.classList.add("page-item");
+      pageItem.style.display = "flex";
+      pageItem.style.alignItems = "center";
+      pageItem.style.marginBottom = "8px";
+
+      // Link
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.textContent = `Preview Page ${i+1}`;
+      link.style.marginRight = "10px";
+
+      // Ticket selector
+      const select = document.createElement("select");
+      select.classList.add("form-select", "form-select-sm");
+      select.style.width = "200px";
+      select.innerHTML = `<option value="">Assign Ticket</option>
+        <option value="all">All</option>
+        @foreach ($data['tickets'] as $tickets)
+          <option value="{{ $tickets['ticket_serial_number'] }}">{{ $tickets['ticket_serial_number'] }}</option>
+        @endforeach
+      `;
+      select.addEventListener("change", function() {
+        splitPages[i].ticket = this.value;
+      });
+
+      // Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.classList.add("btn", "btn-danger", "btn-sm", "ms-2");
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", function() {
+        pageItem.remove();
+        splitPages[i] = null; // mark deleted
+      });
+
+      pageItem.appendChild(link);
+      pageItem.appendChild(select);
+      pageItem.appendChild(deleteBtn);
+      outputDiv.appendChild(pageItem);
+    }
+  });
+
+  // Upload assigned pages to backend
+  document.getElementById("uploadBtn").addEventListener("click", async function() {
+    const formData = new FormData();
+
+    splitPages.forEach((page, idx) => {
+      if (page && page.ticket) {
+        formData.append("files[]", page.blob, `page_${page.page}.pdf`);
+        formData.append("tickets[]", page.ticket);
+      }
+    });
+
+    if (!formData.has("files[]")) {
+      alert("Please assign at least one page to a ticket.");
+      return;
+    }
+
+    // Send to Laravel route
+    let response = await fetch("{{ url('tickets.uploadSplit') }}", {
+      method: "POST",
+      headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" },
+      body: formData
+    });
+
+    let result = await response.json();
+    alert("Upload finished!");
+    console.log(result);
+  });
 </script>
 @endsection

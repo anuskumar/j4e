@@ -572,6 +572,20 @@ public function updatesaleStatus(Request $request, $id)
     ]);
 }
 
+public function get_ticket_data(Request $request){
+
+    $id = $request->get('id');
+
+    $ticket = TicketsGenerated::find($id);
+
+       return response()->json([
+        'success' => true,
+        'data' =>  $ticket,
+
+    ]);
+
+}
+
 
 
 }
