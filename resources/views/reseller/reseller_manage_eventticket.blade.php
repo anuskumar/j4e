@@ -452,7 +452,7 @@ function uploadTicketImages(){
       select.innerHTML = `<option value="">Assign Ticket</option>
         <option value="all">All</option>
         @foreach ($data['tickets'] as $tickets)
-          <option value="{{ $tickets['ticket_serial_number'] }}">{{ $tickets['ticket_serial_number'] }}</option>
+          <option value="{{ $tickets['id'] }}">{{ $tickets['ticket_serial_number'] }}</option>
         @endforeach
       `;
       select.addEventListener("change", function() {
@@ -492,7 +492,7 @@ function uploadTicketImages(){
     }
 
     // Send to Laravel route
-    let response = await fetch("{{ url('tickets.uploadSplit') }}", {
+    let response = await fetch("{{ route('tickets.uploadSplit') }}", {
       method: "POST",
       headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" },
       body: formData

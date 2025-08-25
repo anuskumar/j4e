@@ -1387,4 +1387,25 @@ class ResellerController extends Controller
         // dd($request->all());
     }
 
+     public function upload_ticket_seating(Request $request){
+
+    $files = $request->file('files');
+    $tickets = $request->input('tickets');
+
+    foreach ($files as $index => $file) {
+        $ticketNo = $tickets[$index] ?? null;
+
+        if ($ticketNo) {
+            // Save file
+            $path = $file->store('tickets', 'public');
+
+            // Update ticket record (example)
+            TicketsGenerated::where('id', $ticketNo)
+                ->update(['file' => $path]);
+        }
+    }
+        return response()->json(['status' => 'success']);
+
+    }
+
 }
