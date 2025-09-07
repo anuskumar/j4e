@@ -244,6 +244,75 @@ $val = $data[0];
   </div>
 </div>
 
+<div class="modal fade" id="ticket-image-upload-type" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Upload Tickets</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+    <div class="modal-body">
+            <div class="row">
+            <div class="col-sm-6">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upload Individual Tickets</h5>
+                    <p class="card-text">There you can upload individual files on each tickets</p>
+                   <button type="button" onclick="uploadTicketImagesIndividual()"  class="btn btn-primary">Upload Individually</button>
+                </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upload a Group of Tickets</h5>
+                    <p class="card-text">There you can upload a single file having multiple ticket</p>
+                    <button type="button" onclick="uploadTicketImagesgroup()" class="btn btn-primary">Upload Group of files</button>
+                </div>
+                </div>
+            </div>
+            </div>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="ticket-image-upload-individually" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Upload Tickets</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+            <div class="modal-body">
+                    <div class="row">
+                <table class="table table-bordered">
+            @foreach ($data['tickets'] as $tickets)
+            <tr>
+                <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
+                <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
+                <td> <input type="file" accept="application/pdf" class="form-control mb-3"></td>
+
+
+            </tr>
+            @endforeach
+            <tr>
+
+            </tr>
+        </table>
+            </div>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+
 <div class="modal fade" id="ticket-image-upload" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
 
@@ -290,7 +359,8 @@ $val = $data[0];
     });
 
     function openTicketTypechangeModal(){
-$('#tickcet-type-change-modal').modal('show');
+
+        $('#tickcet-type-change-modal').modal('show');
 
     }
 
@@ -396,8 +466,20 @@ function editTicketData(id){
 
 function uploadTicketImages(){
 
+                $('#ticket-image-upload-type').modal('show');
+}
+
+function uploadTicketImagesgroup(){
+                $('#ticket-image-upload-type').modal('hide');
                 $('#ticket-image-upload').modal('show');
 }
+
+function uploadTicketImagesIndividual(){
+                $('#ticket-image-upload-type').modal('hide');
+                $('#ticket-image-upload-individually').modal('show');
+}
+
+
 </script>
 
 <script>
