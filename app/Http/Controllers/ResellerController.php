@@ -1400,12 +1400,38 @@ class ResellerController extends Controller
             $path = $file->store('tickets', 'public');
 
             // Update ticket record (example)
-            TicketsGenerated::where('id', $ticketNo)
+            TicketsGenerated::find($ticketNo)
                 ->update(['file' => $path]);
         }
     }
         return response()->json(['status' => 'success']);
 
+    }
+
+    public function upload_ticket_seating_individual(Request $request){
+        // dd($request->file('files'));
+        foreach ($request->file('files') as $seatId => $fileGroup) {
+            // dd($fileGroup);
+        if (is_array($fileGroup)) {
+            // dd($fileGroup);
+            foreach ($fileGroup as $file) {
+                if ($file) {
+                    // Generate random name with extension
+                    $imageName = rand() . time() . '.' . $file->extension();
+
+                    // Move to storage/uploads/ticket_images
+                    $file->move(storage_path('uploads/ticket_images'), $imageName);
+
+                    // Save in DB
+                    TicketsGenerated::find($seatId)->update([
+                        'file' => 'uploads/ticket_images/' . $imageName,
+                    ]);
+                }
+            }
+        }
+    }
+
+    return redirect()->back()->with('success', 'Tickets uploaded successfully.');
     }
 
 }

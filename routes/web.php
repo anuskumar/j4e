@@ -188,6 +188,7 @@ Route::group(['prefix' => 'reseller'], function () {
      Route::post('update-ticket-type', [ResellerController::class, 'update_ticket_type'])->name('update.ticket.type');
      Route::post('update-ticket-seating', [ResellerController::class, 'update_ticket_seating'])->name('update.ticket.seating');
      Route::post('upload-ticket-seating', [ResellerController::class, 'upload_ticket_seating'])->name('tickets.uploadSplit');
+     Route::post('upload-ticket-seating-individual', [ResellerController::class, 'upload_ticket_seating_individual'])->name('tickets.uploadIndividual');
 
      Route::delete('reseller-delete-listing/{id}', [ResellerController::class, 'destroy_ticket'])->name('ticket.listing.destroy');
 

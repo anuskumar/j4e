@@ -12,6 +12,8 @@ class TicketsGenerated extends Model
     use SoftDeletes;
     protected $table = 'event_ticket_tickets';
 
+    protected $fillable = ['seat_id', 'file'];
+
     public static function get_the_number_of_tickets($id){
 
         $data = TicketsGenerated::where('event_tickets',$id)->where('is_sold',0)->where('under_purchase_hold',0)->get();

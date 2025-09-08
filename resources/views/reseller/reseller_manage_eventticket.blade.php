@@ -85,6 +85,7 @@ $val = $data[0];
                             <td><b>SEAT NO.</b></td>
                             <td><b>ACTION</b></td>
                             <td><b>ON SALE</b></td></b>
+                            <td><b>Ticket</b></td></b>
                         </tr>
                         @foreach ($data['tickets'] as $tickets)
                            <tr>
@@ -107,6 +108,12 @@ $val = $data[0];
                                                 value="{{ $tickets['on_sale'] }}">
 
                                             </div>
+                            </td>
+                            <td>
+
+                                <a href="{{asset('storage/'.@$tickets['file']) }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
+                                View
+                            </a>
                             </td>
                         </tr>
                         @endforeach
@@ -288,6 +295,8 @@ $val = $data[0];
         <h1 class="modal-title fs-5" id="exampleModalLabel">Upload Tickets</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      <form enctype="multipart/form-data" action="{{ route('tickets.uploadIndividual') }}" method="POST">
+        @csrf
             <div class="modal-body">
                     <div class="row">
                 <table class="table table-bordered">
@@ -295,18 +304,27 @@ $val = $data[0];
             <tr>
                 <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
                 <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
-                <td> <input type="file" accept="application/pdf" class="form-control mb-3"></td>
+                <td><input type="hidden" name="seat_id[]" value="{{ $tickets['id'] }}">
+                     <input type="file" name="files[{{ $tickets['id'] }}][]"  class="form-control mb-3">
+                </td>
 
 
             </tr>
             @endforeach
+            <tr>
+      <td colspan="4">
+        <div class="container">
+          <button type="submit" style="float: right" class="btn btn-primary btn-sm mt-3">Upload Selected</button>
+        </div>
+      </td>
+    </tr>
             <tr>
 
             </tr>
         </table>
             </div>
 </div>
-
+</form>
     </div>
 
   </div>
@@ -532,7 +550,6 @@ function uploadTicketImagesIndividual(){
       select.classList.add("form-select", "form-select-sm");
       select.style.width = "200px";
       select.innerHTML = `<option value="">Assign Ticket</option>
-        <option value="all">All</option>
         @foreach ($data['tickets'] as $tickets)
           <option value="{{ $tickets['id'] }}">{{ $tickets['ticket_serial_number'] }}</option>
         @endforeach
