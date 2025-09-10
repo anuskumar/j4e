@@ -72,10 +72,11 @@ $val = $data[0];
            <b>Row: <span class="text-muted"> {{ $val['row']  }}</span></b>
            &nbsp;
            &nbsp;
-           <button type="button" class="btn btn-light">
+           {{-- <button type="button" class="btn btn-light">
            <i class="fa fa-pencil"></i>
-           </button>
-           <div class="card border-dark mb-3" style="max-width: 50rem;">
+           </button> --}}
+           <br>
+           <div class="card border-dark mb-3 mt-3" style="max-width: 50rem;">
                 <div class="card-body">
                     <h6 class="card-title">Listed Tickets</h6>
                     <table class="table table-borderd">
@@ -93,7 +94,7 @@ $val = $data[0];
                             <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
                             <td><b> <span class="text-muted">{{ $tickets['seat_number'] }}</span></b></td>
                             <td><button class="btn btn-primary btn-sm" onclick="editTicketData({{ $tickets['id'] }})"><b>Add Seat</b></button>
-                            <button class="btn btn-danger btn-sm"><b>Delete</b></button></td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteGeneratedTickets({{ $tickets['id'] }})"><b>Delete</b></button></td>
                             <td>
                                   <div class="form-check form-switch">
                                         <input class="form-check-input"
@@ -110,10 +111,11 @@ $val = $data[0];
                                             </div>
                             </td>
                             <td>
-
+                    @if(@$tickets['file'])
                                 <a href="{{asset('storage/'.@$tickets['file']) }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
                                 View
                             </a>
+                    @endif
                             </td>
                         </tr>
                         @endforeach
@@ -139,7 +141,7 @@ $val = $data[0];
                         <div class="card-header">
                           <b> Price per Ticket </b>
  @if($val['is_admin_approved'] <> 1)
-                            <button type="button" class="btn btn-light float-right">
+                            <button type="button" class="btn btn-light float-right" onclick="ticketPriceChange({{ $val['id'] }})">
            <i class="fa fa-pencil"></i>
            </button>
 @endif
@@ -364,6 +366,55 @@ $val = $data[0];
 
     </div>
 
+  </div>
+</div>
+
+<div class="modal fade" id="tickcet-price-change-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="{{ route('update.ticket.pricechange') }}" method="POST" >
+        <input type="hidden" name="ticket_id" value="{{ $val['id'] }}" >
+        @csrf
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Update Ticket Pricing</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+         <div class="col-md-4">
+         <span>Original Price</span>
+         </div>
+         <div class="col-md-4">
+
+         <input type="text" class="form-control" value="{{ $val['ticket_amount']}}" name="original_price" id="original-price">
+         </div>
+         <div class="col-md-4">
+            USD
+         </div>
+         </div>
+        {{-- <span>Your Sale Price</span>
+         <input type="text" class="form-control" value="{{ $val['face_value']}}" name="sale_price" id="sale-price"> --}}
+
+           <div class="row">
+         <div class="col-md-4">
+         <span>Your Sale Price</span>
+         </div>
+         <div class="col-md-4">
+
+         <input type="text" class="form-control" value="{{ $val['face_value']}}" name="face_value" id="face_value">
+         </div>
+         <div class="col-md-4">
+            USD
+         </div>
+         </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+    </form>
   </div>
 </div>
 
@@ -598,8 +649,92 @@ function uploadTicketImagesIndividual(){
     });
 
     let result = await response.json();
-    alert("Upload finished!");
-    console.log(result);
+    // alert("Upload finished!");
+    // console.log(result);
+
+     Swal.fire('Updated Tickets!','', 'success').then(function(){
+            window.location.reload();
+
+            });
   });
+
+  function ticketPriceChange(val){
+
+     $('#tickcet-price-change-modal').modal('show');
+  }
+
+  function deleteGeneratedTickets(val){
+
+    Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                  $.ajax({
+            url: '{{ route("delete.generated.ticket") }}',
+            type: 'GET',
+            data: {
+               id:val,
+            },
+            success: function(response) {
+            console.log(response);
+window.location.reload();
+
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', xhr.responseText);
+            }
+        });
+
+            }
+        });
+
+  }
 </script>
+
+<script>
+$(document).ready(function() {
+    // Attach validation on form submit
+    $("form").on("submit", function(e) {
+        let originalPrice = $("#original-price").val().trim();
+        let faceValue = $("#face_value").val().trim();
+
+        // Regex: integers or floats
+        let numberPattern = /^[0-9]+(\.[0-9]+)?$/;
+
+        if (!numberPattern.test(originalPrice)) {
+            alert("Please enter a valid number for Original Price.");
+            $("#original-price").focus();
+            e.preventDefault();
+            return false;
+        }
+
+        if (!numberPattern.test(faceValue)) {
+            alert("Please enter a valid number for Sale Price.");
+            $("#face_value").focus();
+            e.preventDefault();
+            return false;
+        }
+
+        return true; // allow submit
+    });
+
+    // Optional: live restriction (only numbers + dot allowed)
+    $("#original-price, #face_value").on("keypress", function(e) {
+        let charCode = e.which ? e.which : e.keyCode;
+        // Allow: numbers (48–57), dot (46), backspace (8), delete (0)
+        if ((charCode < 48 || charCode > 57) && charCode !== 46 && charCode !== 8 && charCode !== 0) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
 @endsection

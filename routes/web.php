@@ -191,7 +191,9 @@ Route::group(['prefix' => 'reseller'], function () {
      Route::post('upload-ticket-seating-individual', [ResellerController::class, 'upload_ticket_seating_individual'])->name('tickets.uploadIndividual');
 
      Route::delete('reseller-delete-listing/{id}', [ResellerController::class, 'destroy_ticket'])->name('ticket.listing.destroy');
+     Route::post('update-ticket-pricechange', [ResellerController::class, 'update_ticket_pricechange'])->name('update.ticket.pricechange');
 
+     Route::get('delete-generated-ticket', [ResellerController::class, 'delete_generated_ticket'])->name('delete.generated.ticket');
 
 });
 

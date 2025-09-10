@@ -1340,7 +1340,7 @@ class ResellerController extends Controller
         ;
 
         $data_all->find($id);
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->get()->toArray();
 
         $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();
@@ -1352,7 +1352,15 @@ class ResellerController extends Controller
         // $data['restrictions'] = RestrictionModel::where('id',$data[0]['ticket_restrictions'])->get()->toArray();
         // dd($data);
         $ticket_type = TicketType::all();
-      return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
+        $evntTcket = EventTickets::find($id);
+        if($evntTcket->created_by == Auth::user()->id){
+
+            return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
+
+        }else{
+            return back()->with('error','User Matching Failed');
+        }
+
 
     }
 
@@ -1387,21 +1395,27 @@ class ResellerController extends Controller
         // dd($request->all());
     }
 
-     public function upload_ticket_seating(Request $request){
+public function upload_ticket_seating(Request $request){
 
     $files = $request->file('files');
     $tickets = $request->input('tickets');
+
+    // dd($files,$tickets);
 
     foreach ($files as $index => $file) {
         $ticketNo = $tickets[$index] ?? null;
 
         if ($ticketNo) {
-            // Save file
-            $path = $file->store('tickets', 'public');
 
-            // Update ticket record (example)
-            TicketsGenerated::find($ticketNo)
-                ->update(['file' => $path]);
+              $imageName = rand() . time() . '.' . $file->extension();
+
+                    // Move to storage/uploads/ticket_images
+                    $file->move(storage_path('uploads/ticket_images'), $imageName);
+
+                    // Save in DB
+                    TicketsGenerated::find($ticketNo)->update([
+                        'file' => 'uploads/ticket_images/' . $imageName,
+                    ]);
         }
     }
         return response()->json(['status' => 'success']);
@@ -1432,6 +1446,46 @@ class ResellerController extends Controller
     }
 
     return redirect()->back()->with('success', 'Tickets uploaded successfully.');
+    }
+
+    public function update_ticket_pricechange(Request $request){
+
+        // dd($request->all());
+
+        $ticket_id = $request->ticket_id;
+        $original_price = $request->original_price;
+        $face_value = $request->face_value;
+
+        $data = EventTickets::find($ticket_id);
+
+        if($original_price > 0){
+
+            $data->ticket_amount = $original_price;
+        }
+
+        if($face_value > 0){
+
+            $data->face_value = $face_value;
+        }
+
+        $data->save();
+
+    return redirect()->back()->with('success', 'Tickets uploaded successfully.');
+
+    }
+
+    public function delete_generated_ticket(Request $request){
+        // dd($request->all());
+        $id = $request->id;
+        $generatedTicket =  TicketsGenerated::find($id);
+        $ticket = EventTickets::find($generatedTicket->event_tickets);
+        if($ticket->no_of_tickets > 0){
+           $ticket->no_of_tickets = round($ticket->no_of_tickets) - 1;
+        }
+        $ticket->save();
+        $generatedTicket->delete();
+
+        return response()->json(['status' => 'success']);
     }
 
 }
