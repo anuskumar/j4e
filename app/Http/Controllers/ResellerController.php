@@ -1289,7 +1289,7 @@ class ResellerController extends Controller
 
     public function mylistings(Request $request){
 
-
+        // dd('helo');
         $data_all = EventTickets::
         leftjoin('event','event.id','event_tickets.event')->
         leftjoin('event_type','event_type.id','event.event_type')
@@ -1318,9 +1318,12 @@ class ResellerController extends Controller
 
        }
 
+        $ticket_type = TicketType::all();
+
+
     //    dd($data);
 
-     return view('reseller.mylistings',compact('data'));
+     return view('reseller.mylistings',compact('data','ticket_type'));
     }
 
     public function reseller_manage_eventticket(Request $request,$id){

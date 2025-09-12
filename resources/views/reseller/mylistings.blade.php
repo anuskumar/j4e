@@ -16,8 +16,8 @@
   </button>
   <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
     <div class="navbar-nav">
-      <a class="nav-item nav-link " href="{{ route('reseller.mylistings') }}">My Listings</a>
-      <a class="nav-item nav-link" href="#">My Sales</a>
+      <a class="nav-item nav-link {{ request()->routeIs('reseller.mylistings') ? 'active' : '' }} " href="{{ route('reseller.mylistings') }}" ><b>My Listings</b></a>
+      <a class="nav-item nav-link" href="#"><b>My Sales</b></a>
 
     </div>
   </div>
@@ -27,9 +27,10 @@
         <td>
             <select class="form-select" aria-label="Default select example">
             <option selected>Ticket Type</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option>
+            @foreach ($ticket_type as $type)
+                <option value="{{ $type->id }}">{{ $type->ticket_type_name }}</option>
+            @endforeach
+
             </select>
         </td><td>
             <select class="form-select" aria-label="Default select example">
