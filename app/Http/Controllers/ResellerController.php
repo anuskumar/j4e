@@ -23,6 +23,7 @@ use App\Models\RestrictionModel;
 use App\Models\SellerPostalAddress;
 use App\Models\SplitTypeModel;
 use App\Models\TicketsGenerated;
+use App\Models\TicketStatus;
 use App\Models\TicketType;
 use App\Models\User;
 use App\Models\VenueModel;
@@ -1308,8 +1309,34 @@ class ResellerController extends Controller
             $data_all->where('event_tickets.created_by',Auth::user()->id);
         // }
 
+        // ✅ filters
+        if ($request->filled('ticket_status')) {
+            $data_all->where('event_tickets.ticket_status', $request->ticket_status);
+        }
+         if ($request->filled('ticket_type')) {
+            $data_all->where('event_tickets.ticket_type', $request->ticket_type);
+        }
+
+        if ($request->filled('start_date')) {
+            $data_all->whereDate('event_tickets.event_from_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $data_all->whereDate('event_tickets.event_to_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $data_all->where(function($q) use ($search) {
+                $q->where('event.event_name', 'like', "%{$search}%")
+                ->orWhere('venue.name', 'like', "%{$search}%")
+                ->orWhere('cities.name', 'like', "%{$search}%");
+            });
+        }
+
+
         $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
+       ->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
 
@@ -1319,11 +1346,12 @@ class ResellerController extends Controller
        }
 
         $ticket_type = TicketType::all();
+        $ticket_status = TicketStatus::all();
 
 
     //    dd($data);
 
-     return view('reseller.mylistings',compact('data','ticket_type'));
+     return view('reseller.mylistings',compact('data','ticket_type','ticket_status'));
     }
 
     public function reseller_manage_eventticket(Request $request,$id){

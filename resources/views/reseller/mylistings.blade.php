@@ -22,35 +22,35 @@
     </div>
   </div>
 </nav>
+<form method="GET" action="{{ route('reseller.mylistings') }}">
 <table class="table table-striped">
     <tr>
         <td>
-            <select class="form-select" aria-label="Default select example">
-            <option selected>Ticket Type</option>
+            <select class="form-select" name="ticket_type" aria-label="Default select example">
+            <option value="">Ticket Type</option>
             @foreach ($ticket_type as $type)
-                <option value="{{ $type->id }}">{{ $type->ticket_type_name }}</option>
+                <option value="{{ $type->id }}"  {{ request('ticket_type') ==  $type->id  ? 'selected' : '' }}>{{ $type->ticket_type_name }}</option>
             @endforeach
 
             </select>
         </td><td>
-            <select class="form-select" aria-label="Default select example">
-            <option selected>Ticket Status</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option>
+            <select class="form-select" name="ticket_status" aria-label="Default select example">
+            <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
+            <option value="0"  {{ request('ticket_status') == '0' ? 'selected' : '' }}>Not available</option>
+            <option value="1"  {{ request('ticket_status') == '1' ? 'selected' : '' }}>Available</option>
             </select>
         </td>
         <td>Event Start Date</td>
-        <td><input class="form-control" type="date"></td>
+        <td><input class="form-control" name="start_date" type="date"  value="{{ request('start_date') }}"></td>
         <td>Event End Date</td>
-        <td><input class="form-control" type="date"></td>
-        <td><input type="text" class="form-control" placeholder="Search"></td>
+        <td><input class="form-control" name="end_date" type="date"  value="{{ request('end_date') }}"></td>
+        <td><input type="text" class="form-control"value="{{ request('search') }}" name="search" placeholder="Search"></td>
         <td>
-            <button class="btn btn-primary" type="button">Search</button>
+            <button class="btn btn-primary" type="submit">Search</button>
         </td>
     </tr>
 </table>
-
+</form>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="file-datatable"
@@ -138,7 +138,7 @@
 
                         </table>
                         <div class="d-flex justify-content-center">
-                            {{-- {!! $data->links() !!} --}}
+                            {!! $data->links() !!}
                         </div>
                     </div>
                 </div>
