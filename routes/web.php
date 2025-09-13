@@ -151,7 +151,7 @@ Route::group(['prefix' => 'reseller'], function () {
     Route::post('store_ticket', [ResellerController::class, 'store_ticket']);
 
 
-    Route::get('event_listing', [ResellerController::class, 'eventlisting']);
+    Route::get('event_listing', [ResellerController::class, 'eventlisting'])->name('reseller.eventlisting');
     Route::get('event_data/{id}', [ResellerController::class, 'eventdata']);
     Route::get('event_list_withtag/{id}', [ResellerController::class, 'event_list_withtag']);
     Route::get('sell_tickets/{id}', [ResellerController::class, 'selltickets'])->name('reseller.selltickets');
@@ -440,6 +440,7 @@ Route::controller(FrontendController::class)->group(function () {
 
     Route::post('/filter-tickets', 'filterTickets');
     Route::get('/get-seating-types/{eventId}', 'getSeatingTypes');
+    Route::post('/customer-update-profile', 'update_customer_profile')->middleware('auth')->name('customer.profile.update');
 });
 
 // Route::controller(EmailController::class)->group(function(){
@@ -468,137 +469,137 @@ Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_fail
 
 
 
-Route::get('/index', function () {
-    return view('index');
-})->name('page');
-Route::get('/add-billing', function () {
-    return view('add-billing');
-})->name('add-billing');
-Route::get('/blank-page', function () {
-    return view('blank-page');
-})->name('blank-page');
-Route::get('/blog-details', function () {
-    return view('blog-details');
-})->name('blog-details');
-Route::get('/blog-grid', function () {
-    return view('blog-grid');
-})->name('blog-grid');
-Route::get('/blog-list', function () {
-    return view('blog-list');
-})->name('blog-list');
-Route::get('/booking-success', function () {
-    return view('booking-success');
-})->name('booking-success');
-Route::get('/booking', function () {
-    return view('booking');
-})->name('booking');
-Route::get('/calendar', function () {
-    return view('calendar');
-})->name('calendar');
-Route::get('/change-password', function () {
-    return view('change-password');
-})->name('change-password');
-Route::get('/chat', function () {
-    return view('chat');
-})->name('chat');
-Route::get('/checkout', function () {
-    return view('checkout');
-})->name('checkout');
-Route::get('/components', function () {
-    return view('components');
-})->name('components');
-Route::get('/favourites', function () {
-    return view('favourites');
-})->name('favourites');
-Route::get('/forgot-password', function () {
-    return view('forgot-password');
-})->name('forgot-password');
-Route::get('/invoice-view', function () {
-    return view('invoice-view');
-})->name('invoice-view');
-Route::get('/invoices', function () {
-    return view('invoices');
-})->name('invoices');
-Route::get('/login-old', function () {
-    return view('login');
-})->name('login');
-Route::get('/map-grid', function () {
-    return view('map-grid');
-})->name('map-grid');
-Route::get('/voice-call', function () {
-    return view('voice-call');
-})->name('voice-call');
-Route::get('/video-call', function () {
-    return view('video-call');
-})->name('video-call');
-Route::get('/term-condition', function () {
-    return view('term-condition');
-})->name('term-condition');
-Route::get('/social-media', function () {
-    return view('social-media');
-})->name('social-media');
-Route::get('/search', function () {
-    return view('search');
-})->name('search');
-Route::get('/schedule-timings', function () {
-    return view('schedule-timings');
-})->name('schedule-timings');
-Route::get('/reviews', function () {
-    return view('reviews');
-})->name('reviews');
-Route::get('/register-old', function () {
-    return view('register');
-})->name('register');
-Route::get('/profile-settings', function () {
-    return view('profile-settings');
-})->name('profile-settings');
-Route::get('/privacy-policy', function () {
-    return view('privacy-policy');
-})->name('privacy-policy');
-Route::get('/map-list', function () {
-    return view('map-list');
-})->name('map-list');
-Route::get('/add-programs', function () {
-    return view('add-programs');
-})->name('add-programs');
-Route::get('/chat-speaker', function () {
-    return view('chat-speaker');
-})->name('chat-speaker');
-Route::get('/customer-dashboard', function () {
-    return view('customer-dashboard');
-})->name('customer-dashboard');
-Route::get('/customer-profile', function () {
-    return view('customer-profile');
-})->name('customer-profile');
-Route::get('/edit-billing', function () {
-    return view('edit-billing');
-})->name('edit-billing');
-Route::get('/edit-programs', function () {
-    return view('edit-programs');
-})->name('edit-programs');
-Route::get('/event-details', function () {
-    return view('event-details');
-})->name('event-details');
-Route::get('/events', function () {
-    return view('events');
-})->name('events');
-Route::get('/my-customers', function () {
-    return view('my-customers');
-})->name('my-customers');
-Route::get('/speaker-change-password', function () {
-    return view('speaker-change-password');
-})->name('speaker-change-password');
-Route::get('/speaker-dashboard', function () {
-    return view('speaker-dashboard');
-})->name('speaker-dashboard');
-Route::get('/speaker-profile-settings', function () {
-    return view('speaker-profile-settings');
-})->name('speaker-profile-settings');
-Route::get('/speaker-profile', function () {
-    return view('speaker-profile');
-})->name('speaker-profile');
-Route::get('/speaker-register', function () {
-    return view('speaker-register');
-})->name('speaker-register');
+// Route::get('/index', function () {
+//     return view('index');
+// })->name('page');
+// Route::get('/add-billing', function () {
+//     return view('add-billing');
+// })->name('add-billing');
+// Route::get('/blank-page', function () {
+//     return view('blank-page');
+// })->name('blank-page');
+// Route::get('/blog-details', function () {
+//     return view('blog-details');
+// })->name('blog-details');
+// Route::get('/blog-grid', function () {
+//     return view('blog-grid');
+// })->name('blog-grid');
+// Route::get('/blog-list', function () {
+//     return view('blog-list');
+// })->name('blog-list');
+// Route::get('/booking-success', function () {
+//     return view('booking-success');
+// })->name('booking-success');
+// Route::get('/booking', function () {
+//     return view('booking');
+// })->name('booking');
+// Route::get('/calendar', function () {
+//     return view('calendar');
+// })->name('calendar');
+// Route::get('/change-password', function () {
+//     return view('change-password');
+// })->name('change-password');
+// Route::get('/chat', function () {
+//     return view('chat');
+// })->name('chat');
+// Route::get('/checkout', function () {
+//     return view('checkout');
+// })->name('checkout');
+// Route::get('/components', function () {
+//     return view('components');
+// })->name('components');
+// Route::get('/favourites', function () {
+//     return view('favourites');
+// })->name('favourites');
+// Route::get('/forgot-password', function () {
+//     return view('forgot-password');
+// })->name('forgot-password');
+// Route::get('/invoice-view', function () {
+//     return view('invoice-view');
+// })->name('invoice-view');
+// Route::get('/invoices', function () {
+//     return view('invoices');
+// })->name('invoices');
+// Route::get('/login-old', function () {
+//     return view('login');
+// })->name('login');
+// Route::get('/map-grid', function () {
+//     return view('map-grid');
+// })->name('map-grid');
+// Route::get('/voice-call', function () {
+//     return view('voice-call');
+// })->name('voice-call');
+// Route::get('/video-call', function () {
+//     return view('video-call');
+// })->name('video-call');
+// Route::get('/term-condition', function () {
+//     return view('term-condition');
+// })->name('term-condition');
+// Route::get('/social-media', function () {
+//     return view('social-media');
+// })->name('social-media');
+// Route::get('/search', function () {
+//     return view('search');
+// })->name('search');
+// Route::get('/schedule-timings', function () {
+//     return view('schedule-timings');
+// })->name('schedule-timings');
+// Route::get('/reviews', function () {
+//     return view('reviews');
+// })->name('reviews');
+// Route::get('/register-old', function () {
+//     return view('register');
+// })->name('register');
+// Route::get('/profile-settings', function () {
+//     return view('profile-settings');
+// })->name('profile-settings');
+// Route::get('/privacy-policy', function () {
+//     return view('privacy-policy');
+// })->name('privacy-policy');
+// Route::get('/map-list', function () {
+//     return view('map-list');
+// })->name('map-list');
+// Route::get('/add-programs', function () {
+//     return view('add-programs');
+// })->name('add-programs');
+// Route::get('/chat-speaker', function () {
+//     return view('chat-speaker');
+// })->name('chat-speaker');
+// Route::get('/customer-dashboard', function () {
+//     return view('customer-dashboard');
+// })->name('customer-dashboard');
+// Route::get('/customer-profile', function () {
+//     return view('customer-profile');
+// })->name('customer-profile');
+// Route::get('/edit-billing', function () {
+//     return view('edit-billing');
+// })->name('edit-billing');
+// Route::get('/edit-programs', function () {
+//     return view('edit-programs');
+// })->name('edit-programs');
+// Route::get('/event-details', function () {
+//     return view('event-details');
+// })->name('event-details');
+// Route::get('/events', function () {
+//     return view('events');
+// })->name('events');
+// Route::get('/my-customers', function () {
+//     return view('my-customers');
+// })->name('my-customers');
+// Route::get('/speaker-change-password', function () {
+//     return view('speaker-change-password');
+// })->name('speaker-change-password');
+// Route::get('/speaker-dashboard', function () {
+//     return view('speaker-dashboard');
+// })->name('speaker-dashboard');
+// Route::get('/speaker-profile-settings', function () {
+//     return view('speaker-profile-settings');
+// })->name('speaker-profile-settings');
+// Route::get('/speaker-profile', function () {
+//     return view('speaker-profile');
+// })->name('speaker-profile');
+// Route::get('/speaker-register', function () {
+//     return view('speaker-register');
+// })->name('speaker-register');
 
 Auth::routes();

@@ -183,6 +183,7 @@
                 @endphp
 
                 @foreach ($event_ticket_list as $dat)
+                    {{-- {{ $dat }} --}}
                     @php
                         $ticket_availability = App\Models\EventTiming::get_available_tickets($dat->id);
                     @endphp
@@ -213,7 +214,7 @@
 
                                 <!-- Right Section -->
                                 <div class="text-end">
-                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->web_price.' '.$dat->short_name }}</h5>
+                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->face_value.' '.$dat->short_name }}</h5>
                                     <h6>each</h6>
                                     @if($ticket_availability > 0)
                                         <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">

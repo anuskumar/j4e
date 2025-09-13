@@ -1,6 +1,12 @@
 <?php $page = 'Reseller/Profile'; ?>
-@extends('admin.layout.app')
-@section('admin_content')
+@extends(Auth::user()->user_type == "reseller" ? 'layouts.reseller_app' : 'admin.layout.app')
+@if(Auth::user()->user_type == "reseller")
+
+    @section('content')
+
+@else
+    @section('admin_content')
+@endif
     <!-- row -->
     <div class="row row-sm">
         <div class="col-lg-4">

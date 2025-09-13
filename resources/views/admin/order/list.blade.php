@@ -1,6 +1,13 @@
 <?php $page="order/list";?>
-@extends('admin.layout.app')
-@section('admin_content')
+@extends(Auth::user()->user_type == "reseller" ? 'layouts.reseller_app' : 'admin.layout.app')
+@if(Auth::user()->user_type == "reseller")
+
+    @section('content')
+
+@else
+    @section('admin_content')
+@endif
+
 
 	<!-- Row -->
     <div class="row row-sm">

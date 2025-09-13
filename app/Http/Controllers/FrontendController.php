@@ -70,7 +70,7 @@ class FrontendController extends Controller
         if (Auth::attempt($credentials)) {
 
             if(Auth::user()->user_type=="reseller"){
-                
+
 
                 $reseller = ResellerModel::where('user_id',Auth::user()->id)->first();
                 if($reseller->is_admin_approved==0){
@@ -81,7 +81,7 @@ class FrontendController extends Controller
                     ->withErrors('Not Approved By Admin');
 
             }else{
-                
+
 
                 return redirect()->intended('home')
                 ->withSuccess('Signed in');
@@ -90,7 +90,7 @@ class FrontendController extends Controller
 
 
             }else{
-                
+
 
                 return redirect()->intended('home')
                 ->withSuccess('Login to Admin Dashboard');
@@ -364,7 +364,7 @@ class FrontendController extends Controller
                                 ->select('*','event.id as id','venue.name as venue_name',
                                 'event.id as event_id','venue.image as venue_image')->first();
 
-
+            // $event_tickets = TicketsGenerated::where()
 
             $event_images = EventImages::where('event',$id)->get();
 
@@ -456,7 +456,7 @@ class FrontendController extends Controller
 
            }
 
-                    public function customer_profile_settings(){
+    public function customer_profile_settings(){
 
                  return view('customer.profile');
            }
@@ -497,4 +497,36 @@ public function upload_ticket(Request $request,$id){
         return redirect()->back()->with('error', 'No file uploaded.');
     }
 }
+
+public function update_customer_profile(Request $request){
+
+    // dd($request->all());
+
+    $profile = User::find(Auth::user()->id);
+
+    if($request->has('name')){
+        $profile->name = $request->name;
+    }
+    if($request->has('date_of_birth')){
+        $profile->date_or_birth = date('Y-m-d',strtotime($request->date_of_birth));
+    }
+    if($request->has('phone')){
+        $profile->phone = $request->phone;
+    }
+    if($request->has('address')){
+        $profile->address = $request->address;
+    }
+
+    if ($request->hasFile('profile')) {
+        $imageName = rand() . '.' . $request->profile->extension();
+
+        $request->profile->move(storage_path('uploads/images'), $imageName);
+
+        $profile->profile =  $imageName;
+    }
+    $profile->save();
+
+    return redirect()->back();
+}
+
 }

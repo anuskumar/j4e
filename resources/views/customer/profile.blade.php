@@ -32,7 +32,11 @@
 									<div class="pro-widget-content">
 										<div class="profile-info-widget">
 											<a href="#" class="booking-doc-img">
-												<img src="{{ asset('assets/img/customers/customer.jpg') }}" alt="User Image">
+                                                @if(@Auth::user()->profile)
+                                                <img src="{{asset('storage/uploads/images/'.@Auth::user()->profile) }}" alt="User Image">
+                                                @else
+                                                <img src="assets/img/customers/customer.jpg" alt="User Image">
+                                                @endif
 											</a>
 											<div class="profile-det-info">
 												<h3>{{ ucfirst(Auth::user()->name) }}</h3>
@@ -74,18 +78,24 @@
 								<div class="card-body">
 
 									<!-- Profile Settings Form -->
-									<form>
+									<form method="POST" action="{{ route('customer.profile.update') }}" enctype="multipart/form-data">
+                                        @csrf
 										<div class="row form-row">
 											<div class="col-12 col-md-12">
 												<div class="form-group">
 													<div class="change-avatar">
-														<div class="profile-img">
-															<img src="assets/img/customers/customer.jpg" alt="User Image">
+
+                                                        <div class="profile-img">
+                                                            @if(@Auth::user()->profile)
+															<img src="{{asset('storage/uploads/images/'.@Auth::user()->profile) }}" alt="User Image">
+                                                            @else
+                                                            <img src="assets/img/customers/customer.jpg" alt="User Image">
+                                                            @endif
 														</div>
 														<div class="upload-img">
 															<div class="change-photo-btn">
 																<span><i class="fa fa-upload"></i> Upload Photo</span>
-																<input type="file" class="upload">
+																<input type="file" class="upload" name="profile">
 															</div>
 															<small class="form-text text-muted">Allowed JPG, GIF or PNG. Max size of 2MB</small>
 														</div>
@@ -95,35 +105,35 @@
 											<div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Full Name</label>
-													<input type="text" class="form-control" value="{{ Auth::user()->name; }}">
+													<input type="text" name="name" class="form-control" value="{{ Auth::user()->name }}">
 												</div>
 											</div>
 
 											<div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Date of Birth</label>
-													<div class="cal-icon">
-														<input type="text" class="form-control datetimepicker" value="{{ Auth::user()->date_or_birth }}">
-													</div>
+
+														<input type="date" name="date_of_birth" class="form-control " value="{{ Auth::user()->date_or_birth }}">
+
 												</div>
 											</div>
 
 											<div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Email ID</label>
-													<input type="email" class="form-control" value="{{ Auth::user()->email }}">
+													<input type="email" readonly class="form-control" value="{{ Auth::user()->email }}">
 												</div>
 											</div>
 											<div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Mobile</label>
-													<input type="text" value="{{ Auth::user()->phone }}" class="form-control">
+													<input type="text" value="{{ Auth::user()->phone }}" name="phone" class="form-control">
 												</div>
 											</div>
 											<div class="col-12">
 												<div class="form-group">
 												<label>Address</label>
-													<input type="text" class="form-control" value="{{ Auth::user()->address }}">
+													<input type="text" class="form-control" name="address" value="{{ Auth::user()->address }}">
 												</div>
 											</div>
 
@@ -133,12 +143,12 @@
 													<input type="text" class="form-control" value="Newyork">
 												</div>
 											</div> --}}
-											<div class="col-12 col-md-6">
+											{{-- <div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Zip Code</label>
 													<input type="text" class="form-control" value="13420">
 												</div>
-											</div>
+											</div> --}}
 											{{-- <div class="col-12 col-md-6">
 												<div class="form-group">
 													<label>Country</label>

@@ -29,7 +29,8 @@ class StripePaymentController extends Controller
      */
     public function stripe()
     {
-        return view('stripe.stripe');
+        // return view('stripe.stripe');
+        return redirect()->route('home');
     }
 
     /**

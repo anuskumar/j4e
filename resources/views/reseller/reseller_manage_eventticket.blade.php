@@ -192,7 +192,7 @@ $val = $data[0];
         <div class="row">
             <div class="col-md-9"></div>
             <div class="col-md-3">
-                <button type="button" class="btn btn-primary">Back To Listing</button>
+                <a type="button" href="{{ route('reseller.mylistings') }}" class="btn btn-primary">Back To Listing</a>
             </div>
         </div>
 

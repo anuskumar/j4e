@@ -31,16 +31,16 @@
                         <a class="nav-link dropdown-toggle" href="#" id="sellDropdown" role="button"
                             data-bs-toggle="dropdown">Sell</a>
                         <ul class="dropdown-menu" aria-labelledby="sellDropdown">
-                            <li><a class="dropdown-item" href="#">Sell Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ url('tickets') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.eventlisting') }}">Sell Tickets</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.mylistings') }}">My Tickets</a></li>
+                            <li><a class="dropdown-item" href="{{ url('customer_order/list') }}">My Sales</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button"
                             data-bs-toggle="dropdown">My Tickets</a>
                         <ul class="dropdown-menu" aria-labelledby="ticketDropdown">
-                            <li><a class="dropdown-item" href="#">Orders</a></li>
+                            <li><a class="dropdown-item" href="{{ url('customer_order/list') }}">Orders</a></li>
                             <li><a class="dropdown-item" href="{{ route('reseller.mylistings') }}">My Tickets</a></li>
                             <li><a class="dropdown-item" href="#">My Sales</a></li>
                             <li><a class="dropdown-item" href="#">Payments</a></li>
@@ -52,8 +52,17 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="profileDropdown">
                             <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">My Profile</a></li>
-                            <li><a class="dropdown-item" href="#">Settings</a></li>
-                            <li><a class="dropdown-item" href="#">Log Out</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">Settings</a></li>
+                            {{-- <li><a class="dropdown-item" href="#">Log Out</a></li> --}}
+                              <a class="dropdown-item" href="{{ route('logout') }}"
+                                       onclick="event.preventDefault();
+                                                     document.getElementById('logout-form').submit();">
+                                        {{ __('Logout') }}
+                                    </a>
+
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
                         </ul>
                     </li>
                 </ul>
