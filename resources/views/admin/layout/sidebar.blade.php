@@ -231,7 +231,7 @@
                                 </li>
                                 <li class="sub-slide2">
                                     <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
-                                        <span class="sub-side-menu__label">city</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
+                                        <span class="sub-side-menu__label">City</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                     <ul class="sub-slide-menu1">
                                         <li><a class="sub-slide-item2" href="{{ url('city/create') }}">Create</a></li>
                                         <li><a class="sub-slide-item2" href="{{ url('city/list') }}">List</a></li>

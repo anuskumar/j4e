@@ -105,6 +105,7 @@ class HomeController extends Controller
        }
 
        else{
+        // dd('in reseller section');
         return redirect('reseller/event_listing');
         // // // return view('speaker-dashboard');
         // return view('admin.home.dashboard');

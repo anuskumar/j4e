@@ -83,7 +83,7 @@ img {
                 <div class="carousel-inner">
                     @foreach($slider as $index => $slide)
                         <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                            <img class="d-block w-100 banner_caro" src="{{ Storage::disk('image')->url('uploads/slide/'. $slide->slide_image) }}"  alt="Slide {{ $index + 1 }}">
+                            <img class="d-block w-100 banner_caro" src="{{ asset('storage/uploads/slide/'. $slide->slide_image) }}"  alt="Slide {{ $index + 1 }}">
                             <div class="carousel-caption d-none d-md-block text-left caption-banner" >
                                 <h1 class="text-white">{{ $slide->meta_description }}</h1>
                                 <button class="btn btn-primary" style="border-radius: 20px;">Book Now</button>
@@ -149,7 +149,7 @@ img {
 						<div class="col-12 col-sm-4 col-md-4  col-lg-3 ">
                             <div class="service-box">
 								<div class="service-img size" style="width: 400px;height:250px; object-fit: contain; display: block;">
-                                    	<img class="img-fluid" src="{{ Storage::disk('image')->url('uploads/event_tag_images/' . $val->tag_image) }}"
+                                    	<img class="img-fluid" src="{{  asset('storage/uploads/event_tag_images/' . $val->tag_image) }}"
                                      style="image-rendering: pixelated; object-fit: cover;
                                    ;" class="img-fluid">
 								</div>
