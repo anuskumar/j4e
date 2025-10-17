@@ -1354,6 +1354,72 @@ class ResellerController extends Controller
      return view('reseller.mylistings',compact('data','ticket_type','ticket_status'));
     }
 
+        public function mysales(Request $request){
+
+        // dd('helo');
+        $data_all = EventTickets::
+        leftjoin('event','event.id','event_tickets.event')->
+        leftjoin('event_type','event_type.id','event.event_type')
+        ->leftjoin('users','users.id','event.event_added_by')
+        ->leftjoin('venue','venue.id','event.venue')->
+        leftjoin('location','location.id','venue.location')
+        ->leftjoin('countries','countries.id','location.country')
+        ->leftjoin('cities','cities.id','location.city')
+        ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
+        ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
+        ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ;
+
+        // if(!Auth::user()->user_type=="superadmin"){
+
+            $data_all->where('event_tickets.created_by',Auth::user()->id);
+        // }
+
+        // ✅ filters
+        if ($request->filled('ticket_status')) {
+            $data_all->where('event_tickets.ticket_status', $request->ticket_status);
+        }
+         if ($request->filled('ticket_type')) {
+            $data_all->where('event_tickets.ticket_type', $request->ticket_type);
+        }
+
+        if ($request->filled('start_date')) {
+            $data_all->whereDate('event_tickets.event_from_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $data_all->whereDate('event_tickets.event_to_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $data_all->where(function($q) use ($search) {
+                $q->where('event.event_name', 'like', "%{$search}%")
+                ->orWhere('venue.name', 'like', "%{$search}%")
+                ->orWhere('cities.name', 'like', "%{$search}%");
+            });
+        }
+
+
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+       ->paginate(20)->appends(request()->all());
+
+       foreach($data as $val){
+
+        $val['waiting_for_approval'] = EventTickets::where('event_tickets.event',$val->id)->where('is_admin_approved',0)->count();
+        $val['my_tickets'] = EventTickets::where('event_tickets.event',$val->id)->where('created_by',Auth::user()->id)->count();
+
+       }
+
+        $ticket_type = TicketType::all();
+        $ticket_status = TicketStatus::all();
+
+
+    //    dd($data);
+
+     return view('reseller.mysales',compact('data','ticket_type','ticket_status'));
+    }
+
     public function reseller_manage_eventticket(Request $request,$id){
 
         $data_all = EventTickets::

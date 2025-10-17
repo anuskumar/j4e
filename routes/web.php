@@ -183,6 +183,7 @@ Route::group(['prefix' => 'reseller'], function () {
     Route::post('request-eventstore', [EventrequestController::class, 'requesteventstore'])->name('reseller.requesteventstore');
 
      Route::get('mylistings', [ResellerController::class, 'mylistings'])->name('reseller.mylistings');
+     Route::get('mysales', [ResellerController::class, 'mysales'])->name('reseller.mysales');
 
      Route::get('reseller-manage-eventticket/{id}', [ResellerController::class, 'reseller_manage_eventticket'])->name('reseller.manage.eventticket');
      Route::post('update-ticket-type', [ResellerController::class, 'update_ticket_type'])->name('update.ticket.type');

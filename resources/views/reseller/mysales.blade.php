@@ -23,8 +23,7 @@
   </div>
 </nav> --}}
 @include('reseller.listing_nav')
-
-<form method="GET" action="{{ route('reseller.mylistings') }}">
+<form method="GET" action="{{ route('reseller.mysales') }}">
 <table class="table table-striped">
     <tr>
         <td>
