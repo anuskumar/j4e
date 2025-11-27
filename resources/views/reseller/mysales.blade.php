@@ -34,20 +34,35 @@
             @endforeach
 
             </select>
-        </td><td>
+        </td>
+        <td>
             <select class="form-select" name="ticket_status" aria-label="Default select example">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
             <option value="0"  {{ request('ticket_status') == '0' ? 'selected' : '' }}>Not available</option>
             <option value="1"  {{ request('ticket_status') == '1' ? 'selected' : '' }}>Available</option>
             </select>
         </td>
+        <td>
+            <select class="form-select" name="sales_status" aria-label="Default select example">
+            <option value=""  {{ request('sales_status') == '' ? 'selected' : '' }}>Sales Status</option>
+            <option value="has_sales"  {{ request('sales_status') == 'has_sales' ? 'selected' : '' }}>Has Sales</option>
+            <option value="no_sales"  {{ request('sales_status') == 'no_sales' ? 'selected' : '' }}>No Sales</option>
+            </select>
+        </td>
         <td>Event Start Date</td>
         <td><input class="form-control" name="start_date" type="date"  value="{{ request('start_date') }}"></td>
         <td>Event End Date</td>
         <td><input class="form-control" name="end_date" type="date"  value="{{ request('end_date') }}"></td>
-        <td><input type="text" class="form-control"value="{{ request('search') }}" name="search" placeholder="Search"></td>
+    </tr>
+    <tr>
+        <td>Min Sales Count</td>
+        <td><input type="number" class="form-control" name="min_sales" min="0" value="{{ request('min_sales') }}" placeholder="Min"></td>
+        <td>Max Sales Count</td>
+        <td><input type="number" class="form-control" name="max_sales" min="0" value="{{ request('max_sales') }}" placeholder="Max"></td>
+        <td><input type="text" class="form-control" value="{{ request('search') }}" name="search" placeholder="Search"></td>
         <td>
             <button class="btn btn-primary" type="submit">Search</button>
+            <a href="{{ route('reseller.mysales') }}" class="btn btn-secondary">Reset</a>
         </td>
     </tr>
 </table>
@@ -65,6 +80,7 @@
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Available Delivery</th>
                                     <th class="border-bottom-0">Ticket</th>
+                                    <th class="border-bottom-0">Sales Count</th>
                                     <th class="border-bottom-0">Price</th>
                                     <th class="border-bottom-0">Action</th>
 
@@ -127,11 +143,16 @@
                                     <td>{{ $val['ticket_type_name'] }}</td>
                                     <td> {{ $val['no_of_tickets'] }}</td>
                                     <td>
+                                        <span class="badge text-bg-success">{{ $val['sales_count'] ?? 0 }} Sold</span>
+                                    </td>
+                                    <td>
                                         Ticket Amount : {{ $val['ticket_amount'].' '.$val['short_name'] }} <br>
                                         Face Value : {{ $val['face_value'].' '.$val['short_name'] }} <br>
                                     </td>
                                     <td>
-                                        <a href="{{ route('reseller.manage.eventticket',$val['id']) }}" class="btn btn-light btn-sm"> <b> > </b></a>
+                                        <a href="{{ route('reseller.view.soldtickets',$val['id']) }}" class="btn btn-info btn-sm" title="View Sold Tickets">
+                                            <i class="fa fa-eye"></i> View
+                                        </a>
                                     </td>
                                 </tr>
                                 @endforeach

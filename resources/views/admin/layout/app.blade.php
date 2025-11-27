@@ -85,11 +85,13 @@
                                 data-eva="close-outline"></i></a>
                     </div>
                     <div class="responsive-logo">
-                        <a href="index.html" class="header-logo"><img
+                        <a href="{{url('/home')}}" class="header-logo"><img
                                 src="{{ asset('admin_assets/img/brand/logo.png') }}" class="logo-11"></a>
-                        <a href="index.html" class="header-logo"><img
-                                src="{{ config('app.storage') . '/uploads/images/' . $system->company_logo }}"
-                                alt="logo"></a>
+                        @if($system && $system->company_logo)
+                            <a href="{{url('/home')}}" class="header-logo"><img
+                                    src="{{ asset('storage/app/uploads/images/' . $system->company_logo) }}"
+                                    alt="logo" style="max-height: 40px; width: auto;"></a>
+                        @endif
 
                     </div>
                     <ul class="header-megamenu-dropdown  nav">

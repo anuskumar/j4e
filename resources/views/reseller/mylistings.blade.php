@@ -132,7 +132,9 @@
                                         Face Value : {{ $val['face_value'].' '.$val['short_name'] }} <br>
                                     </td>
                                     <td>
-                                        <a href="{{ route('reseller.manage.eventticket',$val['id']) }}" class="btn btn-light btn-sm"> <b> > </b></a>
+                                        <a href="{{ route('reseller.view.soldtickets',$val['id']) }}" class="btn btn-info btn-sm" title="View Sold Tickets">
+                                            <i class="fa fa-eye"></i> View
+                                        </a>
                                     </td>
                                 </tr>
                                 @endforeach

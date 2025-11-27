@@ -1384,11 +1384,11 @@ class ResellerController extends Controller
         }
 
         if ($request->filled('start_date')) {
-            $data_all->whereDate('event_tickets.event_from_date', '>=', $request->start_date);
+            $data_all->whereDate('event_timings.event_date', '>=', $request->start_date);
         }
 
         if ($request->filled('end_date')) {
-            $data_all->whereDate('event_tickets.event_to_date', '<=', $request->end_date);
+            $data_all->whereDate('event_timings.event_date', '<=', $request->end_date);
         }
 
         if ($request->filled('search')) {
@@ -1400,14 +1400,66 @@ class ResellerController extends Controller
             });
         }
 
+        // Apply sales count filters using whereIn with subquery
+        if ($request->filled('sales_status')) {
+            $salesStatus = $request->sales_status;
+            if ($salesStatus == 'has_sales') {
+                $data_all->whereIn('event_tickets.id', function($query) {
+                    $query->select('event_tickets')
+                        ->from('event_ticket_tickets')
+                        ->where('is_sold', 1)
+                        ->whereNull('deleted_at')
+                        ->groupBy('event_tickets')
+                        ->havingRaw('COUNT(*) > 0');
+                });
+            } elseif ($salesStatus == 'no_sales') {
+                $data_all->whereNotIn('event_tickets.id', function($query) {
+                    $query->select('event_tickets')
+                        ->from('event_ticket_tickets')
+                        ->where('is_sold', 1)
+                        ->whereNull('deleted_at');
+                });
+            }
+        }
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->paginate(20)->appends(request()->all());
+        if ($request->filled('min_sales')) {
+            $minSales = (int)$request->min_sales;
+            $data_all->whereIn('event_tickets.id', function($query) use ($minSales) {
+                $query->select('event_tickets')
+                    ->from('event_ticket_tickets')
+                    ->where('is_sold', 1)
+                    ->whereNull('deleted_at')
+                    ->groupBy('event_tickets')
+                    ->havingRaw('COUNT(*) >= ?', [$minSales]);
+            });
+        }
+
+        if ($request->filled('max_sales')) {
+            $maxSales = (int)$request->max_sales;
+            $data_all->whereIn('event_tickets.id', function($query) use ($maxSales) {
+                $query->select('event_tickets')
+                    ->from('event_ticket_tickets')
+                    ->where('is_sold', 1)
+                    ->whereNull('deleted_at')
+                    ->groupBy('event_tickets')
+                    ->havingRaw('COUNT(*) <= ?', [$maxSales]);
+            });
+        }
+
+        // Add sales count as subquery for display
+        $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+            ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL) as sales_count');
+
+        $data = $data_all->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
 
         $val['waiting_for_approval'] = EventTickets::where('event_tickets.event',$val->id)->where('is_admin_approved',0)->count();
         $val['my_tickets'] = EventTickets::where('event_tickets.event',$val->id)->where('created_by',Auth::user()->id)->count();
+        // Sales count is already calculated in the query, but we'll keep this as fallback
+        if (!isset($val['sales_count']) || $val['sales_count'] === null) {
+            $val['sales_count'] = TicketsGenerated::where('event_tickets', $val->id)->where('is_sold', 1)->count();
+        }
 
        }
 
@@ -1459,6 +1511,50 @@ class ResellerController extends Controller
         }
 
 
+    }
+
+    public function view_sold_tickets(Request $request, $id){
+        
+        // Verify the ticket belongs to the authenticated reseller
+        $eventTicket = EventTickets::find($id);
+        if(!$eventTicket || $eventTicket->created_by != Auth::user()->id){
+            return back()->with('error', 'Unauthorized access or ticket not found');
+        }
+
+        // Get main ticket information
+        $mainTicket = EventTickets::
+        leftjoin('event','event.id','event_tickets.event')->
+        leftjoin('event_type','event_type.id','event.event_type')
+        ->leftjoin('users','users.id','event.event_added_by')
+        ->leftjoin('venue','venue.id','event.venue')->
+        leftjoin('location','location.id','venue.location')
+        ->leftjoin('countries','countries.id','location.country')
+        ->leftjoin('cities','cities.id','location.city')
+        ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
+        ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
+        ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
+        ->where('event_tickets.id', $id)
+        ->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        ->first();
+
+        // Get all sold tickets from event_ticket_tickets for this main ticket
+        $soldTickets = TicketsGenerated::where('event_tickets', $id)
+            ->where('is_sold', 1)
+            ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
+            ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')
+            ->select(
+                'event_ticket_tickets.*',
+                'event_ticket_tickets.id as ticket_id',
+                'venue_seating.seating_type_name',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time'
+            )
+            ->orderBy('event_ticket_tickets.created_at', 'desc')
+            ->get();
+
+        return view('reseller.view_sold_tickets', compact('mainTicket', 'soldTickets'));
     }
 
     public function update_ticket_type(Request $request){
