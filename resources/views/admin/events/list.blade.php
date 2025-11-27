@@ -43,11 +43,10 @@
                                     <td>{{ $val->venue_name }}</td>
                                     {{-- <td>{{ $val->name }}</td> --}}
                                     <td>
-                                        @if($val->event_image)
-                                            <img src="{{ asset('storage/app/uploads/events/' . $val->event_image) }}" alt="Event Image" style="max-width: 100px; max-height: 100px; object-fit: cover;" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23ddd\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\'%3ENo Image%3C/text%3E%3C/svg%3E';">
-                                        @else
-                                            <span class="text-muted">No Image</span>
-                                        @endif
+                                        {{-- {{ $val->image }} --}}
+                                        <img src="{{ config('app.storage') ."uploads/events/". $val->event_image }}"  alt="img">
+
+                                        {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}"> --}}
                                     </td>
                                     <td>
                                         <a href="{{url('events/event_timings',$val->id)}}"><button type="button" class="btn btn-primary">Manage</button></a>

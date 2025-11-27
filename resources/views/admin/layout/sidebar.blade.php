@@ -7,21 +7,11 @@
 				<aside class="app-sidebar sidebar-scroll">
 					<div class="main-sidebar-header active">
 						<a class="desktop-logo logo-light active" href="{{url('/home')}}">
-                            @if($system && $system->company_logo)
-                                <img src="{{ asset('storage/app/uploads/images/' . $system->company_logo) }}" alt="logo" style="max-height: 50px; width: auto;">
-                            @else
-                                <img src="{{ asset('admin_assets/img/brand/logo.png') }}" class="main-logo" alt="logo">
-                            @endif
+                            <img src="{{ config('app.storage') . '/uploads/images/' . $system->company_logo }}"  alt="logo">
                           <!--<h2>  {{ $system->company_name }} </h2>-->
                         </a>
 						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/logo-white.png') }}" class="main-logo" alt="logo"></a>
-						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}">
-                            @if($system && $system->company_logo)
-                                <img src="{{ asset('storage/app/uploads/images/' . $system->company_logo) }}" alt="logo" style="max-height: 40px; width: auto;">
-                            @else
-                                <img src="{{ asset('admin_assets/img/brand/favicon.png') }}" alt="logo">
-                            @endif
-                        </a>
+						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}"><img src="{{ config('app.storage') . '/uploads/images/1689154585.png'}}"" alt="logo"></a>
 						<a class="logo-icon mobile-logo icon-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/favicon-white.png') }}" alt="logo"></a>
 					</div>
 					<div class="main-sidemenu">
