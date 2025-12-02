@@ -274,9 +274,11 @@
                                                     </td>
                                                     <td>
                                                         <div class="d-flex align-items-center">
-                                                            <img src="{{ Storage::disk('image')->url('uploads/images/' . $val->profile) }}"
-                                                                alt="" style="width: 45px; height: 45px"
-                                                                class="rounded-circle" />
+                                                            @if($val->profile)
+                                                                <img src="{{ asset('storage/uploads/images/' . $val->profile) }}" alt="" style="width: 45px; height: 45px" class="rounded-circle" onerror="this.src='{{ asset('assets/img/speakers/speaker-thumb-02.jpg') }}'">
+                                                            @else
+                                                                <img src="{{ asset('assets/img/speakers/speaker-thumb-02.jpg') }}" alt="" style="width: 45px; height: 45px" class="rounded-circle">
+                                                            @endif
                                                             <div class="ms-3">
                                                                 <p class="fw-bold mb-1">{{ Str::ucfirst($val->user_name) }}
                                                                 </p>

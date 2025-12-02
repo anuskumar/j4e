@@ -5,7 +5,11 @@
 {{-- <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel" style="padding-left: 0px 900px">
     <div class="carousel-inner">
         <div class="carousel-item active d-block" style="background-color: #022F5C">
-            <img src="{{ Storage::disk('image')->url('uploads/events/' . @$event_datas->event_image) }}" class="d-block w-100" alt="Your Image Description">
+            @if(@$event_datas->event_image)
+                <img src="{{ asset('storage/uploads/events/' . $event_datas->event_image) }}" class="d-block w-100" alt="Your Image Description" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+            @else
+                <img src="{{ asset('assets/img/default-event.jpg') }}" class="d-block w-100" alt="Your Image Description">
+            @endif
         </div>
     </div>
 </div> --}}

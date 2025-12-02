@@ -47,7 +47,7 @@ img {
 
         <div class="menu-header">
             <a href="index">
-                <img src="assets/img/logoscroll.png" class="img-fluid" alt="Logo">
+                <img src="{{ asset('assets/img/logoscroll.png') }}" class="img-fluid" alt="Logo">
             </a>
             <a id="menu_close" class="menu-close" href="javascript:void(0);">
                 <i class="fas fa-times"></i>
@@ -200,7 +200,7 @@ img {
                         {{-- <div class="col-md-6 col-lg-3 col-sm-12">
                             <div class="service-box">
 								<div class="service-img">
-									<img src="assets/img/img-08.jpg" alt="" class="img-fluid">
+									<img src="{{ asset('assets/img/img-08.jpg') }}" alt="" class="img-fluid">
 								</div>
 								<div class="overlay-content">
 									<div class="rating">
@@ -260,7 +260,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-01.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-01.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -276,7 +276,7 @@ img {
 										<p class="add-cont">308 Stoney Road, Florida</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-01.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-01.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">ms. Annie</span>
@@ -286,7 +286,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="#">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -295,7 +295,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -319,7 +319,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-02.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-02.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -335,7 +335,7 @@ img {
 										<p class="add-cont">1265 Twin Drive, Michigan</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-02.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-02.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">ms. Caia Earle</span>
@@ -345,7 +345,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="#">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -354,7 +354,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -378,7 +378,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-03.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-03.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -394,7 +394,7 @@ img {
 										<p class="add-cont">4960 Pot Road, New Jersey</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-03.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-03.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">ms. Tilli Devlin</span>
@@ -404,7 +404,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -413,7 +413,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -437,7 +437,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-04.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-04.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -453,7 +453,7 @@ img {
 										<p class="add-cont">2101 Raver Drive, Tennessee</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-04.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-04.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">mr. Adar Li</span>
@@ -463,7 +463,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -472,7 +472,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -496,7 +496,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-05.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-05.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -512,7 +512,7 @@ img {
 										<p class="add-cont">4482 Alpaca Way, Alaska</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-05.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-05.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">mr. Fuad Lyles</span>
@@ -522,7 +522,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -531,7 +531,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -555,7 +555,7 @@ img {
 								<div class="profile-widget">
 									<div class="doc-img">
 										<a href="event-details">
-											<img class="img-fluid" alt="User Image" src="assets/img/events/event-06.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/events/event-06.jpg') }}">
 										</a>
 									</div>
 									<div class="pro-content">
@@ -571,7 +571,7 @@ img {
 										<p class="add-cont">3849 Smith Road, Georgia</p>
 										<div class="profile-info d-flex">
 											<a href="speaker-profile" class="profile-img">
-												<img src="assets/img/profile/profile-06.jpg" alt="">
+												<img src="{{ asset('assets/img/profile/profile-06.jpg') }}" alt="">
 											</a>
 											<a href="speaker-profile">
 												<span class="profile-name">ms. Ansleigh</span>
@@ -581,7 +581,7 @@ img {
 										<div class="row row-sm seat-details">
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-04.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-04.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Available Seats</span>
 														<span class="price-info">210/265</span>
@@ -590,7 +590,7 @@ img {
 											</div>
 											<div class="col-6">
 												<div class="d-flex align-items-center">
-													<a href="javascript:void(0);"><img src="assets/img/icon-05.png" alt=""></a>
+													<a href="javascript:void(0);"><img src="{{ asset('assets/img/icon-05.png') }}" alt=""></a>
 													<a href="javascript:void(0);">
 														<span class="available-info">Timings</span>
 														<span class="price-info">12:30 - 02:00 PM</span>
@@ -638,7 +638,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak01.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak01.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -662,7 +662,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak02.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak02.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -686,7 +686,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak03.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak03.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -710,7 +710,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak04.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak04.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -734,7 +734,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak05.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak05.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -758,7 +758,7 @@ img {
 								<div class="single-team">
 									<div class="team-img">
 										<a href="speaker-profile">
-											<img class="img-fluid" alt="User Image" src="assets/img/speakers/speak06.jpg">
+											<img class="img-fluid" alt="User Image" src="{{ asset('assets/img/speakers/speak06.jpg') }}">
 										</a>
 									</div>
 									<div class="team-content">
@@ -802,7 +802,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-01.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-01.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Shonda Williams</h4>
@@ -825,7 +825,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-02.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-02.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Grant Mason</h4>
@@ -848,7 +848,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-03.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-03.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Marion Scott</h4>
@@ -871,7 +871,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-04.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-04.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Leonard Bender</h4>
@@ -894,7 +894,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-05.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-05.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Cheryl Bostick</h4>
@@ -917,7 +917,7 @@ img {
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="assets/img/testimonial/avatar-06.jpg" alt="">
+									<img src="{{ asset('assets/img/testimonial/avatar-06.jpg') }}" alt="">
 								</div>
 								<div class="client-details">
 									<h4 class="name">Martin Belvin</h4>
@@ -964,7 +964,7 @@ img {
 							<!-- Blog Post -->
 							<div class="content-wrapper">
 								<div class="blog-image">
-									<a href="blog-details"><img class="img-fluid" src="assets/img/blog/blog-01.jpg" alt="Post Image"></a>
+									<a href="blog-details"><img class="img-fluid" src="{{ asset('assets/img/blog/blog-01.jpg') }}" alt="Post Image"></a>
 								</div>
 								<div class="blog-content">
 									<a href="javascript:void(0);" class="post-date"> <span> Posted on 25-01-2021 </span></a>
@@ -983,7 +983,7 @@ img {
 							<!-- Blog Post -->
 							<div class="content-wrapper">
 								<div class="blog-image">
-									<a href="blog-details"><img class="img-fluid" src="assets/img/blog/blog-02.jpg" alt="Post Image"></a>
+									<a href="blog-details"><img class="img-fluid" src="{{ asset('assets/img/blog/blog-02.jpg') }}" alt="Post Image"></a>
 								</div>
 								<div class="blog-content">
 									<a href="javascript:void(0);" class="post-date"> <span> Posted on 25-01-2021 </span></a>
@@ -1002,7 +1002,7 @@ img {
 							<!-- Blog Post -->
 							<div class="content-wrapper">
 								<div class="blog-image">
-									<a href="blog-details"><img class="img-fluid" src="assets/img/blog/blog-03.jpg" alt="Post Image"></a>
+									<a href="blog-details"><img class="img-fluid" src="{{ asset('assets/img/blog/blog-03.jpg') }}" alt="Post Image"></a>
 								</div>
 								<div class="blog-content">
 									<a href="javascript:void(0);" class="post-date"> <span> Posted on 25-01-2021 </span></a>

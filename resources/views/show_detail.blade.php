@@ -31,14 +31,19 @@
 							<div class="speaker-widget">
 								<div class="doc-info-left">
 									<div class="speaker-img">
-										<img src="{{ Storage::disk('image')->url('uploads/events/' . @$event_datas->event_image) }}" class="img-fluid" alt="User Image">
+										@if(@$event_datas->event_image)
+                                            <img src="{{ asset('storage/uploads/events/' . $event_datas->event_image) }}" class="img-fluid" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                        @else
+                                            <img src="{{ asset('assets/img/default-event.jpg') }}" class="img-fluid" alt="User Image">
+                                        @endif
 									</div>
 									<div class="doc-info-cont">
 										<h4 class="doc-name">{{ Str::ucfirst(@$event_datas->event_name) }}</h4>
 
 										<p class="doc-speciality">{{ @$event_datas->event_desc }}</p>
 										<p class="doc-department">
-                                            <img src="{{ Storage::disk('image')->url('uploads/event_tag_images/' . @$event_datas->tag_image) }}"
+                                            @if(@$event_datas->tag_image)
+                                                <img src="{{ asset('storage/uploads/event_tag_images/' . $event_datas->tag_image) }}"
                                              class="img-fluid" alt="Speciality">{{ @$event_datas->tag_name }}</p>
 										<div class="rating">
 											<i class="fas fa-star filled"></i>
@@ -55,8 +60,11 @@
                                                 @foreach ($event_images as $img)
 
                                                 <li>
-													<a href="{{ Storage::disk('image')->url('uploads/events/' . $img->image) }}" data-fancybox="gallery">
-														<img src="{{ Storage::disk('image')->url('uploads/events/' . $img->image) }}" alt="Feature">
+													@if($img->image)
+                                                        <a href="{{ asset('storage/uploads/events/' . $img->image) }}" data-fancybox="gallery">
+														    <img src="{{ asset('storage/uploads/events/' . $img->image) }}" alt="Feature" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                        </a>
+                                                    @endif
 													</a>
 												</li>
 
@@ -239,8 +247,11 @@
     									<!--		</div>-->
     									<div class="row">
                                       <div class=" col-sm-8 col-md-8 col-lg-12 col-xl-12">
-                                            <a href="{{ Storage::disk('image')->url('uploads/venue/' . @$event_datas->venue_image) }}" data-fancybox="gallery2">
-                                                <img src="{{ Storage::disk('image')->url('uploads/venue/' . @$event_datas->venue_image) }}" alt="Feature Image" class="img-fluid">
+                                            @if(@$event_datas->venue_image)
+                                                <a href="{{ asset('storage/uploads/venue/' . $event_datas->venue_image) }}" data-fancybox="gallery2">
+                                                    <img src="{{ asset('storage/uploads/venue/' . $event_datas->venue_image) }}" alt="Feature Image" class="img-fluid" onerror="this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                                                </a>
+                                            @endif
                                             </a>
                                         </div>
                                         </div>

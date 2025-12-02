@@ -181,8 +181,13 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="custom-controls-stacked">
-                                                  <a href="{{ Storage::disk('image')->url('uploads/ticket_proof/proof_of_id/' . $data->proof_of_id) }}" target="_blank" >  <img  width="100" src="{{ Storage::disk('image')->url('uploads/ticket_proof/proof_of_id/' . $data->proof_of_id) }}">
-                                                  </a>  </div>
+                                                  @if($data->proof_of_id)
+                                                      <a href="{{ asset('storage/uploads/ticket_proof/proof_of_id/' . $data->proof_of_id) }}" target="_blank">
+                                                          <img width="100" src="{{ asset('storage/uploads/ticket_proof/proof_of_id/' . $data->proof_of_id) }}" onerror="this.src='{{ asset('assets/img/default-document.jpg') }}'">
+                                                      </a>
+                                                  @else
+                                                      <span class="text-muted">No document</span>
+                                                  @endif  </div>
                                             </div>
                                         </div>
                                     </div>
@@ -194,9 +199,13 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="custom-controls-stacked">
-                                                 <a href="{{ Storage::disk('image')->url('uploads/ticket_proof/proof_of_purchase/' . $data->proof_of_purchase) }}" target="_blank">   <img  width="100" src="
-                                                    {{ Storage::disk('image')->url('uploads/ticket_proof/proof_of_purchase/' . $data->proof_of_purchase) }}">
-                                                 </a> </div>
+                                                 @if($data->proof_of_purchase)
+                                                     <a href="{{ asset('storage/uploads/ticket_proof/proof_of_purchase/' . $data->proof_of_purchase) }}" target="_blank">
+                                                         <img width="100" src="{{ asset('storage/uploads/ticket_proof/proof_of_purchase/' . $data->proof_of_purchase) }}" onerror="this.src='{{ asset('assets/img/default-document.jpg') }}'">
+                                                     </a>
+                                                 @else
+                                                     <span class="text-muted">No document</span>
+                                                 @endif </div>
                                             </div>
                                         </div>
                                     </div>

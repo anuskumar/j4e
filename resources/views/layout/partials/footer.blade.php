@@ -14,7 +14,11 @@
 								<div class="footer-widget footer-about">
 									{{-- <h2 class="footer-title">About Us</h2> --}}
                                     <a class="navbar-brand mt-4" href="{{ url('/') }}">
-                                        <img src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo) }}" class="" width="265px;" height="65px;" alt="Logo">
+                                        @if($settings && $settings->company_logo)
+                                            <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="265px;" height="65px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
+                                        @else
+                                            <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="265px;" height="65px;" alt="Logo">
+                                        @endif
                                     </a>
 									<div class="footer-about-content">
 										<p>Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</p>

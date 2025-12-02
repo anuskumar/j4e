@@ -43,7 +43,11 @@
                                             <td>
                                                 <h5 class="table-avatar">
                                                     <a href="{{ url('show_details_show',@$val->event_id) }}" class="avatar avatar-sm mr-2">
-                                                        <img class="avatar-img rounded-circle"  src="{{ Storage::disk('image')->url('uploads/events/' . @$val->event_image) }}" alt="User Image">
+                                                        @if(@$val->event_image)
+                                                            <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                        @else
+                                                            <img class="avatar-img rounded-circle" src="{{ asset('assets/img/default-event.jpg') }}" alt="User Image">
+                                                        @endif
                                                     </a>
                                                     <a href="{{ url('show_details_show',@$val->event_id) }}">{{ @$val->event_name }} <span>{{ @$val->tag_name }}, {{ @$val->event_type_name }}</span></a>
                                                 </h5>

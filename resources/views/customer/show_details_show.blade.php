@@ -75,7 +75,11 @@
             <div class="card ">
                 <div class="row align-items-center" style="padding: 10px; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3); ">
                     <div class="col-md-3">
-                        <img src="{{ Storage::disk('image')->url('uploads/events/' . @$event_datas->event_image) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
+                        @if(@$event_datas->event_image)
+                            <img src="{{ asset('storage/uploads/events/' . $event_datas->event_image) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                        @else
+                            <img src="{{ asset('assets/img/default-event.jpg') }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
+                        @endif
                     </div>
                     <div class="col-md-9">
                         <h4 class="doc-name">{{ Str::ucfirst(@$event_datas->event_name) }}</h4>
@@ -135,7 +139,11 @@
             </div>
             <div class="card mt-3 shadow-sm">
                 <div class="image-container">
-                    <img src="{{ Storage::disk('image')->url('uploads/venue/' . @$event_datas->venue_image) }}" alt="Demo Image" class="zoomable-image">
+                    @if(@$event_datas->venue_image)
+                        <img src="{{ asset('storage/uploads/venue/' . $event_datas->venue_image) }}" alt="Venue Image" class="zoomable-image" onerror="this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                    @else
+                        <img src="{{ asset('assets/img/default-venue.jpg') }}" alt="Venue Image" class="zoomable-image">
+                    @endif
                     <div class="zoom-controls">
                         <button id="zoom-in" class="zoom-btn">+</button>
                         <button id="zoom-out" class="zoom-btn">-</button>

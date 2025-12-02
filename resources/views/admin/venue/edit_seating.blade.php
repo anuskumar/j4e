@@ -106,7 +106,11 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="custom-controls-stacked">
-                                                    <img alt="" src="{{ Storage::disk('image')->url('uploads/venue_seating/' . $data->seating_image) }}">
+                                                    @if($data->seating_image)
+                                                        <img alt="" src="{{ asset('storage/uploads/venue_seating/' . $data->seating_image) }}" onerror="this.src='{{ asset('assets/img/default-seating.jpg') }}'">
+                                                    @else
+                                                        <img alt="" src="{{ asset('assets/img/default-seating.jpg') }}">
+                                                    @endif
                                                     <br><br>
                                                     <input type="file" name="seating_image" class="form-control" ><br><br>
 

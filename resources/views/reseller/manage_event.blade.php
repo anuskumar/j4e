@@ -89,7 +89,11 @@
                                                                             <a href="customer-profile"
                                                                                 class="avatar avatar-sm mr-2">
                                                                                 <img class="avatar-img rounded-circle"
-                                                                                    src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}"
+                                                                                    @if($val->event_image)
+                                                                                        src="{{ asset('storage/uploads/events/' . $val->event_image) }}"
+                                                                                    @else
+                                                                                        src="{{ asset('assets/img/default-event.jpg') }}"
+                                                                                    @endif
                                                                                    ></a>
                                                                             <a
                                                                                 href="customer-profile">{{ $val->event_name }}<span></span></a>
@@ -171,7 +175,11 @@
                                                                             <a href="customer-profile"
                                                                                 class="avatar avatar-sm mr-2">
                                                                                 <img class="avatar-img rounded-circle"
-                                                                                    src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}"
+                                                                                    @if($val->event_image)
+                                                                                        src="{{ asset('storage/uploads/events/' . $val->event_image) }}"
+                                                                                    @else
+                                                                                        src="{{ asset('assets/img/default-event.jpg') }}"
+                                                                                    @endif
                                                                                    ></a>
                                                                             <a
                                                                                 href="customer-profile">{{ $val->event_name }}<span></span></a>

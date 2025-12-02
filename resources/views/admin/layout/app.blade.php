@@ -87,9 +87,13 @@
                     <div class="responsive-logo">
                         <a href="index.html" class="header-logo"><img
                                 src="{{ asset('admin_assets/img/brand/logo.png') }}" class="logo-11"></a>
-                        <a href="index.html" class="header-logo"><img
-                                src="{{ config('app.storage') . '/uploads/images/' . $system->company_logo }}"
-                                alt="logo"></a>
+                        <a href="index.html" class="header-logo">
+                            @if($system && $system->company_logo)
+                                <img src="{{ asset('storage/uploads/images/' . $system->company_logo) }}" alt="logo" onerror="this.src='{{ asset('admin_assets/img/brand/logo.png') }}'">
+                            @else
+                                <img src="{{ asset('admin_assets/img/brand/logo.png') }}" alt="logo">
+                            @endif
+                        </a>
 
                     </div>
                     <ul class="header-megamenu-dropdown  nav">
@@ -207,7 +211,7 @@
 											</div>
 											<div class="main-message-list chat-scroll">
 												<a href="mail.html" class="p-3 d-flex border-bottom">
-													<div class="drop-img  cover-image  " data-bs-image-src="admin_assets/img/faces/3.jpg">
+													<div class="drop-img  cover-image  " data-bs-image-src="{{ asset('admin_assets/img/faces/3.jpg') }}">
 														<span class="avatar-status bg-teal"></span>
 													</div>
 
@@ -220,7 +224,7 @@
 													</div>
 												</a>
 												<a href="mail.html" class="p-3 d-flex border-bottom">
-													<div class="drop-img cover-image" data-bs-image-src="admin_assets/img/faces/2.jpg">
+													<div class="drop-img cover-image" data-bs-image-src="{{ asset('admin_assets/img/faces/2.jpg') }}">
 														<span class="avatar-status bg-teal"></span>
 													</div>
 													<div class="wd-90p">
@@ -232,7 +236,7 @@
 													</div>
 												</a>
 												<a href="mail.html" class="p-3 d-flex border-bottom">
-													<div class="drop-img cover-image" data-bs-image-src="admin_assets/img/faces/9.jpg">
+													<div class="drop-img cover-image" data-bs-image-src="{{ asset('admin_assets/img/faces/9.jpg') }}">
 														<span class="avatar-status bg-teal"></span>
 													</div>
 													<div class="wd-90p">
@@ -244,7 +248,7 @@
 													</div>
 												</a>
 												<a href="mail.html" class="p-3 d-flex border-bottom">
-													<div class="drop-img cover-image" data-bs-image-src="admin_assets/img/faces/12.jpg">
+													<div class="drop-img cover-image" data-bs-image-src="{{ asset('admin_assets/img/faces/12.jpg') }}">
 														<span class="avatar-status bg-danger"></span>
 													</div>
 													<div class="wd-90p">
@@ -256,7 +260,7 @@
 													</div>
 												</a>
 												<a href="mail.html" class="p-3 d-flex border-bottom">
-													<div class="drop-img cover-image" data-bs-image-src="admin_assets/img/faces/5.jpg">
+													<div class="drop-img cover-image" data-bs-image-src="{{ asset('admin_assets/img/faces/5.jpg') }}">
 														<span class="avatar-status bg-teal"></span>
 													</div>
 													<div class="wd-90p">

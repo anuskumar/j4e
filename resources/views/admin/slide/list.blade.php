@@ -31,7 +31,11 @@
 
                                     <td>
                                         {{-- {{ $val->image }} --}}
-                                        <img alt="" width="100" height="100" src="{{ Storage::disk('image')->url('uploads/slide/'. $val->slide_image) }}">
+                                        @if($val->slide_image)
+                                            <img alt="" width="100" height="100" src="{{ asset('storage/uploads/slide/' . $val->slide_image) }}" onerror="this.src='{{ asset('assets/img/default-slide.jpg') }}'">
+                                        @else
+                                            <img alt="" width="100" height="100" src="{{ asset('assets/img/default-slide.jpg') }}">
+                                        @endif
                                         {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo) }}"> --}}
                                     </td>
                                     <td>{{ $val->meta_description }}</td>

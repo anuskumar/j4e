@@ -30,7 +30,11 @@
 									<div class="row">
 										<div class="col-md-6">
 											<div class="invoice-logo">
-												<img src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo) }}" alt="logo">
+												@if($settings && $settings->company_logo)
+                                                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" alt="logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
+                                                @else
+                                                    <img src="{{ asset('assets/img/logoscroll.png') }}" alt="logo">
+                                                @endif
 											</div>
 										</div>
 										<div class="col-md-6">

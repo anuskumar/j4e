@@ -41,7 +41,11 @@
                                     <td>{{ $val->seating_type_name }}</td>
                                     <td>
                                         {{-- {{ $val->image }} --}}
-                                        <img alt="" src="{{ Storage::disk('image')->url('uploads/venue_seating/' . $val->seating_image) }}">
+                                        @if($val->seating_image)
+                                            <img alt="" src="{{ asset('storage/uploads/venue_seating/' . $val->seating_image) }}" onerror="this.src='{{ asset('assets/img/default-seating.jpg') }}'">
+                                        @else
+                                            <img alt="" src="{{ asset('assets/img/default-seating.jpg') }}">
+                                        @endif
                                     </td>
                                     <td>{{ $val->number_of_seats }}</td>
                                     <td>{{ $val->seat_serial_prefix }}</td>

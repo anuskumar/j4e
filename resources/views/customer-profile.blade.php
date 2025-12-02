@@ -70,7 +70,11 @@
                                     <li class="list-group-item">
 										<div class="media align-items-center">
 											<div class="mr-3">
-												<img alt="Image placeholder"  src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}" class="avatar  rounded-circle">
+												@if($val->event_image)
+                                                    <img alt="Image placeholder" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" class="avatar rounded-circle" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                @else
+                                                    <img alt="Image placeholder" src="{{ asset('assets/img/default-event.jpg') }}" class="avatar rounded-circle">
+                                                @endif
 											</div>
 											<div class="media-body">
 												<h5 class="d-block mb-0">{{ $val->event_name }} </h5>
@@ -138,7 +142,11 @@
 																	<td>
 																		<h2 class="table-avatar">
 																			<a href="{{ url('show_details_show',$val->event_id) }}" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle"  src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}" alt="User Image">
+																				@if($val->event_image)
+                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                                                @else
+                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('assets/img/default-event.jpg') }}" alt="User Image">
+                                                                                @endif
 																			</a>
 																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }}</span></a>
 																		</h2>

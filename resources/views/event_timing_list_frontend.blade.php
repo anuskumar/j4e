@@ -55,7 +55,11 @@
         <div class="carousel-inner">
             <div class="carousel-item active">
                 <img class="d-block" style="height: 400px;"
-                    src="{{ Storage::disk('image')->url('uploads/event_tag_images/' . $event_datas->tag_image) }}">
+                    @if($event_datas->tag_image)
+                        src="{{ asset('storage/uploads/event_tag_images/' . $event_datas->tag_image) }}"
+                    @else
+                        src="{{ asset('assets/img/default-tag.jpg') }}"
+                    @endif
 
                 <div class="carousel-caption d-none d-md-block">
                     <div class="banner-header">
@@ -135,7 +139,11 @@
                 <div class="col-md-1"></div>
                 <div class="col-md-11">
 
-                  <img src="{{ Storage::disk('image')->url('uploads/venue/' . $event_datas->venue_image) }}" style='height:500px;width:100%;'>
+                  @if($event_datas->venue_image)
+                      <img src="{{ asset('storage/uploads/venue/' . $event_datas->venue_image) }}" style='height:500px;width:100%;' onerror="this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                  @else
+                      <img src="{{ asset('assets/img/default-venue.jpg') }}" style='height:500px;width:100%;'>
+                  @endif
 
                 </div>
                 {{-- <div class="col-md-1"></div> --}}

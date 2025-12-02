@@ -2,7 +2,7 @@
     <div class="widget-profile pro-widget-content">
         <div class="profile-info-widget">
             <a href="#" class="booking-doc-img">
-                <img src="assets/img/speakers/speaker-thumb-02.jpg" alt="User Image">
+                <img src="{{ asset('assets/img/speakers/speaker-thumb-02.jpg') }}" alt="User Image">
             </a>
             <div class="profile-det-info">
                 <h3>Wayte Barlow</h3>

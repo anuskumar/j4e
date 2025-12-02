@@ -78,7 +78,11 @@
                                                 <td>
                                                     {{-- {{ $val->image }} --}}
                                                     <img alt="event image" style="width: 50px;"
-                                                        src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}">
+                                                        @if($val->event_image)
+                                                            src="{{ asset('storage/uploads/events/' . $val->event_image) }}"
+                                                        @else
+                                                            src="{{ asset('assets/img/default-event.jpg') }}"
+                                                        @endif
                                                 </td>
                                                 <td>
                                                     <a href="{{ url('reseller/manage_tickets', $val->id) }}"><button type="button"

@@ -68,7 +68,11 @@
                             <!-- Booking speaker Info -->
                             <div class="booking-doc-info">
                                 <a href="speaker-profile" class="booking-doc-img">
-                                    <img src="{{ Storage::disk('image')->url('uploads/events/' . $data->event_image) }}" alt="User Image">
+                                    @if($data->event_image)
+                                        <img src="{{ asset('storage/uploads/events/' . $data->event_image) }}" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                    @else
+                                        <img src="{{ asset('assets/img/default-event.jpg') }}" alt="User Image">
+                                    @endif
                                 </a>
                                 <div class="booking-info">
                                     <h4><a href="{{ url('show_details_show',$data->event) }}" target="_blank">

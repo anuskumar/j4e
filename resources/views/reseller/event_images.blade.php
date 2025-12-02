@@ -77,7 +77,11 @@
                                         <div class="card-body pt-0 text-center">
                                             <div class="file-manger-icon">
 
-                                                    <img src="{{ Storage::disk('image')->url('uploads/events/' . $val->image) }}" alt="img" class="rounded-7">
+                                                    @if($val->image)
+                                                        <img src="{{ asset('storage/uploads/events/' . $val->image) }}" alt="img" class="rounded-7" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                    @else
+                                                        <img src="{{ asset('assets/img/default-event.jpg') }}" alt="img" class="rounded-7">
+                                                    @endif
 
                                             </div>
                                             {{-- <h6 class="mb-1 font-weight-semibold">videos</h6>

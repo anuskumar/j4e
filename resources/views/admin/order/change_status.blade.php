@@ -96,7 +96,12 @@
                                         <td>{{ $lo->remark }}</td>
                                         <td>
                                             @if($lo->document)
-                                            <a href="{{ Storage::disk('image')->url('uploads/purchase_status_document/' . $lo->document) }}" target="_blank">See</a></td>
+                                            @if($lo->document)
+                                                <a href="{{ asset('storage/uploads/purchase_status_document/' . $lo->document) }}" target="_blank">See</a>
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
                                             @endif
                                             <td>{{ $lo->name }}</td>
                                             @if(Auth::user()->user_type == 'superadmin')

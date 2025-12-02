@@ -103,7 +103,11 @@
 												<label class="form-label">Event Image</label>
 											</div>
 											<div class="col-md-6">
-                                                 <img alt="" src="{{ Storage::disk('image')->url('uploads/events/' . @$data->event_image) }}">
+                                                 @if(@$data->event_image)
+                                                     <img alt="" src="{{ asset('storage/uploads/events/' . $data->event_image) }}" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                 @else
+                                                     <img alt="" src="{{ asset('assets/img/default-event.jpg') }}">
+                                                 @endif
                                                 <br>
                                                 <br>
                                                 <br>

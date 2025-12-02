@@ -91,7 +91,11 @@
                                                                 <td>{{ $val->venue_type_name }}</td>
                                                                 <td>
                                                                     {{-- {{ $val->image }} --}}
-                                                                    <img alt="venue image" style="width:50px;" src="{{ Storage::disk('image')->url('uploads/venue/' . $val->image) }}">
+                                                                    @if($val->image)
+                                                                        <img alt="venue image" style="width:50px;" src="{{ asset('storage/uploads/venue/' . $val->image) }}" onerror="this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                                                                    @else
+                                                                        <img alt="venue image" style="width:50px;" src="{{ asset('assets/img/default-venue.jpg') }}">
+                                                                    @endif
                                                                 </td>
                                                                 <td>{{ $val->venue_name }}</td>
                                                                 <td>{{ $val->location_name }}</td>

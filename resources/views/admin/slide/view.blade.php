@@ -19,7 +19,11 @@
 												<label class="form-label" class="form-control">Banner Image</label>
 											</div>
 											<div class="col-md-6">
-                                                <img alt="" width="100" height="100" src="{{ Storage::disk('image')->url('uploads/slide/'. $data->slide_image) }}">
+                                                @if($data->slide_image)
+                                                    <img alt="" width="100" height="100" src="{{ asset('storage/uploads/slide/' . $data->slide_image) }}" onerror="this.src='{{ asset('assets/img/default-slide.jpg') }}'">
+                                                @else
+                                                    <img alt="" width="100" height="100" src="{{ asset('assets/img/default-slide.jpg') }}">
+                                                @endif
 											</div>
 										</div>
 									</div>
