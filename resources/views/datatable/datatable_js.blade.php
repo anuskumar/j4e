@@ -17,6 +17,24 @@
 <script>
 $(document).ready(function () {
     $.noConflict();
-    var table = $('.dataTables').DataTable();
+    
+    // Initialize file-datatable without buttons (if exists)
+    if ($('#file-datatable').length) {
+        var table = $('#file-datatable').DataTable({
+            language: {
+                searchPlaceholder: 'Search...',
+                scrollX: "100%",
+                sSearch: '',
+            }
+        });
+    }
+    
+    // Initialize other dataTables
+    $('.dataTables').not('#file-datatable').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        }
+    });
 });
 </script>

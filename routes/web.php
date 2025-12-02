@@ -215,6 +215,7 @@ Route::group(['prefix' => 'reseller'], function () {
 });
 
 Route::group(['prefix' => 'admin'], function () {
+    Route::get('customer-neworder', [OrderController::class, 'index'])->name('admin.customer.neworder');
     Route::get('edit/{id}', [CompanySettingsController::class, 'edit']);
     // Route::post('update', [CompanySettingsController::class, 'update']);
     Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company');

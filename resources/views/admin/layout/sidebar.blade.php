@@ -73,7 +73,7 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('customer_order/list') }}">New Orders</a></li>
+                                        <li><a class="sub-side-menu__item" href="{{ route('admin.customer.neworder') }}">New Orders</a></li>
                                         <li><a class="sub-side-menu__item" href="{{ url('customer_order/old_list') }}">Older Orders</a></li>
                                     </ul>
 
