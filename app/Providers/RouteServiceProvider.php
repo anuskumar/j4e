@@ -14,10 +14,30 @@ class RouteServiceProvider extends ServiceProvider
      * The path to your application's "home" route.
      *
      * Typically, users are redirected here after authentication.
+     * This will be dynamically determined based on user_type.
      *
      * @var string
      */
     public const HOME = '/home';
+    
+    /**
+     * Get the post-authentication redirect path based on user type.
+     *
+     * @return string
+     */
+    public static function getHomeForUserType($userType)
+    {
+        switch ($userType) {
+            case 'superadmin':
+                return '/admin/home';
+            case 'customer':
+                return '/customer/home';
+            case 'reseller':
+                return '/reseller/home';
+            default:
+                return '/home';
+        }
+    }
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.

@@ -37,7 +37,7 @@ class FrontendController extends Controller
 
             if(Auth::user()->user_type == "reseller"){
 
-                return redirect('home')->with('success','Logged in Successfully');
+                return redirect()->route('reseller.home')->with('success','Logged in Successfully');
 
             }else{
 
@@ -81,19 +81,23 @@ class FrontendController extends Controller
                     ->withErrors('Not Approved By Admin');
 
             }else{
-
-
-                return redirect()->intended('home')
-                ->withSuccess('Signed in');
-
+                $userType = Auth::user()->user_type;
+                if ($userType === 'superadmin') {
+                    return redirect()->intended(route('admin.home'))->withSuccess('Signed in');
+                } elseif ($userType === 'customer') {
+                    return redirect()->intended(route('customer.home'))->withSuccess('Signed in');
+                }
+                return redirect()->intended(route('reseller.home'))->withSuccess('Signed in');
             }
 
-
             }else{
-
-
-                return redirect()->intended('home')
-                ->withSuccess('Login to Admin Dashboard');
+                $userType = Auth::user()->user_type;
+                if ($userType === 'superadmin') {
+                    return redirect()->intended(route('admin.home'))->withSuccess('Login to Admin Dashboard');
+                } elseif ($userType === 'customer') {
+                    return redirect()->intended(route('customer.home'))->withSuccess('Login to Customer Dashboard');
+                }
+                return redirect()->intended(route('reseller.home'))->withSuccess('Login to Reseller Dashboard');
 
 
             }
@@ -161,18 +165,31 @@ class FrontendController extends Controller
 
                $auth = Auth::user();
                if($auth){
-
-                   return redirect('home');
-
+                   $userType = Auth::user()->user_type;
+                   if ($userType === 'superadmin') {
+                       return redirect()->route('admin.home');
+                   } elseif ($userType === 'customer') {
+                       return redirect()->route('customer.home');
+                   } elseif ($userType === 'reseller') {
+                       return redirect()->route('reseller.home');
+                   }
+                   return redirect()->route('home');
                }else{
-
                $login = User::find($user->id);
                Auth::login($login);
                $user = User::find(Auth::user()->id);
                $user->last_login = new DateTime();
                $user->save();
 
-               return redirect('home');
+               $userType = Auth::user()->user_type;
+               if ($userType === 'superadmin') {
+                   return redirect()->route('admin.home');
+               } elseif ($userType === 'customer') {
+                   return redirect()->route('customer.home');
+               } elseif ($userType === 'reseller') {
+                   return redirect()->route('reseller.home');
+               }
+               return redirect()->route('home');
                }
 
 

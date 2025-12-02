@@ -8,6 +8,7 @@ use App\Models\TicketsGenerated;
 
 use App\Models\Events;
 use App\Models\EventTickets;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,16 @@ class StripePaymentController extends Controller
     public function stripe()
     {
         // return view('stripe.stripe');
+        if (Auth::check()) {
+            $userType = Auth::user()->user_type;
+            if ($userType === 'superadmin') {
+                return redirect()->route('admin.home');
+            } elseif ($userType === 'customer') {
+                return redirect()->route('customer.home');
+            } elseif ($userType === 'reseller') {
+                return redirect()->route('reseller.home');
+            }
+        }
         return redirect()->route('home');
     }
 

@@ -54,7 +54,22 @@ Route::get('/ticket_filter_action', [WelcomeController::class, 'ticket_filter_ac
 
 
 
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+// Legacy home route - redirects based on user type
+Route::get('/home', [HomeController::class, 'redirectToRoleHome'])->name('home');
+
+// Role-based home routes
+Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmin']], function () {
+    Route::get('/home', [HomeController::class, 'adminHome'])->name('admin.home');
+});
+
+Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer']], function () {
+    Route::get('/home', [HomeController::class, 'customerHome'])->name('customer.home');
+});
+
+Route::group(['prefix' => 'reseller', 'middleware' => ['auth', 'user.type:reseller']], function () {
+    Route::get('/home', [HomeController::class, 'resellerHome'])->name('reseller.home');
+});
+
 Route::get('/sell_tickets', [FrontendController::class, 'sell_tickets'])->name('sell_tickets');
 
 

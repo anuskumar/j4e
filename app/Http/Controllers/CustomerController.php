@@ -96,7 +96,15 @@ class CustomerController extends Controller
         $user->last_login = new DateTime();
         $user->save();
 
-        return redirect('home');
+        $userType = Auth::user()->user_type;
+        if ($userType === 'superadmin') {
+            return redirect()->route('admin.home');
+        } elseif ($userType === 'customer') {
+            return redirect()->route('customer.home');
+        } elseif ($userType === 'reseller') {
+            return redirect()->route('reseller.home');
+        }
+        return redirect()->route('home');
         }
 
 
