@@ -290,12 +290,9 @@
         src="https://checkout.stripe.com/checkout.js"
         class="stripe-button"
         data-key="{{ config('services.stripe.key') }}"
-         data-amount="{{ round($data->web_price * $ticket_count *100) }}" {{-- Adjust the amount as needed --}}
-        {{-- data-name="Your Company Name"
-        data-description="Payment description"
-        data-image="https://stripe.com/img/documentation/checkout/marketplace.png" --}}
+        data-amount="{{ round($data->web_price * $ticket_count * 100) }}"
         data-locale="auto"
-        data-currency="usd" {{-- Adjust the currency as needed --}}
+        data-currency="{{ strtolower($data->currency_name) }}"
     ></script>
                                             {{-- <div class="col-md-6">
                                                 <div class="form-group card-label">

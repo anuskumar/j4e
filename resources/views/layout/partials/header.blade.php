@@ -117,29 +117,49 @@ error_reporting(0);
             </div>
         </div>
         <div class="header-top-right">
-            <!-- Your user menu HTML goes here -->
-            <!-- For example, user menu with login/logout links -->
-            @if(Auth::user()->id)
+            <!-- User menu -->
+            @if(Auth::check())
+                @php
+                    $user = Auth::user();
+                    $profileImage = $user->profile
+                        ? asset('storage/uploads/images/' . $user->profile)
+                        : asset('assets/img/customers/customer.jpg');
+
+                    $profileSettingsUrl = $user->user_type === 'reseller'
+                        ? route('reseller.profile')
+                        : url('customer_profile_settings');
+                @endphp
             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                 @csrf
             </form>
             <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
                 <span class="user-img">
-                    <img class="rounded-circle" src="{{ asset('assets/img/speakers/speaker-thumb-02.jpg') }}" width="31">
+                    <img
+                        class="rounded-circle"
+                        src="{{ $profileImage }}"
+                        width="31"
+                        alt="User Image"
+                        onerror="this.onerror=null;this.src='{{ asset('assets/img/customers/customer.jpg') }}';"
+                    >
                 </span>
             </a>
             <div class="dropdown-menu dropdown-menu-right">
                 <div class="user-header">
                     <div class="avatar avatar-sm">
-                        <img src="{{ asset('assets/img/speakers/speaker-thumb-02.jpg') }}" alt="User Image" class="avatar-img rounded-circle">
+                        <img
+                            src="{{ $profileImage }}"
+                            alt="User Image"
+                            class="avatar-img rounded-circle"
+                            onerror="this.onerror=null;this.src='{{ asset('assets/img/customers/customer.jpg') }}';"
+                        >
                     </div>
                     <div class="user-text">
-                        <h6>{{ ucfirst(Auth::user()->name) }}</h6>
-                        <p class="text-muted mb-0">{{ ucfirst(Auth::user()->user_type) }}</p>
+                        <h6>{{ ucfirst($user->name) }}</h6>
+                        <p class="text-muted mb-0">{{ ucfirst($user->user_type) }}</p>
                     </div>
                 </div>
                 <a class="dropdown-item" href="{{ url('home') }}">Dashboard</a>
-                <a class="dropdown-item" href="{{ url('profile-settings') }}">Profile Settings</a>
+                <a class="dropdown-item" href="{{ $profileSettingsUrl }}">Profile Settings</a>
                 <a class="dropdown-item" href="#"
                     onclick="event.preventDefault();
                         document.getElementById('logout-form').submit();">Logout</a>

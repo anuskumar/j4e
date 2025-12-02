@@ -85,13 +85,37 @@ class StripePaymentController extends Controller
         //     'automatic_payment_methods' => ['enabled' => true],
         //   ]);
 
+        // Normalise amount and enforce Stripe minimums per currency
+        $currency = strtolower($request->currency_name);
+        $amount   = (float) $request->payment_amount;
+
+        // Convert to smallest currency unit (e.g. cents, fils)
+        $amountInSmallestUnit = (int) round($amount * 100);
+
+        // Stripe minimum amounts (in smallest unit). Adjusted for AED (200 fils = 2.00 AED).
+        $minByCurrency = [
+            'aed' => 200,
+            'usd' => 50,
+            'eur' => 50,
+            // fallback for most other currencies
+        ];
+
+        $minForCurrency = $minByCurrency[$currency] ?? 50;
+
+        if ($amountInSmallestUnit < $minForCurrency) {
+            $minDisplay = number_format($minForCurrency / 100, 2);
+
+            return back()->withErrors([
+                'cardError' => "Minimum charge amount is {$minDisplay} " . strtoupper($currency) . ". Please increase the ticket quantity or price.",
+            ]);
+        }
+
         Stripe::setApiKey(config('services.stripe.secret'));
 
-          $data = Charge::create([
-            'amount' => $request->payment_amount == 0  ? 1 : $request->payment_amount * 100,
-            'currency' =>  $request->currency_name,
-            // 'automatic_payment_methods' => ['enabled' => true],
-            'source' => $request->stripeToken,
+        $data = Charge::create([
+            'amount'   => $amountInSmallestUnit,
+            'currency' =>  $currency,
+            'source'   => $request->stripeToken,
         ]);
 
         //   dd($data);

@@ -15,10 +15,12 @@
                     <div class="ps-0">
                         <div class="main-profile-overview">
                             <div class="main-img-user profile-user">
-                            <img src="{{ config('app.storage') ."uploads/images/". $authdata->profile }}"  alt="img">
-
-                                {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $authdata->profile) }}"> --}}
-
+                                @php
+                                    $resellerProfileImage = $authdata->profile
+                                        ? config('app.storage') . "uploads/images/" . $authdata->profile
+                                        : asset('assets/img/customers/customer.jpg');
+                                @endphp
+                                <img src="{{ $resellerProfileImage }}" alt="img">
                             </div>
                             <div class="d-flex justify-content-between mg-b-20">
                                 <div>

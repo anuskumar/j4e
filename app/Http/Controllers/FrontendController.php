@@ -373,13 +373,16 @@ class FrontendController extends Controller
 
             $artist_data = [];
 
-            if($event_datas){
+            if ($event_datas && !empty($event_datas->artists)) {
+                $artistIds = json_decode($event_datas->artists, true);
 
-                foreach(json_decode($event_datas->artists) as $json){
-
-                    $dat = ArtistModel::find($json);
-                    array_push($artist_data,$dat);
-
+                if (is_array($artistIds)) {
+                    foreach ($artistIds as $artistId) {
+                        $dat = ArtistModel::find($artistId);
+                        if ($dat) {
+                            $artist_data[] = $dat;
+                        }
+                    }
                 }
             }
             $venue_seating = VenueSeating::get();

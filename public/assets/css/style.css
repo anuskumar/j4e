@@ -93,8 +93,10 @@ body {
 	color: #022F5C;
     font-family: "Poppins",sans-serif;
 	font-size: 0.9375rem;
-    height: 100%;
+    min-height: 100vh;
 	overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 h1, h2, h3, h4, h5, h6 {
 	color: #272b41;
@@ -194,10 +196,26 @@ input[type=password] {
 .list-group-item {
 	border: 1px solid #f0f0f0;
 }
+
+/* Layout: header + flexible content + footer */
+body > .main-wrapper {
+    flex: 0 0 auto;
+}
+
+body > .footer {
+    flex: 0 0 auto;
+}
+
+body > :not(.main-wrapper):not(.footer) {
+    flex: 1 0 auto;
+    width: 100%;
+}
+
 .content {
 	min-height: 200px;
 	padding: 30px 15px 0;
 }
+
 .content > .container-fluid {
 	padding-left: 15px;
 	padding-right: 15px;
