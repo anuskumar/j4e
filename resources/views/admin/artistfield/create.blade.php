@@ -21,7 +21,7 @@
 												<label class="form-label">ArtistField Name</label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="field_name" placeholder="Enter name"  value="{{ old('field_name') }}">
+												<input type="text" class="form-control" name="field_name" placeholder="Enter name"  value="{{ old('field_name') }}" required>
 											</div>
 										</div>
 									</div>

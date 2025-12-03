@@ -12,6 +12,17 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">Create Venue</div>
+								
+								@if ($errors->any())
+									<div class="alert alert-danger">
+										<ul class="mb-0">
+											@foreach ($errors->all() as $error)
+												<li>{{ $error }}</li>
+											@endforeach
+										</ul>
+									</div>
+								@endif
+								
 								<form class="form-horizontal"  action="{{ url('venue/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
@@ -20,10 +31,13 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Name</label>
+												<label class="form-label">Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="name" placeholder="Enter name"  value="{{ old('name') }}">
+												<input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Enter venue name" value="{{ old('name') }}" required>
+												@error('name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -34,46 +48,59 @@
 												<label class="form-label">Type</label>
 											</div>
 											<div class="col-md-6">
-                                                <select name="venue_type" class="form-control">
-                                                    <option>Select</option>
+                                                <select name="venue_type" class="form-control @error('venue_type') is-invalid @enderror">
+                                                    <option value="">Select</option>
                                                     @foreach($venue_type as $type)
-                                                    <option value="{{ $type->id }}">{{ $type->venue_type_name }}</option>
+                                                    <option value="{{ $type->id }}" {{ old('venue_type') == $type->id ? 'selected' : '' }}>{{ $type->venue_type_name }}</option>
                                                     @endforeach
                                                 </select>
+												@error('venue_type')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">location</label>
+												<label class="form-label">Location <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-                                                <select name="location" class="form-control select2-select">
-                                                    <option>Select</option>
+                                                <select name="location" class="form-control select2-select @error('location') is-invalid @enderror" required>
+                                                    <option value="">Select</option>
                                                     @foreach($location as $loc)
-                                                    <option value="{{ $loc->id }}">{{ $loc->location_name.", ".$loc->name.", ".$loc->country_name }}</option>
+                                                    <option value="{{ $loc->id }}" {{ old('location') == $loc->id ? 'selected' : '' }}>{{ $loc->location_name.", ".$loc->name.", ".$loc->country_name }}</option>
                                                     @endforeach
                                                 </select>
+												@error('location')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Google map link</label>
+												<label class="form-label">Google Map Link</label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="google_map_link" placeholder="Google map link" value="{{ old('google_map_link') }}">
+												<input type="url" class="form-control @error('google_map_link') is-invalid @enderror" name="google_map_link" placeholder="https://maps.google.com/..." value="{{ old('google_map_link') }}">
+												@error('google_map_link')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
-									</div><div class="form-group ">
+									</div>
+									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
 												<label class="form-label">Latitude</label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="latitude" placeholder="Lattitude" value="{{ old('latitude') }}">
+												<input type="number" step="0.000001" class="form-control @error('latitude') is-invalid @enderror" name="latitude" placeholder="Enter latitude" value="{{ old('latitude') }}">
+												@error('latitude')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -83,7 +110,10 @@
 												<label class="form-label">Longitude</label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="longitude" placeholder="Longitude" value="{{ old('longitude') }}">
+												<input type="number" step="0.000001" class="form-control @error('longitude') is-invalid @enderror" name="longitude" placeholder="Enter longitude" value="{{ old('longitude') }}">
+												@error('longitude')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -92,11 +122,14 @@
 										<div class="row">
 											<div class="col-md-3">
 												<label class="form-label">Image</label>
-
 											</div>
 											<div class="col-md-6">
 												<div class="custom-controls-stacked">
-                                                    <input type="file" name="image" class="form-control" >
+                                                    <input type="file" name="image" class="form-control @error('image') is-invalid @enderror" accept="image/*">
+													@error('image')
+														<div class="invalid-feedback">{{ $message }}</div>
+													@enderror
+													<small class="form-text text-muted">Upload venue image (JPG, PNG, etc.)</small>
 												</div>
 											</div>
 										</div>

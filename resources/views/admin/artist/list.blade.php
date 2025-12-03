@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Artists</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Artists</h3>
+                        <a href="{{ url('artist/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Artist
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -37,15 +42,22 @@
                                     <td>{{ Illuminate\Support\Str::limit($val->about, $limit = 40, $end = '...') }}</td>
 
 
-                                     <td>
-                                        <form action="{{ url('artist/destroy',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('artist/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('artist/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                            {{-- <a href=""><button type="button" class="btn btn-danger" class="btn btn-danger show_confirm">Delete</button></a> --}}
-                                            <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-                                        </form>
+                                    <td>
+                                        <div class="table-action">
+                                            <a href="{{url('artist/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{url('artist/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url('artist/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

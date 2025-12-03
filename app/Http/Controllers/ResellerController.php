@@ -51,6 +51,7 @@ class ResellerController extends Controller
     {
         $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
             ->select('*', 'users.id as id', 'resellers.id as resellers_id')->where('users.user_type', 'reseller')
+            ->orderBy('users.id', 'desc')
             // ->paginate(2);
             ->get();
         // dd($data);
@@ -89,22 +90,49 @@ class ResellerController extends Controller
      */
     public function store(Request $request)
     {
-        $user          = new User();
-        $user->name    = $request->name;
-        $user->email   = $request->email;
-        $user->phone   = $request->phone;
-        $user->address = $request->address;
+        // Validation rules
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|max:255',
+            'password' => 'required|string|min:6',
+            'phone' => 'required|string|max:20',
+            'country_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'is_active' => 'nullable|in:0,1',
+        ], [
+            'name.required' => 'User name is required.',
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already registered.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters long.',
+            'phone.required' => 'Phone number is required.',
+        ]);
 
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
         $user->user_type = 'reseller';
-        $user->password  = Hash::make($request->password);
-        $user->is_active = $request->is_active;
+        $user->password = Hash::make($request->password);
+        $user->is_active = $request->has('is_active') ? $request->is_active : 1;
+        
+        // Store phone number with country code
+        if ($request->has('phone') && !empty($request->phone)) {
+            $countryCode = $request->has('country_code') && !empty($request->country_code) ? $request->country_code : '+91 (IN)';
+            $user->phone = $countryCode . ' ' . $request->phone;
+        }
+        
+        if ($request->has('address')) {
+            $user->address = $request->address;
+        }
+
         $user->save();
 
-        $reseller          = new ResellerModel();
+        $reseller = new ResellerModel();
         $reseller->user_id = $user->id;
         $reseller->save();
 
-        return redirect('reseller/list');
+        return redirect('reseller/list')->with('success', 'Reseller created successfully!');
     }
 
     /**
@@ -1679,6 +1707,28 @@ public function upload_ticket_seating(Request $request){
         $generatedTicket->delete();
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reseller not found.',
+            ], 404);
+        }
+
+        $status = $request->input('status', 0);
+        $user->is_active = $status == 1 ? 1 : 0;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reseller status updated successfully.',
+            'status' => $user->is_active
+        ]);
     }
 
 }

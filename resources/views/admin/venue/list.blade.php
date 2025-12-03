@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Venue</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Venue</h3>
+                        <a href="{{ url('venue/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Venue
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -38,10 +43,13 @@
 
                                     <td>{{ $val->venue_type_name }}</td>
                                     <td>
-                                        {{-- {{ $val->image }} --}}
-                                        <img src="{{ config('app.storage') ."uploads/venue/". $val->image }}"  alt="img">
-
-                                        {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/venue/' . $val->image) }}"> --}}
+                                        @if($val->image)
+                                            <a href="{{ config('app.storage') .'uploads/venue/'. $val->image }}" target="_blank" title="View Image">
+                                                <i class="far fa-image fa-2x text-primary"></i>
+                                            </a>
+                                        @else
+                                            <i class="far fa-image fa-2x text-muted" title="No Image"></i>
+                                        @endif
                                     </td>
                                     <td>{{ $val->venue_name }}</td>
                                     <td>{{ $val->location_name }}</td>
@@ -52,19 +60,27 @@
                                     <td>{{ $val->total_seats }}</td>
                                     <td>{{ $val->total_seat_types }}</td>
                                     <td>
-                                        <a href="{{url('venue/manage_Seating',$val->id)}}"><button type="button" class="btn btn-primary">Manage</button></a>
-
+                                        <a href="{{url('venue/manage_Seating',$val->id)}}" class="btn btn-sm bg-primary-light" title="Manage Seating">
+                                            <i class="far fa-cog"></i>
+                                        </a>
                                     </td>
 
                                     <td>
-                                        <form action="{{ url('venue/destroy',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('venue/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('venue/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                            {{-- <a href=""><button type="button" class="btn btn-danger" class="btn btn-danger show_confirm">Delete</button></a> --}}
-                                            <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-                                        </form>
+                                        <div class="table-action">
+                                            <a href="{{url('venue/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{url('venue/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url('venue/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

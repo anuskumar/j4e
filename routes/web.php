@@ -95,6 +95,7 @@ Route::group(['prefix' => 'customer'], function () {
     Route::get('delete/{id}', [CustomerController::class, 'delete']);
     Route::post('store', [CustomerController::class, 'store']);
     Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
+    Route::post('update-status/{id}', [CustomerController::class, 'updateStatus']);
 });
 
 
@@ -108,6 +109,7 @@ Route::group(['prefix' => 'reseller'], function () {
     Route::post('update', [ResellerController::class, 'update']);
     Route::delete('delete/{id}', [ResellerController::class, 'delete']);
     Route::post('store', [ResellerController::class, 'store']);
+    Route::post('update-status/{id}', [ResellerController::class, 'updateStatus']);
     // Route::delete('destroy/{id}', [ResellerController::class,'delete']);
 
     Route::get('profile', [ResellerController::class, 'profile'])->name('reseller.profile');
@@ -337,6 +339,7 @@ Route::group(['prefix' => 'city'], function () {
     Route::get('list', [CityController::class, 'index']);
     Route::get('create', [CityController::class, 'create']);
     Route::post('store', [CityController::class, 'store']);
+    Route::get('view/{id}', [CityController::class, 'show']);
     Route::get('edit/{id}', [CityController::class, 'edit']);
     Route::post('update', [CityController::class, 'update']);
     Route::delete('destroy/{id}', [CityController::class, 'delete']);

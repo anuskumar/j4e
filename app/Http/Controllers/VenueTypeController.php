@@ -15,7 +15,7 @@ class VenueTypeController extends Controller
     public function index()
     {
 
-        $data = VenueType::get();
+        $data = VenueType::orderBy('id', 'desc')->get();
         // dd($data);
         return view('admin.venuetype.list',compact('data'));
 

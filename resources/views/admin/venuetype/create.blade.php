@@ -10,6 +10,17 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">Create VenueType</div>
+								
+								@if ($errors->any())
+									<div class="alert alert-danger">
+										<ul class="mb-0">
+											@foreach ($errors->all() as $error)
+												<li>{{ $error }}</li>
+											@endforeach
+										</ul>
+									</div>
+								@endif
+								
 								<form class="form-horizontal"  action="{{ url('venuetype/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
@@ -18,10 +29,13 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Venue Type Name</label>
+												<label class="form-label">Venue Type Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="name" placeholder="Enter name"  value="{{ old('name') }}">
+												<input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Enter venue type name" value="{{ old('name') }}" required>
+												@error('name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -34,7 +48,7 @@
 											</div>
 											<div class="col-md-6">
 												<div class="custom-controls-stacked">
-													<label class=""><input  type="radio" value="1" name="is_active"><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+													<label class=""><input  type="radio" value="1" name="is_active" checked><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 													<label class=""><input  type="radio" value="0" name="is_active"><span> Inactive</span></label>
 												</div>
 											</div>

@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">File Export</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">File Export</h3>
+                        <a href="{{ url('reseller/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Reseller
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -38,20 +43,32 @@
 
                                     <td>{{ $val->phone }}</td>
                                     <td>{{ $val->address }}</td>
-                                    <td>{{ $val->is_active == 1 ? "Active" :"Inactive" }}</td>
+                                    <td>
+                                        @if($val->is_active == 1)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-danger">Inactive</span>
+                                        @endif
+                                    </td>
                                     <td>{{$val->last_login ?  date('d/m/Y h:i a',strtotime($val->last_login)) :"" }}</td>
 
 
                                     <td>
-                                        <form action="{{ url('reseller/delete',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('reseller/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('reseller/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                        {{-- <a href="{{url('customer/delete',$val->id)}}"><button type="button" class="btn btn-danger">Delete</button></a> --}}
-                                        <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-
-                                        </form>
+                                        <div class="table-action">
+                                            <a href="{{url('reseller/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{url('reseller/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url('reseller/delete',$val->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -94,7 +111,6 @@
     <script src="admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="admin_assets/js/main.js"></script>
     <!-- End Row -->
-
 
 @include('datatable.datatable_js')
 @endsection

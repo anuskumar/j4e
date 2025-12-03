@@ -24,6 +24,7 @@ class VenueController extends Controller
         leftjoin('countries','countries.id','location.country')
         ->leftjoin('cities','cities.id','location.city')->
         select("*","venue.id as id","venue.name as venue_name")->
+        orderBy('venue.id', 'desc')->
         get();
 
         foreach($data as $val){

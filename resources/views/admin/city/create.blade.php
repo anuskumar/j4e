@@ -10,6 +10,17 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">Add City</div>
+								
+								@if ($errors->any())
+									<div class="alert alert-danger">
+										<ul class="mb-0">
+											@foreach ($errors->all() as $error)
+												<li>{{ $error }}</li>
+											@endforeach
+										</ul>
+									</div>
+								@endif
+								
 								<form class="form-horizontal"  action="{{ url('city/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
@@ -18,10 +29,13 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">City Name</label>
+												<label class="form-label">City Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="name"  value="{{ old('name') }}">
+												<input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Enter city name" value="{{ old('name') }}" required>
+												@error('name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -29,16 +43,19 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Country</label>
+												<label class="form-label">Country <span class="text-danger">*</span></label>
 											</div>
 
                                             <div class="col-md-6">
-												<select name="country_id" class="form-control" required>
-                                                    <option>Select</option>
+												<select name="country_id" class="form-control @error('country_id') is-invalid @enderror" required>
+                                                    <option value="">Select</option>
                                                     @foreach($country_name as $val)
-                                                    <option value="{{ $val->id }}">{{ $val->country_name }}</option>
+                                                    <option value="{{ $val->id }}" {{ old('country_id') == $val->id ? 'selected' : '' }}>{{ $val->country_name }}</option>
                                                     @endforeach
                                                 </select>
+												@error('country_id')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>

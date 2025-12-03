@@ -32,10 +32,8 @@
                                     <th class="border-bottom-0">Event Name</th>
                                     <th class="border-bottom-0">Event Type</th>
                                     <th class="border-bottom-0">Event Date</th>
-                                    <th class="border-bottom-0"> Location</th>
-                                    <th class="border-bottom-0"> Venue</th>
-                                    <th class="border-bottom-0"> Image</th>
                                     <th class="border-bottom-0">Event Status</th>
+                                    <th class="border-bottom-0">Action</th>
                                     {{-- <th class="border-bottom-0">Tickets</th> --}}
 
                                 </tr>
@@ -66,17 +64,34 @@
                                             <td>{{ $val->venue_name }}</td>
 
                                             <td>
-
-                                                <img alt=""
-                                                    @if($val->event_image)
-                                                        src="{{ asset('storage/uploads/events/' . $val->event_image) }}"
-                                                    @else
-                                                        src="{{ asset('assets/img/default-event.jpg') }}"
-                                                    @endif
+                                                @if($val->event_image)
+                                                    <a href="{{ asset('storage/uploads/events/' . $val->event_image) }}" target="_blank" title="View Image">
+                                                        <i class="far fa-image fa-2x text-primary"></i>
+                                                    </a>
+                                                @else
+                                                    <i class="far fa-image fa-2x text-muted" title="No Image"></i>
+                                                @endif
                                             </td>
                                             <td>
-                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}"><button type="button"
-                                                        class="btn btn-primary">Manage</button></a>
+                                                @if(isset($val->event_is_active))
+                                                    @if($val->event_is_active == 1)
+                                                        <span class="badge bg-success">Active</span>
+                                                    @else
+                                                        <span class="badge bg-danger">Inactive</span>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="table-action">
+                                                    <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm bg-primary-light" title="View">
+                                                        <i class="far fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm bg-info-light" title="Manage">
+                                                        <i class="far fa-cog"></i>
+                                                    </a>
+                                                </div>
                                             </td>
 
 
@@ -108,8 +123,14 @@
                                             {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}"> --}}
                                         </td>
                                         <td>
-                                            <a href="{{ url('tickets/manage_tickets', $val->id) }}"><button type="button"
-                                                    class="btn btn-primary">Manage</button></a>
+                                            <div class="table-action">
+                                                <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm bg-primary-light" title="View">
+                                                    <i class="far fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm bg-info-light" title="Manage">
+                                                    <i class="far fa-cog"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                         {{-- <td>{{ $val->event_is_active == 1 ? 'Active' : 'Inactive' }}</td> --}}
 
