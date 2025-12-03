@@ -82,7 +82,7 @@
 
                             </li>
 
-                            @if(Auth::user()->user_type='superadmin')
+                            @if(Auth::user()->user_type == 'superadmin')
                             <li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">User Management</span><i class="angle fe fe-chevron-down"></i></a>
 								<ul class="slide-menu">
@@ -260,7 +260,6 @@
                                     <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                         <span class="sub-side-menu__label">Ticket Restrictions</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                     <ul class="sub-slide-menu1">
-                                        <li><a class="sub-slide-item2" href="{{ url('ticket_restrictions/create') }}">Create</a></li>
                                         <li><a class="sub-slide-item2" href="{{ url('ticket_restrictions/list') }}">List</a></li>
                                     </ul>
                                 </li>

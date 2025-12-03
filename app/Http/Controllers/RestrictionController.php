@@ -12,7 +12,7 @@ class RestrictionController extends Controller
     public function index()
     {
 
-        $data = RestrictionModel::get();
+        $data = RestrictionModel::orderBy('id', 'desc')->get();
         // dd($data);
         return view('admin.ticket_restrictions.list',compact('data'));
 
