@@ -17,16 +17,19 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Venue Type</label>
+												<label class="form-label">Venue Type <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
 												{{-- <input type="text" class="form-control"  name="venue_type"  value="{{ $data->venue_type }}"> --}}
-                                                <select name="venue_type" class="form-control">
-                                                    <option>Select</option>
+                                                <select name="venue_type" class="form-control @error('venue_type') is-invalid @enderror" required>
+                                                    <option value="">Select</option>
                                                     @foreach($venue_type as $type)
                                                     <option value="{{ $type->id }}" {{ ($data->venue_type ==  $type->id) ? "selected" :"" }}>{{ $type->venue_type_name }}</option>
                                                     @endforeach
                                                 </select>
+                                                @error('venue_type')
+                                                    <div class="invalid-feedback">{{ $message }}</div>
+                                                @enderror
 											</div>
 										</div>
 									</div>

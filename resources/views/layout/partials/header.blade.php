@@ -160,13 +160,45 @@ error_reporting(0);
                 </div>
                 <a class="dropdown-item" href="{{ url('home') }}">Dashboard</a>
                 <a class="dropdown-item" href="{{ $profileSettingsUrl }}">Profile Settings</a>
-                <a class="dropdown-item" href="#"
-                    onclick="event.preventDefault();
-                        document.getElementById('logout-form').submit();">Logout</a>
+                <a class="dropdown-item logout-link" href="{{ route('logout') }}"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
             </div>
             <br>
             @endif
         </div>
+        
+        <script>
+            // Ensure logout functionality works from navbar
+            document.addEventListener('DOMContentLoaded', function() {
+                var logoutLinks = document.querySelectorAll('.logout-link');
+                logoutLinks.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var form = document.getElementById('logout-form');
+                        if (form) {
+                            form.submit();
+                        } else {
+                            // Fallback: create form dynamically
+                            var logoutForm = document.createElement('form');
+                            logoutForm.method = 'POST';
+                            logoutForm.action = '{{ route('logout') }}';
+                            logoutForm.style.display = 'none';
+                            
+                            var csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = '{{ csrf_token() }}';
+                            logoutForm.appendChild(csrfInput);
+                            
+                            document.body.appendChild(logoutForm);
+                            logoutForm.submit();
+                        }
+                    });
+                });
+            });
+        </script>
 
     </nav>
     <!-- Navbar -->

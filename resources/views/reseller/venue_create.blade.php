@@ -59,15 +59,18 @@
                                     <div class="row">
                                         <div class="col-md-3">
                                             {{-- {{ print_r($venue_type) }} --}}
-                                            <label class="form-label">Type</label>
+                                            <label class="form-label">Type <span class="text-danger">*</span></label>
                                         </div>
                                         <div class="col-md-6">
-                                            <select name="venue_type" class="form-control">
-                                                <option>Select</option>
+                                            <select name="venue_type" class="form-control @error('venue_type') is-invalid @enderror" required>
+                                                <option value="">Select</option>
                                                 @foreach($venue_type as $type)
-                                                <option value="{{ $type->id }}">{{ $type->venue_type_name }}</option>
+                                                <option value="{{ $type->id }}" {{ old('venue_type') == $type->id ? 'selected' : '' }}>{{ $type->venue_type_name }}</option>
                                                 @endforeach
                                             </select>
+                                            @error('venue_type')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
                                         </div>
                                     </div>
                                 </div>

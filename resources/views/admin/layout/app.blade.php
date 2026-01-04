@@ -381,10 +381,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                    class="d-none">
-                                    @csrf
-                                </form>
                                 <div class="dropdown main-profile-menu nav nav-item nav-link">
                                     <a class="profile-user d-flex" href=""><img
                                             src="{{ asset('admin_assets/img/faces/6.jpg') }}" alt="user-img"
@@ -409,11 +405,14 @@
                                         @endif
 
                                         <a class="dropdown-item" href="#"
-                                            onclick="event.preventDefault();
-                                              document.getElementById('logout-form').submit();"><i
-                                                class="fas fa-sign-out-alt"></i>Logout </a>
+                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </a>
                                     </div>
                                 </div>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
                                 {{-- <div class="dropdown main-header-message right-toggle">
 										<a class="nav-link pe-0" data-bs-toggle="sidebar-right" data-bs-target=".sidebar-right">
 											<i class="ion ion-md-menu tx-20 bg-transparent"></i>
@@ -824,6 +823,34 @@
                 toastr.error("{{ $error }}");
             @endforeach
         @endif
+    </script>
+
+    <script>
+        // Ensure logout functionality works
+        $(document).ready(function() {
+            // Handle logout clicks
+            $('a[href="{{ route('logout') }}"]').on('click', function(e) {
+                e.preventDefault();
+                var form = document.getElementById('logout-form');
+                if (form) {
+                    form.submit();
+                } else {
+                    // Fallback: create form dynamically
+                    var logoutForm = $('<form>', {
+                        'method': 'POST',
+                        'action': '{{ route('logout') }}',
+                        'class': 'd-none'
+                    });
+                    logoutForm.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '_token',
+                        'value': '{{ csrf_token() }}'
+                    }));
+                    $('body').append(logoutForm);
+                    logoutForm[0].submit();
+                }
+            });
+        });
     </script>
 
 </body>

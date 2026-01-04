@@ -36,6 +36,36 @@
 
 		<!-- Custom JS -->
 		<script src="{{ asset('assets/js/script.js') }}"></script>
+		
+		<!-- Logout Handler -->
+		<script>
+			$(document).ready(function() {
+				// Handle logout clicks from navbar
+				$(document).on('click', '.logout-link, a[href="{{ route('logout') }}"]', function(e) {
+					e.preventDefault();
+					var form = $('#logout-form');
+					if (form.length) {
+						form.submit();
+					} else {
+						// Fallback: create form dynamically
+						var logoutForm = $('<form>', {
+							'method': 'POST',
+							'action': '{{ route('logout') }}',
+							'id': 'logout-form',
+							'class': 'd-none'
+						});
+						logoutForm.append($('<input>', {
+							'type': 'hidden',
+							'name': '_token',
+							'value': '{{ csrf_token() }}'
+						}));
+						$('body').append(logoutForm);
+						logoutForm.submit();
+					}
+				});
+			});
+		</script>
+		
 		@if(Route::is(['map-grid','map-list']))
 		<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6adZVdzTvBpE2yBRK8cDfsss8QXChK0I"></script>
 		<script src="{{ asset('assets/js/map.js') }}"></script>

@@ -671,6 +671,7 @@ class ResellerController extends Controller
         $validated = $request->validate([
             'name'     => 'required',
             'location' => 'required',
+            'venue_type' => 'required',
         ]);
         // dd($request->request);
         $venue                  = new VenueModel();
@@ -719,7 +720,7 @@ class ResellerController extends Controller
 
         $validated = $request->validate([
             'id' => 'required',
-
+            'venue_type' => 'required',
         ]);
 
         $data                  = VenueModel::find($request->id);

@@ -43,18 +43,7 @@
                             data-bs-toggle="dropdown">Sell</a>
                         <ul class="dropdown-menu" aria-labelledby="sellDropdown">
                             <li><a class="dropdown-item" href="#">Sell Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ url('tickets') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button"
-                            data-bs-toggle="dropdown">My Tickets</a>
-                        <ul class="dropdown-menu" aria-labelledby="ticketDropdown">
-                            <li><a class="dropdown-item" href="#">Orders</a></li>
-                            <li><a class="dropdown-item" href="{{ url('tickets') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
-                            <li><a class="dropdown-item" href="#">Payments</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.mysales') }}">My Sales</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

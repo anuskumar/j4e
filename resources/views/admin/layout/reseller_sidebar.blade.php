@@ -51,10 +51,10 @@
 
                             </li>
                             <li class="slide">
-								<a class="side-menu__item" data-bs-toggle="slide"   href="{{ url('tickets') }}"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">My Listing</span><i class=" "></i></a>
+								<a class="side-menu__item" data-bs-toggle="slide"   href="{{ route('reseller.mylistings') }}"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">My Listing</span><i class=" "></i></a>
                             </li>
                             <li class="slide">
-								<a class="side-menu__item" data-bs-toggle="slide"   href="{{ url('customer_order/list') }}"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">My Sales</span><i class=" "></i></a>
+								<a class="side-menu__item" data-bs-toggle="slide"   href="{{ route('reseller.mysales') }}"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">My Sales</span><i class=" "></i></a>
                             </li>
                             {{-- <li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">My Tickets</span><i class="angle fe fe-chevron-down"></i></a>
