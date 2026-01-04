@@ -7,20 +7,234 @@
     <title>Sell Events Tickets</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
     <style>
+        :root {
+            --primary-color: #d20ae9;
+            --primary-dark: #8b00a8;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --box-shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .form-section-card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-section-card:hover {
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .form-section-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-section-header h5,
+        .form-section-header h6 {
+            color: #212529;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-section-header .icon {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
         .btn-ticket {
             flex: 1;
-            /* Makes buttons evenly distribute space */
-            min-width: 50px;
-            /* Ensures buttons don’t shrink too much */
+            min-width: 60px;
             max-width: 80px;
-            /* Prevents buttons from getting too wide */
-            padding: 8px 12px;
-            /* Keeps padding balanced */
+            padding: 12px 16px;
             font-size: 16px;
-            /* Ensures readability */
-            background-color: rgb(219, 216, 216);
+            font-weight: 600;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+
+        .btn-ticket:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-ticket.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(210, 10, 233, 0.3);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(210, 10, 233, 0.25);
+        }
+
+        .ticket-type {
+            border: 2px solid #dee2e6;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 120px;
+        }
+
+        .ticket-type:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-hover);
+        }
+
+        .ticket-type.border-primary {
+            border: 3px solid var(--primary-color) !important;
+            box-shadow: 0 0 0 0.2rem rgba(210, 10, 233, 0.25);
+        }
+
+        .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #dee2e6;
+            cursor: pointer;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .form-check-label {
+            margin-left: 0.5rem;
+            cursor: pointer;
+            color: #495057;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border: none;
+            border-radius: var(--border-radius);
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 4px 15px rgba(210, 10, 233, 0.3);
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(210, 10, 233, 0.4);
+            color: white;
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .info-alert {
+            border-left: 4px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, rgba(210, 10, 233, 0.05) 0%, rgba(139, 0, 168, 0.05) 100%);
+        }
+
+        .success-alert {
+            border-left: 4px solid var(--success-color);
+            border-radius: var(--border-radius);
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .input-group .form-control:focus {
+            border-left: 2px solid var(--primary-color);
+        }
+
+        .converted-value-display {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .converted-value-display label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+
+        .converted-value-display #converted-value {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #dee2e6, transparent);
+            margin: 2rem 0;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--danger-color);
+        }
+
+        .error-message {
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .btn-submit {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -105,41 +319,49 @@
     </div>
 
     <div class="container mt-4">
+        <!-- Display validation errors -->
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Please fix the following errors:</strong>
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('reseller.sellticketsave', ['id' => $id]) }}"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data" id="ticketForm">
             @csrf
-            {{-- @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif --}}
             <!-- Enter Number of Tickets -->
-            <div class="card p-3 mb-3">
-                <h6 class="fw-bold">Select Number of Tickets <span class="text-danger">*</span></h6>
-                <p class="text-muted small">
-                    If seat numbers are specified on your tickets, all tickets must be consecutive.
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h6><i class="bi bi-ticket-perforated icon"></i> Select Number of Tickets <span class="text-danger">*</span></h6>
+                </div>
+                <p class="text-muted mb-4">
+                    <i class="bi bi-info-circle"></i> If seat numbers are specified on your tickets, all tickets must be consecutive.
                     For non-consecutive tickets, you must create separate listings.
                 </p>
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="d-flex gap-2 flex-wrap mb-3">
                     <?php for ($i = 1; $i <= 5; $i++): ?>
-                    <button type="button" class="btn btn-outline-secondary ticket-btn btn-ticket"
+                    <button type="button" class="btn btn-ticket ticket-btn"
                         data-value="<?= $i ?>"><?= $i ?></button>
                     <?php endfor; ?>
-                    <button type="button" class="btn btn-outline-secondary btn-ticket" id="showDropdown">6+</button>
+                    <button type="button" class="btn btn-ticket" id="showDropdown">6+</button>
                 </div>
 
                 <!-- Hidden input to store the selected value -->
                 <input type="hidden" id="ticketInput" name="ticket_count" value="">
                 @error('ticket_count')
-                    <div class="text-danger">{{ $message }}</div>
+                    <div class="error-message">
+                        <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                    </div>
                 @enderror
 
-                <div id="ticketDropdownContainer" class="mt-2 d-none">
-                    <label for="ticketQuantity" class="form-label fw-bold">Select Quantity</label>
+                <div id="ticketDropdownContainer" class="mt-3 d-none">
+                    <label for="ticketQuantity" class="form-label">Select Quantity</label>
                     <select id="ticketQuantity" class="form-select">
                         <option selected value="">Select Tickets</option>
                         <?php for ($i = 6; $i <= 30; $i++): ?>
@@ -151,134 +373,164 @@
 
 
             <!-- Enter Seating Details -->
-            <div class="card p-3 mb-3">
-                <h5 class="fw-bold">Enter Seating Details <span class="text-danger fs-6">*</span></h5>
-                <p class="text-muted small">You are required to provide section, row, and seat information if
-                    available. Listings can be updated using My Account.</p>
-
-                <div class="mb-3">
-                    <label class="form-label" for="venue_seating">Section <span class="text-danger">*</span></label>
-                    <select class="form-select" name="venue_seating" id="venue_seating">
-                        <option value="">Please select...</option>
-                        @foreach ($venue_seatings as $seating)
-                            <option value="{{ $seating->id }}">
-                                {{ $seating->seating_type_name ?? 'Unnamed Section' }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('venue_seating')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h5><i class="bi bi-geo-alt icon"></i> Enter Seating Details <span class="text-danger fs-6">*</span></h5>
                 </div>
+                <p class="text-muted mb-4">
+                    <i class="bi bi-info-circle"></i> You are required to provide section, row, and seat information if
+                    available. Listings can be updated using My Account.
+                </p>
 
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label required-field" for="venue_seating">Section</label>
+                        <select class="form-select" name="venue_seating" id="venue_seating">
+                            <option value="">Please select...</option>
+                            @foreach ($venue_seatings as $seating)
+                                <option value="{{ $seating->id }}" {{ old('venue_seating') == $seating->id ? 'selected' : '' }}>
+                                    {{ $seating->seating_type_name ?? 'Unnamed Section' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('venue_seating')
+                            <div class="error-message">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Row (Enter a single letter (A-Z)) <span
-                            class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="row" placeholder="A or Z"
-                        value="{{ old('row') }}" maxlength="1">
-                    @error('row')
-                        <div class="text-danger">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Seat Number (0 - 99) <span class="text-danger">*</span></label>
-                    <div class="d-flex gap-2">
-                        <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
-                            placeholder="Seat From" maxlength="2">
-                        <span class="align-self-center">to</span>
-                        <input type="text" class="form-control" name="seat_to" placeholder="Seat to field is auto-filled based on ticket count and seat from"
-                            value="{{ old('seat_to') }}" maxlength="2">
-                        @error('seat_to')
-                            <div class="text-danger">{{ $message }}</div>
+                    <div class="col-md-6">
+                        <label class="form-label required-field">Row (Enter a single letter A-Z)</label>
+                        <input type="text" class="form-control" name="row" placeholder="e.g., A, B, C"
+                            value="{{ old('row') }}" maxlength="1" style="text-transform: uppercase;">
+                        @error('row')
+                            <div class="error-message">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
                         @enderror
                     </div>
                 </div>
 
-                <div class="mb-5">
-                    <label class="form-label">If you are unable to provide seating information, please select a
-                        reason:</label>
-                    <div class="form-check">
+                <div class="mb-4">
+                    <label class="form-label required-field">Seat Number (0 - 99)</label>
+                    <div class="d-flex gap-3 align-items-end">
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
+                                placeholder="Seat From" maxlength="2">
+                        </div>
+                        <span class="fw-bold text-muted mb-2">to</span>
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control" name="seat_to" 
+                                placeholder="Auto-filled" value="{{ old('seat_to') }}" maxlength="2" readonly>
+                            <small class="text-muted">Auto-calculated</small>
+                        </div>
+                    </div>
+                    @error('seat_to')
+                        <div class="error-message mt-2">
+                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                        </div>
+                    @enderror
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">If you are unable to provide seating information, please select a reason:</label>
+                    <div class="form-check mb-2">
                         <input class="form-check-input" type="radio" name="seat_reason" id="reason1"
-                            value="not_provided">
-                        <label class="form-check-label" for="reason1">The primary site has not provided me with this
-                            information</label>
+                            value="not_provided" {{ old('seat_reason') == 'not_provided' ? 'checked' : '' }}>
+                        <label class="form-check-label" for="reason1">
+                            The primary site has not provided me with this information
+                        </label>
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="seat_reason" id="reason2"
-                            value="other">
+                            value="other" {{ old('seat_reason') == 'other' ? 'checked' : '' }}>
                         <label class="form-check-label" for="reason2">Other</label>
                     </div>
                 </div>
 
-                <!-- selecting ticket Details -->
+                <div class="section-divider"></div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted">Do you want to sell all your tickets together?</label>
+                <!-- selecting ticket Details -->
+                <div class="mb-0">
+                    <label class="form-label fw-bold mb-3">Do you want to sell all your tickets together?</label>
                     @foreach ($splittypes as $split)
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="radio" name="sell_together"
-                                id="sell_{{ $split->id }}" value="{{ $split->id }}">
-                            <label class="form-check-label"
-                                for="sell_{{ $split->id }}">{{ $split->split_name }}</label>
+                                id="sell_{{ $split->id }}" value="{{ $split->id }}" {{ old('sell_together') == $split->id ? 'checked' : '' }}>
+                            <label class="form-check-label" for="sell_{{ $split->id }}">
+                                {{ $split->split_name }}
+                            </label>
                         </div>
                     @endforeach
+                    @error('sell_together')
+                        <div class="error-message mt-2">
+                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                        </div>
+                    @enderror
                 </div>
-
-
             </div>
-            <div class="alert alert-success d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
+            <div class="alert alert-success success-alert d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-check-circle me-2 fs-5"></i>
                 <span>Unlike other sites, it is always free to list your tickets for sale on Just 4 Entertainment</span>
             </div>
 
             <!-- Enter Face Value Section -->
-            <div class="card mb-3" style="max-width: 100%;">
-                <div class="card-body">
-                    <h6 class="fw-bold">Enter Face Value</h6>
-                    <div class="alert alert-light d-flex align-items-center" role="alert">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <span>Face value is the price printed on the ticket, excluding any booking fees.</span>
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h6><i class="bi bi-currency-dollar icon"></i> Enter Face Value</h6>
+                </div>
+                <div class="alert alert-light info-alert d-flex align-items-center mb-4" role="alert">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span>Face value is the price printed on the ticket, excluding any booking fees.</span>
+                </div>
+
+                <div class="row g-3">
+                    {{-- Currency Dropdown --}}
+                    <div class="col-md-4">
+                        <label for="currency" class="form-label required-field">Currency</label>
+                        <select class="form-select" id="currency" name="currency">
+                            <option value="">Select Currency</option>
+                            @foreach ($currency as $val)
+                                <option value="{{ $val->id }}" data-code="{{ $val->short_name }}" {{ old('currency') == $val->id ? 'selected' : '' }}>
+                                    {{ $val->symbol . ' ' . $val->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('currency')
+                            <div class="error-message">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
-                    <div class="row g-2">
-                        {{-- Currency Dropdown --}}
-                        <div class="col-md-4">
-                            <label for="currency" class="form-label">Currency</label>
-                            <select class="form-select" id="currency" name="currency">
-                                <option selected>Select</option>
-                                @foreach ($currency as $val)
-                                    <option value="{{ $val->id }}" data-code="{{ $val->short_name }}">
-                                        {{ $val->symbol . ' ' . $val->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    {{-- Amount Input --}}
+                    <div class="col-md-3">
+                        <label for="amount" class="form-label required-field">Amount (Price per ticket)</label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="currency-code">💱</span>
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount"
+                                placeholder="0.00" value="{{ old('amount') }}">
                         </div>
-
-                        {{-- Amount Input --}}
-                        <div class="col-md-3">
-                            <label for="amount" class="form-label">Amount (Price per ticket)</label>
-                            <div class="input-group">
-                                <span class="input-group-text" id="currency-code">💱</span>
-                                <input type="text" class="form-control" id="amount" name="amount"
-                                    placeholder="0">
+                        @error('amount')
+                            <div class="error-message">
+                                <i class="bi bi-exclamation-circle"></i> {{ $message }}
                             </div>
-                        </div>
+                        @enderror
+                    </div>
 
-                        {{-- Cents Input --}}
-                        <div class="col-md-2">
-                            <label for="cents" class="form-label">Cents</label>
-                            <input type="text" class="form-control" id="cents" name="cents"
-                                placeholder="00" maxlength="2">
-                        </div>
+                    {{-- Cents Input --}}
+                    <div class="col-md-2">
+                        <label for="cents" class="form-label">Cents</label>
+                        <input type="number" class="form-control" id="cents" name="cents"
+                            placeholder="00" maxlength="2" min="0" max="99" value="{{ old('cents') }}">
+                    </div>
 
-                        {{-- Converted Value Display --}}
-                        <div class="col-md-3 d-flex align-items-center">
-                            <div>
-                                <label class="form-label">Converted Value</label>
-                                <div id="converted-value" class="fw-bold">$0.00 USD</div>
-                            </div>
+                    {{-- Converted Value Display --}}
+                    <div class="col-md-3">
+                        <div class="converted-value-display">
+                            <label>Converted Value</label>
+                            <div id="converted-value" class="fw-bold">$0.00 USD</div>
                         </div>
                     </div>
                 </div>
@@ -287,100 +539,131 @@
 
 
             <!-- Ticket type Section -->
-            <div class="mt-4">
-                <div class="card mb-3 p-4">
-                    <h5 class="fw-bold">Choose Ticket Type</h5>
-                    <div class="row g-3">
-                        <input type="hidden" id="ticketTypeInput" name="ticket_type" value="">
-                        @foreach ($ticket_type as $type)
-                            <div class="col-md-6">
-                                <div class="card ticket-type p-3"
-                                    style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#add8e6' : '#90ee90') }};"
-                                    onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
-                                    <h6 class="fw-bold">{{ $type->ticket_type_name }}</h6>
-                                    <p class="text-muted mb-0">{{ $type->description }}</p>
-                                </div>
-
-                                <!-- Mobile App dropdown section within the same column -->
-                                @if (strtolower($type->ticket_type_name) == 'mobile ticket transfer' ||
-                                        (strpos(strtolower($type->ticket_type_name), 'mobile') !== false &&
-                                            strpos(strtolower($type->ticket_type_name), 'transfer') !== false))
-                                    <div id="mobileAppSelect-{{ $type->id }}"
-                                        class="mt-2 d-none mobile-app-select">
-                                        <input type="hidden" id="mobileAppInput" name="mobile_app" value="">
-                                        <label for="mobileApp" class="form-label">Mobile Application:</label>
-                                        <select id="mobileApp" class="form-select">
-                                            <option selected>Select an application</option>
-                                            @foreach ($mobile_applications as $app)
-                                                <option value="{{ $app->id }}">{{ $app->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h5><i class="bi bi-ticket-perforated icon"></i> Choose Ticket Type <span class="text-danger">*</span></h5>
                 </div>
+                <div class="row g-3">
+                    <input type="hidden" id="ticketTypeInput" name="ticket_type" value="{{ old('ticket_type') }}">
+                    @foreach ($ticket_type as $type)
+                        <div class="col-md-6">
+                            <div class="card ticket-type p-4"
+                                style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#e3f2fd' : '#f1f8e9') }};"
+                                onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
+                                <h6 class="fw-bold mb-2">{{ $type->ticket_type_name }}</h6>
+                                <p class="text-muted mb-0 small">{{ $type->description ?? 'Select this ticket type' }}</p>
+                            </div>
+
+                            <!-- Mobile App dropdown section within the same column -->
+                            @if (strtolower($type->ticket_type_name) == 'mobile ticket transfer' ||
+                                    (strpos(strtolower($type->ticket_type_name), 'mobile') !== false &&
+                                        strpos(strtolower($type->ticket_type_name), 'transfer') !== false))
+                                <div id="mobileAppSelect-{{ $type->id }}"
+                                    class="mt-3 d-none mobile-app-select">
+                                    <input type="hidden" id="mobileAppInput" name="mobile_app" value="{{ old('mobile_app') }}">
+                                    <label for="mobileApp" class="form-label required-field">Mobile Application</label>
+                                    <select id="mobileApp" class="form-select">
+                                        <option value="">Select an application</option>
+                                        @foreach ($mobile_applications as $app)
+                                            <option value="{{ $app->id }}" {{ old('mobile_app') == $app->id ? 'selected' : '' }}>{{ $app->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('mobile_app')
+                                        <div class="error-message">
+                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                        </div>
+                                    @enderror
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                @error('ticket_type')
+                    <div class="error-message mt-3">
+                        <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                    </div>
+                @enderror
             </div>
-            <div class="alert alert-success d-flex align-items-center mt-3" role="alert">
-                <i class="bi bi-ticket me-2"></i>
-                <span>99 buyers are currently searching for tickets for this event. Now is a good time to
-                    sell!</span>
+            
+            <div class="alert alert-success success-alert d-flex align-items-center mt-4" role="alert">
+                <i class="bi bi-ticket me-2 fs-5"></i>
+                <span>99 buyers are currently searching for tickets for this event. Now is a good time to sell!</span>
             </div>
 
             <!-- Restriction and requirements Section -->
-            <div class="mt-4">
-                <div class="card mb-3 p-4">
-                    <h5 class="fw-bold">Select Restrictions on Use</h5>
-                    <p>If any of the following conditions apply to your tickets, please select them from the list below.
-                    </p>
-                    <div class="row g-3">
-                        @foreach ($restrictions as $restriction)
-                            <div class="col-md-4">
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h5><i class="bi bi-shield-exclamation icon"></i> Select Restrictions on Use</h5>
+                </div>
+                <p class="text-muted mb-4">If any of the following conditions apply to your tickets, please select them from the list below.</p>
+                <div class="row g-3">
+                    @foreach ($restrictions as $restriction)
+                        <div class="col-md-4">
+                            <div class="form-check">
                                 <input type="checkbox" id="restriction_{{ $restriction->id }}" name="restrictions[]"
-                                    value="{{ $restriction->id }}" class="restriction-checkbox"
-                                    data-name="{{ $restriction->restrictions }}">
-                                <label
-                                    for="restriction_{{ $restriction->id }}">{{ $restriction->restrictions }}</label>
+                                    value="{{ $restriction->id }}" class="form-check-input restriction-checkbox"
+                                    data-name="{{ $restriction->restrictions }}"
+                                    {{ in_array($restriction->id, old('restrictions', [])) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="restriction_{{ $restriction->id }}">
+                                    {{ $restriction->restrictions }}
+                                </label>
                             </div>
-                        @endforeach
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Ticket Details Section -->
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h5><i class="bi bi-list-check icon"></i> Select Required Ticket Details</h5>
+                </div>
+                <p class="text-muted mb-4">If any of the following conditions apply to your tickets, please select the corresponding options below.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input" {{ old('limitedView') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="limitedView">Limited or restricted view</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="vipPass" name="vipPass" class="form-check-input" {{ old('vipPass') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="vipPass">Includes VIP pass</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="mealPackage" name="mealPackage" class="form-check-input" {{ old('mealPackage') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="mealPackage">Ticket and meal package</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="parking" name="parking" class="form-check-input" {{ old('parking') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="parking">Includes parking</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="standingOnly" name="standingOnly" class="form-check-input" {{ old('standingOnly') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="standingOnly">Standing Only</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="aisleSeat" name="aisleSeat" class="form-check-input" {{ old('aisleSeat') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="aisleSeat">Aisle seat</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-
-            <div class="mt-4">
-                <div class="card mb-3 p-4">
-                    <h5 class="fw-bold">Select Required Ticket Details</h5>
-                    <p>If any of the following conditions apply to your tickets, please select the corresponding options
-                        below.</p>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <input type="checkbox" id="limitedView"> <label for="limitedView">Limited or restricted
-                                view</label>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="checkbox" id="vipPass"> <label for="vipPass">Includes VIP pass</label>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="checkbox" id="mealPackage"> <label for="mealPackage">Ticket and meal
-                                package</label>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="checkbox" id="parking"> <label for="parking">Includes parking</label>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="checkbox" id="standingOnly"> <label for="standingOnly">Standing Only</label>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="checkbox" id="aisleSeat"> <label for="aisleSeat">Aisle seat</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-4 text-center">
-                <button type="submit" class="btn btn-success px-5 w-50">Continue</button>
+            <!-- Submit Button -->
+            <div class="mt-5 mb-5 text-center">
+                <button type="submit" class="btn btn-submit">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Continue to Next Step
+                </button>
             </div>
 
         </form>
@@ -462,7 +745,38 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
     <script>
+        // Configure Toastr
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+
+        // Display success message
+        @if(session('success'))
+            toastr.success("{{ session('success') }}", "Success!");
+        @endif
+
+        // Display error message
+        @if(session('error'))
+            toastr.error("{{ session('error') }}", "Error!");
+        @endif
+
         document.addEventListener('DOMContentLoaded', function() {
             // Ticket quantity buttons
             const ticketButtons = document.querySelectorAll('.btn-ticket');
@@ -578,35 +892,76 @@
             }
 
             // Form validation before submit
-            const form = document.querySelector('form');
+            const form = document.getElementById('ticketForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
+                    let hasErrors = false;
+                    let errorMessages = [];
+
                     // Check if ticket count is selected
                     if (!ticketInput.value) {
-                        e.preventDefault();
-                        alert('Please select the number of tickets');
-                        return false;
+                        hasErrors = true;
+                        errorMessages.push('Please select the number of tickets');
                     }
 
                     // Check if ticket type is selected
                     const ticketTypeInput = document.getElementById('ticketTypeInput');
                     if (!ticketTypeInput.value) {
-                        e.preventDefault();
-                        alert('Please select a ticket type');
-                        return false;
+                        hasErrors = true;
+                        errorMessages.push('Please select a ticket type');
+                    }
+
+                    // Check if venue seating is selected
+                    const venueSeating = document.querySelector('select[name="venue_seating"]');
+                    if (!venueSeating.value) {
+                        hasErrors = true;
+                        errorMessages.push('Please select a section');
+                    }
+
+                    // Check if sell together is selected
+                    const sellTogether = document.querySelector('input[name="sell_together"]:checked');
+                    if (!sellTogether) {
+                        hasErrors = true;
+                        errorMessages.push('Please select whether to sell tickets together');
+                    }
+
+                    // Check if currency is selected
+                    const currency = document.getElementById('currency');
+                    if (!currency.value || currency.value === 'Select') {
+                        hasErrors = true;
+                        errorMessages.push('Please select a currency');
+                    }
+
+                    // Check if amount is entered
+                    const amount = document.getElementById('amount');
+                    if (!amount.value || parseFloat(amount.value) <= 0) {
+                        hasErrors = true;
+                        errorMessages.push('Please enter a valid amount');
                     }
 
                     // Check if mobile app is selected for mobile transfer
-                    if (ticketTypeInput.value === 'mobile-transfer') {
-                        const mobileAppInput = document.getElementById('mobileAppInput');
-                        if (!mobileAppInput.value) {
-                            e.preventDefault();
-                            alert('Please select a mobile application');
-                            return false;
+                    if (ticketTypeInput.value) {
+                        const ticketTypeName = document.querySelector(`.ticket-type[onclick*="'${ticketTypeInput.value}'"]`);
+                        if (ticketTypeName && ticketTypeName.textContent.toLowerCase().includes('mobile') && ticketTypeName.textContent.toLowerCase().includes('transfer')) {
+                            const mobileAppInput = document.getElementById('mobileAppInput');
+                            if (!mobileAppInput || !mobileAppInput.value) {
+                                hasErrors = true;
+                                errorMessages.push('Please select a mobile application for mobile ticket transfer');
+                            }
                         }
                     }
 
-                    // Additional validation as needed
+                    if (hasErrors) {
+                        e.preventDefault();
+                        toastr.error(errorMessages.join('<br>'), 'Validation Error', {
+                            timeOut: 8000,
+                            extendedTimeOut: 2000
+                        });
+                        return false;
+                    }
+
+                    // Show loading message
+                    toastr.info('Creating ticket, please wait...', 'Processing');
                 });
             }
 
