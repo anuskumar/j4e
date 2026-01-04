@@ -1446,7 +1446,7 @@ class ResellerController extends Controller
         }
 
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.is_admin_approved as is_admin_approved','event_tickets.ticket_status as ticket_status','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->orderBy('event_tickets.id', 'desc')
        ->paginate(20)->appends(request()->all());
 
@@ -1599,10 +1599,9 @@ class ResellerController extends Controller
         ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')
         ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
-        ;
+        ->where('event_tickets.id', $id);
 
-        $data_all->find($id);
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.is_admin_approved as is_admin_approved','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->get()->toArray();
 
         $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();

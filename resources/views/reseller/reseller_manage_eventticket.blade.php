@@ -11,15 +11,13 @@ $val = $data[0];
 
             </div>
             <div class="col-md-3">
+
+              {{-- {{ print_r($val) }} --}}
                   @if ($val['is_admin_approved'] == 1)
-                                               @if($val['ticket_status'] == 1)
-                                                <span class="badge text-bg-success">Active</span>
-                                                @else
-                                                    <span class="badge text-bg-primary">Paused</span>
-                                                @endif
-                                            @else
-                                            <span class="badge text-bg-primary">Waiting for Approval</span>
-                                            @endif
+                    <span class="badge text-bg-success">Approved</span>
+                  @else
+                    <span class="badge text-bg-warning">Waiting for Approval ({{ $val['is_admin_approved'] }})</span>
+                  @endif
             </div>
             <div class="col-md-3">
 

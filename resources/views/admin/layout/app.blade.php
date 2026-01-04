@@ -668,8 +668,41 @@
     <!--- Chart bundle min js --->
     <script src="{{ asset('admin_assets/plugins/chart.js/Chart.bundle.min.js') }}"></script>
 
+    <!--- Sparkline fallback - must be defined BEFORE sparkline plugin loads --->
+    <script>
+        // Define sparkline fallback immediately to prevent errors
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                // Store original if it exists, otherwise create fallback
+                var originalSparkline = jQuery.fn.sparkline;
+                jQuery.fn.sparkline = function() {
+                    // If original exists and is a function, use it
+                    if (typeof originalSparkline === 'function') {
+                        return originalSparkline.apply(this, arguments);
+                    }
+                    // Otherwise return this to allow chaining
+                    return this;
+                };
+            }
+        })();
+    </script>
+    
     <!--- JQuery sparkline js --->
     <script src="{{ asset('admin_assets/plugins/jquery-sparkline/jquery.sparkline.min.js') }}"></script>
+    
+    <!--- Ensure sparkline is available after plugin loads --->
+    <script>
+        // Re-check and ensure sparkline is available after plugin loads
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                if (typeof jQuery.fn.sparkline === 'undefined') {
+                    jQuery.fn.sparkline = function() { 
+                        return this; 
+                    };
+                }
+            }
+        })();
+    </script>
 
     <!--- Internal Sampledata js --->
     <script src="{{ asset('admin_assets/js/chart.flot.sampledata.js') }}"></script>
@@ -701,8 +734,23 @@
     <!--- Scripts js --->
     <script src="{{ asset('admin_assets/js/script.js') }}"></script>
 
+    <!--- Ensure sparkline is available before index.js runs --->
+    <script>
+        // Final check before index.js loads - ensure sparkline exists
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                if (typeof jQuery.fn.sparkline === 'undefined' || typeof jQuery.fn.sparkline !== 'function') {
+                    jQuery.fn.sparkline = function(options, callback) {
+                        // No-op function that returns the jQuery object for chaining
+                        return this;
+                    };
+                }
+            }
+        })();
+    </script>
+
     <!--- Index js --->
-    <script src="{{ asset('admin_assets/js/index.js') }}"></script>
+    <script src="{{ asset('admin_assets/js/index.js') }}" onerror="console.warn('index.js failed to load');"></script>
 
     <!--themecolor js-->
     <script src="{{ asset('admin_assets/js/themecolor.js') }}"></script>

@@ -96,6 +96,11 @@
 <hr>
                             <div class="booking-summary">
                                 <div class="booking-item-wrap">
+                                    @php
+                                        // Use face_value if available and > 0, otherwise use ticket_amount
+                                        $ticket_price = ($data->face_value && $data->face_value > 0) ? $data->face_value : ($data->ticket_amount ?? 0);
+                                        $total_amount = $ticket_price * $ticket_count;
+                                    @endphp
                                     <ul class="booking-date">
                                         <li>Date <span>{{ date('d M Y',strtotime($data->event_date)) }}</span></li>
                                         <li>Time <span>{{ date('H:i A',strtotime($data->event_time)) }}</span></li>
@@ -103,14 +108,14 @@
                                     <ul class="booking-fee">
                                         <li>Ticket Name <span>{{ Str::ucfirst($data->ticket_name) }}</span></li>
                                         <li>Number of Tickets <span>{{ $ticket_count }}</span></li>
-                                        <li>Ticket Amount <span>{{ round($data->web_price) . $data->short_name }}</span></li>
-                                        <li>Total Amount <span>{{ round($data->web_price * $ticket_count) . $data->short_name  }}</span></li>
+                                        <li>Ticket Amount <span>{{ number_format($ticket_price, 2) . ' ' . $data->short_name }}</span></li>
+                                        <li>Total Amount <span>{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span></li>
                                     </ul>
                                     <div class="booking-total">
                                         <ul class="booking-total-list">
                                             <li>
                                                 <span>Final Amount</span>
-                                                <span class="total-cost">{{ round($data->web_price * $ticket_count) . $data->short_name  }}</span>
+                                                <span class="total-cost">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -199,7 +204,14 @@
 
                                 </div> -->
 
-                                <input type="hidden" value="{{ round($data->web_price * $ticket_count) }}" name="payment_amount">
+                                @php
+                                    // Calculate ticket price and total amount for form submission
+                                    $ticket_price_form = ($data->face_value && $data->face_value > 0) ? $data->face_value : ($data->ticket_amount ?? 0);
+                                    $total_amount_form = $ticket_price_form * $ticket_count;
+                                    // Round to 2 decimal places to preserve cents
+                                    $total_amount_form = round($total_amount_form, 2);
+                                @endphp
+                                <input type="hidden" value="{{ $total_amount_form }}" name="payment_amount">
                                 <input type="hidden" value="{{ $data->event_id }}" name="event_id">
                                 <input type="hidden" value="{{ $data->id }}" name="event_ticket_id">
                                 <input type="hidden" value="{{ $ticket_count }}" name="total_number">
@@ -211,50 +223,73 @@
 
                                 <div class="info-widget">
                                    <h4 class="card-title">Shipping Information</h4>
+                                   @if ($errors->any())
+                                       <div class="alert alert-danger">
+                                           <ul class="mb-0">
+                                               @foreach ($errors->all() as $error)
+                                                   <li>{{ $error }}</li>
+                                               @endforeach
+                                           </ul>
+                                       </div>
+                                   @endif
                                    <div class="row">
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Name</label>
-                                               <input class="form-control" name="shipping_name" value="{{ Auth::user()->name }}" type="text" required>
+                                               <label>Name <span class="text-danger">*</span></label>
+                                               <input class="form-control @error('shipping_name') is-invalid @enderror" name="shipping_name" value="{{ old('shipping_name', Auth::user()->name) }}" type="text" required>
+                                               @error('shipping_name')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Address Line 1</label>
-                                               <textarea class="form-control" name="shipping_address1" required>{{ Auth::user()->address }} </textarea>
+                                               <label>Address Line 1 <span class="text-danger">*</span></label>
+                                               <textarea class="form-control @error('shipping_address1') is-invalid @enderror" name="shipping_address1" required>{{ old('shipping_address1', Auth::user()->address) }}</textarea>
+                                               @error('shipping_address1')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
                                                <label>Address Line 2</label>
-                                               <textarea class="form-control" name="shipping_address2" > </textarea>
+                                               <textarea class="form-control @error('shipping_address2') is-invalid @enderror" name="shipping_address2">{{ old('shipping_address2') }}</textarea>
+                                               @error('shipping_address2')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Country</label>
-                                              <select class="form-control" name="shipping_country" required>
-
-                                               <option value=""> select</option>
+                                               <label>Country <span class="text-danger">*</span></label>
+                                              <select class="form-control @error('shipping_country') is-invalid @enderror" name="shipping_country" id="shipping_country" required>
+                                               <option value="">Select Country</option>
                                                @foreach ($countries as $country )
-
-                                               <option value="{{ $country->id }}">{{ $country->country_name }}</option>
-
+                                               <option value="{{ $country->id }}" {{ old('shipping_country') == $country->id ? 'selected' : '' }}>{{ $country->country_name }}</option>
                                                @endforeach
-
                                               </select>
+                                               @error('shipping_country')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>City</label>
-                                               <input class="form-control"  required  type="text" name="shipping_city" >
+                                               <label>City <span class="text-danger">*</span></label>
+                                               <input class="form-control @error('shipping_city') is-invalid @enderror" type="text" name="shipping_city" value="{{ old('shipping_city') }}" required>
+                                               @error('shipping_city')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Pincode</label>
-                                               <input class="form-control" required type="text" name="shipping_pincode" >
+                                               <label>Pincode <span class="text-danger">*</span></label>
+                                               <input class="form-control @error('shipping_pincode') is-invalid @enderror" type="text" name="shipping_pincode" value="{{ old('shipping_pincode') }}" required>
+                                               @error('shipping_pincode')
+                                                   <div class="invalid-feedback">{{ $message }}</div>
+                                               @enderror
                                            </div>
                                        </div>
                                    </div>
@@ -290,7 +325,7 @@
         src="https://checkout.stripe.com/checkout.js"
         class="stripe-button"
         data-key="{{ config('services.stripe.key') }}"
-        data-amount="{{ round($data->web_price * $ticket_count * 100) }}"
+        data-amount="{{ round($total_amount_form * 100) }}"
         data-locale="auto"
         data-currency="{{ strtolower($data->currency_name) }}"
     ></script>
@@ -421,10 +456,9 @@
             startTimer(fiveMinutes, display);
         };
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script scr="http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js"></script>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
 
     <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 
@@ -503,7 +537,6 @@
         --------------------------------------------*/
 
         var $form = $(".require-validation");
-  alert($form);
         $('form.require-validation').bind('submit', function(e) {
             var $form = $(".require-validation"),
             inputSelector = ['input[type=email]', 'input[type=password]',
@@ -543,7 +576,7 @@
         --------------------------------------------
         --------------------------------------------*/
         function stripeResponseHandler(status, response) {
-            if (response.error)
+            if (response.error) {
                 $('.error')
                     .removeClass('hide')
                     .find('.alert')
@@ -562,6 +595,79 @@
 
 
     $(document).ready(function() {
+        // Form validation before Stripe checkout
+        $('#payment-form').on('submit', function(e) {
+            var isValid = true;
+            var errorMessages = [];
+            
+            // Validate shipping name
+            if ($('input[name="shipping_name"]').val().trim() === '') {
+                $('input[name="shipping_name"]').addClass('is-invalid');
+                isValid = false;
+                errorMessages.push('Please enter your name.');
+            } else {
+                $('input[name="shipping_name"]').removeClass('is-invalid');
+            }
+            
+            // Validate shipping address
+            if ($('textarea[name="shipping_address1"]').val().trim() === '') {
+                $('textarea[name="shipping_address1"]').addClass('is-invalid');
+                isValid = false;
+                errorMessages.push('Please enter your address.');
+            } else {
+                $('textarea[name="shipping_address1"]').removeClass('is-invalid');
+            }
+            
+            // Validate country
+            if ($('select[name="shipping_country"]').val() === '' || $('select[name="shipping_country"]').val() === null) {
+                $('select[name="shipping_country"]').addClass('is-invalid');
+                isValid = false;
+                errorMessages.push('Please select a country.');
+            } else {
+                $('select[name="shipping_country"]').removeClass('is-invalid');
+            }
+            
+            // Validate city
+            if ($('input[name="shipping_city"]').val().trim() === '') {
+                $('input[name="shipping_city"]').addClass('is-invalid');
+                isValid = false;
+                errorMessages.push('Please enter your city.');
+            } else {
+                $('input[name="shipping_city"]').removeClass('is-invalid');
+            }
+            
+            // Validate pincode
+            if ($('input[name="shipping_pincode"]').val().trim() === '') {
+                $('input[name="shipping_pincode"]').addClass('is-invalid');
+                isValid = false;
+                errorMessages.push('Please enter your pincode.');
+            } else {
+                $('input[name="shipping_pincode"]').removeClass('is-invalid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                // Show error message
+                if ($('.info-widget .alert-danger').length === 0) {
+                    $('.info-widget').prepend('<div class="alert alert-danger"><ul class="mb-0"></ul></div>');
+                }
+                var $errorList = $('.info-widget .alert-danger ul');
+                $errorList.empty();
+                errorMessages.forEach(function(msg) {
+                    $errorList.append('<li>' + msg + '</li>');
+                });
+                $('html, body').animate({
+                    scrollTop: $('.alert-danger').offset().top - 100
+                }, 500);
+                return false;
+            }
+        });
+        
+        // Remove invalid class on input
+        $('input, textarea, select').on('input change', function() {
+            $(this).removeClass('is-invalid');
+        });
+        
         $('#country').on('change', function() {
             let countryId = $(this).val();
             $('#city').empty().append('<option value="">Loading...</option>');

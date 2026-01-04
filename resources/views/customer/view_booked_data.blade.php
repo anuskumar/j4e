@@ -22,11 +22,66 @@
 			<!-- Page Content -->
 			<div class="content">
 				<div class="container">
+					<style>
+						@media print {
+							.no-print {
+								display: none !important;
+							}
+							.breadcrumb-bar {
+								display: none !important;
+							}
+							.invoice-content {
+								box-shadow: none !important;
+								border: none !important;
+							}
+							body {
+								background: white !important;
+							}
+						}
+						.invoice-content {
+							background: #fff;
+							padding: 30px;
+							border-radius: 8px;
+							box-shadow: 0 0 10px rgba(0,0,0,0.1);
+						}
+						.invoice-header {
+							border-bottom: 2px solid #e3f2fd;
+							padding-bottom: 20px;
+							margin-bottom: 30px;
+						}
+						.invoice-logo img {
+							max-height: 60px;
+							width: auto;
+						}
+						.invoice-table {
+							margin-bottom: 0;
+						}
+						.invoice-table thead {
+							background-color: #f8f9fa;
+						}
+						.invoice-table thead th {
+							border-bottom: 2px solid #dee2e6;
+							font-weight: 600;
+							padding: 12px;
+						}
+						.invoice-table tbody td {
+							padding: 12px;
+							vertical-align: middle;
+						}
+					</style>
 
 					<div class="row">
 						<div class="col-lg-12">
-							<div class="invoice-content">
-								<div class="invoice-item">
+							<div class="invoice-content" id="invoice-content">
+								<!-- PDF Download Button -->
+								<div class="text-right mb-3">
+									<a href="{{ route('invoice.pdf', $data->id) }}" class="btn btn-primary" target="_blank">
+										<i class="fas fa-file-pdf mr-2"></i>Download PDF
+									</a>
+								</div>
+
+								<!-- Invoice Header -->
+								<div class="invoice-item invoice-header">
 									<div class="row">
 										<div class="col-md-6">
 											<div class="invoice-logo">
@@ -37,36 +92,50 @@
                                                 @endif
 											</div>
 										</div>
-										<div class="col-md-6">
-											<p class="invoice-details">
-												<strong>Order:</strong> #00124 <br>
-												<strong>Issued:</strong> 20/07/2020
-											</p>
+										<div class="col-md-6 text-right">
+											<div class="invoice-details">
+												<h3 class="mb-2" style="color: #333; font-weight: 600;">Invoice</h3>
+												<p class="mb-1"><strong>Order ID:</strong> #{{ str_pad($data->id, 6, '0', STR_PAD_LEFT) }}</p>
+												<p class="mb-1"><strong>Issue Date:</strong> {{ $data->payment_date ? date('d M Y', strtotime($data->payment_date)) : date('d M Y') }}</p>
+												<p class="mb-0"><strong>Status:</strong> <span class="badge badge-info">{{ $data->status_name }}</span></p>
+											</div>
 										</div>
-                                        <div class="other-info">
-                                            <h4>Booking Status</h4>
-                                            <p class="text-muted mb-0"> {{ $data->status_name }}</p>
-                                        <p><strong>
-
-                                        </strong></p>
-                                        </div>
 									</div>
 								</div>
 
-								<!-- Invoice Item -->
-
-								<!-- /Invoice Item -->
-
-								<!-- Invoice Item -->
+								<!-- Invoice Item - Billing Info -->
 								<div class="invoice-item">
 									<div class="row">
-										<div class="col-md-12">
+										<div class="col-md-6">
+											<div class="invoice-info">
+												<strong class="customer-text">Invoice To</strong>
+												<p class="invoice-details invoice-details-two">
+													{{ $data->shipping_name ?? Auth::user()->name }}<br>
+													@if($data->shipping_address1)
+													{{ $data->shipping_address1 }}<br>
+													@endif
+													@if($data->shipping_address2)
+													{{ $data->shipping_address2 }}<br>
+													@endif
+													@if($data->shipping_city)
+													{{ $data->shipping_city }}{{ $data->shipping_pincode ? ', ' . $data->shipping_pincode : '' }}<br>
+													@endif
+													@if($data->country_name)
+													{{ $data->country_name }}
+													@endif
+												</p>
+											</div>
+										</div>
+										<div class="col-md-6">
 											<div class="invoice-info">
 												<strong class="customer-text">Payment Method</strong>
-												<p class="invoice-details invoice-details-two">
-													Credit /Debit Card <br>
-													{{ 'XXXX-XXXX-XXXX-'.substr($data->payment_card_number,-4) }}<br>
-													<br>
+												<p class="invoice-details">
+													Credit / Debit Card <br>
+													@if($data->payment_card_number)
+													{{ 'XXXX-XXXX-XXXX-' . substr($data->payment_card_number, -4) }}
+													@else
+													N/A
+													@endif
 												</p>
 											</div>
 										</div>
@@ -74,7 +143,7 @@
 								</div>
 								<!-- /Invoice Item -->
 
-								<!-- Invoice Item -->
+								<!-- Invoice Item - Order Summary -->
 								<div class="invoice-item invoice-table-wrap">
 									<div class="row">
 										<div class="col-md-12">
@@ -84,18 +153,33 @@
 														<tr>
 															<th>Event</th>
 															<th class="text-center">Number of Tickets</th>
-															{{-- <th class="text-center">VAT</th> --}}
+															<th class="text-right">Unit Price</th>
 															<th class="text-right">Amount</th>
 														</tr>
 													</thead>
 													<tbody>
 														<tr>
-															<td>{{ $data->event_name }}</td>
+															<td><strong>{{ $data->event_name }}</strong></td>
 															<td class="text-center">{{ $count }}</td>
-															{{-- <td class="text-center">$0</td> --}}
-															<td class="text-right">{{ @$ticket->ticket_amount.' '.@$data->currency_name }}</td>
+															<td class="text-right">{{ number_format(@$ticket->ticket_amount, 2) . ' ' . @$data->currency_name }}</td>
+															<td class="text-right"><strong>{{ number_format($data->payment_amount, 2) . ' ' . $data->currency_name }}</strong></td>
 														</tr>
-
+													</tbody>
+												</table>
+											</div>
+										</div>
+										<div class="col-md-6 col-xl-4 ml-auto mt-3">
+											<div class="table-responsive">
+												<table class="invoice-table-two table">
+													<tbody>
+														<tr>
+															<th>Subtotal:</th>
+															<td><span>{{ number_format($data->payment_amount, 2) . ' ' . $data->currency_name }}</span></td>
+														</tr>
+														<tr>
+															<th>Total Amount:</th>
+															<td><strong><span>{{ number_format($data->payment_amount, 2) . ' ' . $data->currency_name }}</span></strong></td>
+														</tr>
 													</tbody>
 												</table>
 											</div>
@@ -124,100 +208,93 @@
 								</div>
                                 <br>
                                 <br>
+								<!-- Invoice Item - Ticket Details Table -->
 								<div class="invoice-item invoice-table-wrap">
 									<div class="row">
-										<div class="col-md-6">
+										<div class="col-md-12">
+											<h4 class="mb-3">Ticket Details</h4>
 											<div class="table-responsive">
 												<table class="invoice-table table table-bordered">
 													<thead>
 														<tr>
-															<th>Event Details</th>
-															<th class="text-center"></th>
-															{{-- <th class="text-center">VAT</th> --}}
-
+															<th>#</th>
+															<th>Ticket Serial Number</th>
+															<th>Seat Number</th>
+															<th>Event Date</th>
+															<th>Event Timing</th>
+															<th>Seating Type</th>
+															<th>Seat Row</th>
 														</tr>
 													</thead>
-
-                                                        @foreach ($data_list as $list )
-                                                        <tbody>
-                                                        <tr>
-															<td>{{ "Ticket Serial" }}</td>
-															<td class="text-center">{{ $list->ticket_serial_number }}</td>
-
+													<tbody>
+														@foreach ($data_list as $list)
+														<tr>
+															<td>{{ $loop->iteration }}</td>
+															<td><strong>{{ $list->ticket_serial_number ?? 'N/A' }}</strong></td>
+															<td>{{ $list->seat_number_prefix ?? 'N/A' }}</td>
+															<td>{{ $list->event_date ? date('d M Y', strtotime($list->event_date)) : 'N/A' }}</td>
+															<td>
+																@if($list->from_time && $list->to_time)
+																	{{ date('h:i A', strtotime($list->from_time)) }} - {{ date('h:i A', strtotime($list->to_time)) }}
+																@else
+																	N/A
+																@endif
+															</td>
+															<td>{{ $list->seating_type_name ?? 'N/A' }}</td>
+															<td>{{ $list->seat_row ?? 'N/A' }}</td>
 														</tr>
-                                                        <tr>
-															<td>{{ "Seat Number" }}</td>
-															<td class="text-center">{{ $list->seat_number_prefix }}</td>
-
-														</tr>
-                                                        <tr>
-															<td>{{ "Event Date" }}</td>
-															<td class="text-center">{{ $list->event_date }}</td>
-
-														</tr>
-                                                        <tr>
-															<td>{{ "Event Timing" }}</td>
-															<td class="text-center">{{ $list->from_time }} To {{ $list->to_time }}</td>
-
-														</tr>
-                                                        <tr>
-															<td>{{ "Event Seating" }}</td>
-															<td class="text-center">{{ $list->seating_type_name }}</td>
-
-														</tr>
-                                                        <tr>
-															<td>{{ "Seat Row" }}</td>
-															<td class="text-center">{{ $list->seat_row }}</td>
-
-														</tr>
-                                                        <hr>
-                                                    </tbody>
-
-                                                        @endforeach
-
-
-
+														@endforeach
+													</tbody>
 												</table>
 											</div>
 										</div>
-                                        <div class="col-md-6">
-                                            <div class="card">
-                                                <div class="card-body">
-                                                    <div class="mb-4 main-content-label"> Status Log</div>
-                                                    <table class="table table-striped">
-                                                        <tr>
-                                                            <th>Date</th>
-                                                            <th>Status</th>
-                                                            <th>Remark</th>
-                                                            <th>File</th>
-                                                            <th>Added By</th>
-                                                            @if(Auth::user()->user_type == 'superadmin')
-                                                            <th>Del</th>
-                                                            @endif
-                                                        </tr>
-                                                        @foreach ($log as $lo)
-                                                        <tr>
-                                                            <td>{{ date('d m Y',strtotime($lo->created_at)) }}</td>
-                                                            <td>{{ $lo->status_name }}</td>
-                                                            <td>{{ $lo->remark }}</td>
-                                                            <td>
-                                                                @if($lo->document)
-                                                                @if($lo->document)
-                                                                    <a href="{{ asset('storage/uploads/purchase_status_document/' . $lo->document) }}" target="_blank">Click</a>
-                                                                @else
-                                                                    N/A
-                                                                @endif
-                                                            </td>
-                                                                @endif
-                                                                <td>{{ $lo->name }}</td>
+                                        <div class="col-md-12 mt-4 no-print">
+                                            <div class="invoice-item">
+                                                <h4 class="mb-3">Status Log</h4>
+                                                <div class="table-responsive">
+                                                    <table class="invoice-table table table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Status</th>
+                                                                <th>Remark</th>
+                                                                <th>File</th>
+                                                                <th>Added By</th>
                                                                 @if(Auth::user()->user_type == 'superadmin')
-                                                                <td><a href="{{ url('customer_order/delete_status_log',$lo->id) }}" onclick="return confirm('Are you sure you want to delete this log ?');"> Delete</a></td>
+                                                                <th>Action</th>
                                                                 @endif
                                                             </tr>
-                                                        @endforeach
-
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($log as $lo)
+                                                            <tr>
+                                                                <td>{{ date('d M Y', strtotime($lo->created_at)) }}</td>
+                                                                <td><span class="badge badge-info">{{ $lo->status_name }}</span></td>
+                                                                <td>{{ $lo->remark ?? 'N/A' }}</td>
+                                                                <td>
+                                                                    @if($lo->document)
+                                                                        <a href="{{ asset('storage/uploads/purchase_status_document/' . $lo->document) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                            <i class="fas fa-file-alt"></i> View
+                                                                        </a>
+                                                                    @else
+                                                                        <span class="text-muted">N/A</span>
+                                                                    @endif
+                                                                </td>
+                                                                <td>{{ $lo->name ?? 'N/A' }}</td>
+                                                                @if(Auth::user()->user_type == 'superadmin')
+                                                                <td>
+                                                                    <a href="{{ url('customer_order/delete_status_log',$lo->id) }}" 
+                                                                       onclick="return confirm('Are you sure you want to delete this log?');" 
+                                                                       class="btn btn-sm btn-outline-danger">
+                                                                        <i class="fas fa-trash"></i> Delete
+                                                                    </a>
+                                                                </td>
+                                                                @endif
+                                                            </tr>
+                                                            @endforeach
+                                                        </tbody>
                                                     </table>
-
+                                                </div>
                                             </div>
                                         </div>
 
@@ -227,22 +304,19 @@
 								<!-- /Invoice Item -->
 
 								<!-- Invoice Information -->
-								<div class="other-info">
-									<h4>Booking information</h4>
-									{{-- <p class="text-muted mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sed dictum ligula, cursus
-										blandit risus. Maecenas eget metus non tellus dignissim aliquam ut a ex.
-										 Maecenas sed vehicula dui, ac suscipit lacus. Sed finibus leo vitae lorem interdum,
-										  eu scelerisque tellus fermentum. Curabitur sit amet lacinia lorem. Nullam finibus pellentesque libero.</p> --}}
-								<p><strong>Payment id : {{ $data->payment_id }}</strong></p>
-                                </div>
-<
-                                <div class="other-info">
-									<h4>Booking Status</h4>
-									<p class="text-muted mb-0"> {{ $data->status_name }}</p>
-								<p><strong>
-
-								</strong></p>
-                                </div>
+                                <div class="invoice-item mt-4" style="border-top: 2px solid #e3f2fd; padding-top: 20px;">
+									<div class="row">
+										<div class="col-md-6">
+											<h5 class="mb-3">Booking Information</h5>
+											<p class="mb-2"><strong>Payment ID:</strong> {{ $data->payment_id ?? 'N/A' }}</p>
+											<p class="mb-2"><strong>Order ID:</strong> #{{ str_pad($data->id, 6, '0', STR_PAD_LEFT) }}</p>
+											<p class="mb-0"><strong>Booking Status:</strong> <span class="badge badge-info">{{ $data->status_name }}</span></p>
+										</div>
+										<div class="col-md-6 text-right">
+											<p class="text-muted mb-0">Thank you for your purchase!</p>
+										</div>
+									</div>
+								</div>
 								<!-- /Invoice Information -->
 
 							</div>

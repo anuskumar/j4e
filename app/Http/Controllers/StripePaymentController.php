@@ -50,8 +50,28 @@ class StripePaymentController extends Controller
      */
     public function stripePost(Request $request)
     {
-
-
+        // Validate shipping address fields
+        $validated = $request->validate([
+            'shipping_name' => 'required|string|max:255',
+            'shipping_address1' => 'required|string|max:500',
+            'shipping_address2' => 'nullable|string|max:500',
+            'shipping_country' => 'required|numeric|exists:countries,id',
+            'shipping_city' => 'required|string|max:255',
+            'shipping_pincode' => 'required|string|max:20',
+            'stripeToken' => 'required|string',
+            'payment_amount' => 'required|numeric|min:0',
+            'event_id' => 'required|numeric|exists:event,id',
+            'event_ticket_id' => 'required|numeric|exists:event_tickets,id',
+            'total_number' => 'required|numeric|min:1',
+            'currency_name' => 'required|string',
+        ], [
+            'shipping_name.required' => 'Please enter your name.',
+            'shipping_address1.required' => 'Please enter your address.',
+            'shipping_country.required' => 'Please select a country.',
+            'shipping_country.exists' => 'Please select a valid country.',
+            'shipping_city.required' => 'Please enter your city.',
+            'shipping_pincode.required' => 'Please enter your pincode.',
+        ]);
 
         info($request->all());
         // dd($request->all());
@@ -98,6 +118,13 @@ class StripePaymentController extends Controller
         // Normalise amount and enforce Stripe minimums per currency
         $currency = strtolower($request->currency_name);
         $amount   = (float) $request->payment_amount;
+        
+        // Check if amount is 0 or very small first
+        if ($amount <= 0) {
+            return back()->withErrors([
+                'cardError' => "Invalid payment amount. Please check the ticket price and quantity.",
+            ])->withInput();
+        }
 
         // Convert to smallest currency unit (e.g. cents, fils)
         $amountInSmallestUnit = (int) round($amount * 100);
@@ -114,10 +141,11 @@ class StripePaymentController extends Controller
 
         if ($amountInSmallestUnit < $minForCurrency) {
             $minDisplay = number_format($minForCurrency / 100, 2);
+            $currentAmount = number_format($amount, 2);
 
             return back()->withErrors([
-                'cardError' => "Minimum charge amount is {$minDisplay} " . strtoupper($currency) . ". Please increase the ticket quantity or price.",
-            ]);
+                'cardError' => "Payment amount ({$currentAmount} " . strtoupper($currency) . ") is below the minimum charge amount of {$minDisplay} " . strtoupper($currency) . ". Please check the ticket price.",
+            ])->withInput();
         }
 
         Stripe::setApiKey(config('services.stripe.secret'));
@@ -172,20 +200,15 @@ class StripePaymentController extends Controller
 
             }
 
-            $data = new OrderStatusUpdate();
-            $data->purchase_id = $ticket->id;
-            $data->status_id = 1;
-            $data->created_by = Auth::user()->id;
-            $data->save();
-
-
-            $order_id = $data->id;
+            $orderStatus = new OrderStatusUpdate();
+            $orderStatus->purchase_id = $ticket->id;
+            $orderStatus->status_id = 1;
+            $orderStatus->created_by = Auth::user()->id;
+            $orderStatus->save();
 
             $event = Events::where('id',$request->event_id)->first();
             $event_tickets = EventTickets::where('id',$request->event_ticket_id)->first();
             $user_data = User::where('id',$event_tickets->created_by)->first();
-
-
 
             $maildata = [
                 'email' => $user_data->email,
@@ -202,12 +225,8 @@ class StripePaymentController extends Controller
     // $emailController = new Emailj4eController();
     // $emailController->ticketsoldmail($maildata);
 
-
-    //         FacadesSession::flash('success', 'Payment successful!');
-
-            return view('stripe.booking_success_modal',['order_id' => $order_id]);
-
-            //  return redirect('booking_success'.'/'.$ticket->id);
+            // Redirect to customer home/profile page (shows their orders/bookings)
+            return redirect()->route('customer.home')->with('success', 'Payment successful! Your order has been confirmed.');
 
         }else{
 

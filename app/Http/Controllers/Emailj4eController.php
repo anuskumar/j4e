@@ -19,18 +19,26 @@ class Emailj4eController extends Controller
 {
     public function ticketapprovedmail($maildata)
     { 
-        
-        // $email = $maildata['email','resellername','eventname','eventdate','numberoftickets','totalamount'];
-        $email = $maildata['email'];
-        $resellername = $maildata['resellername'];
-        $eventname = $maildata['eventname'];
-        $eventdate = $maildata['eventdate'];
-        $numberoftickets = $maildata['numberoftickets'];
-        $totalamount = $maildata['totalamount'];
-        info($maildata);
-         Mail::to($email)->send(new TicketApprovedMail($resellername, $eventname, $eventdate,$numberoftickets,$totalamount));
-       
-        return "Email sent successfully!";
+        try {
+            // $email = $maildata['email','resellername','eventname','eventdate','numberoftickets','totalamount'];
+            $email = $maildata['email'];
+            $resellername = $maildata['resellername'];
+            $eventname = $maildata['eventname'];
+            $eventdate = $maildata['eventdate'];
+            $numberoftickets = $maildata['numberoftickets'];
+            $totalamount = $maildata['totalamount'];
+            info($maildata);
+            Mail::to($email)->send(new TicketApprovedMail($resellername, $eventname, $eventdate,$numberoftickets,$totalamount));
+           
+            return "Email sent successfully!";
+        } catch (\Exception $e) {
+            // Log the error but don't throw exception
+            \Log::error('Failed to send ticket approval email: ' . $e->getMessage(), [
+                'email' => $maildata['email'] ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            return "Email sending failed: " . $e->getMessage();
+        }
     }
     
    

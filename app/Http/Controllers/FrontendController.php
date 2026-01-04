@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class FrontendController extends Controller
@@ -274,8 +275,22 @@ class FrontendController extends Controller
             ->leftjoin('cities','cities.id','location.city')
             ->leftjoin('currency','currency.id','event_tickets.amount_currency')
             ->where('event_tickets.id',$id)
-            ->select('*','event_tickets.id as id','venue.name as venue_name','event_timings.event_date as event_date',
-            'event_timings.from_time as event_time','event.id as event_id','currency.short_name as currency_name')->first();
+            ->select('event_tickets.*',
+                'event_tickets.id as id',
+                'event_tickets.web_price',
+                'event_tickets.ticket_amount',
+                'event_tickets.face_value',
+                'venue.name as venue_name',
+                'event_timings.event_date as event_date',
+                'event_timings.from_time as event_time',
+                'event.id as event_id',
+                'event.event_name as event_name',
+                'event.event_image as event_image',
+                'currency.short_name as currency_name',
+                'currency.short_name as short_name',
+                'location.location_name as location_name',
+                'countries.country_name as country_name',
+                'cities.name as city_name')->first();
             // dd($data);
 
             $ticket_count = TicketsGenerated::where('event_tickets', $id)
@@ -474,6 +489,34 @@ class FrontendController extends Controller
 
             return view('customer.view_booked_data',compact('settings','data','count','ticket','data_list','log'));
 
+           }
+
+           public function downloadInvoicePdf($id){
+            $settings = \App\Models\CompanySettings::first();
+
+            $data = TicketPurchase::where('ticket_purchase.id',$id)
+            ->leftjoin('countries','countries.id','shipping_country')
+            ->leftjoin('event','event.id','ticket_purchase.event_id')
+           ->leftjoin('currency','currency.id','ticket_purchase.payment_currency')
+           ->leftjoin('purchase_status','purchase_status.id','ticket_purchase.purchase_status')
+            ->select('*','ticket_purchase.id as id','currency.name as currency_name')->first();
+
+            $data_list = TicketsGenerated::where('event_ticket_tickets.purchase_id',$id)
+           ->leftjoin('ticket_purchase','ticket_purchase.id','event_ticket_tickets.purchase_id')
+            ->leftjoin('countries','countries.id','shipping_country')
+            ->leftjoin('event','event.id','ticket_purchase.event_id')
+           ->leftjoin('currency','currency.id','ticket_purchase.payment_currency')
+           ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
+           ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')
+            ->select('*','event_ticket_tickets.id as id','currency.name as currency_name')->get();
+
+            $count = TicketsGenerated::where('purchase_id',$data->id)->count();
+            $ticket = TicketsGenerated::where('purchase_id',$data->id)->first();
+
+            $pdf = Pdf::loadView('customer.invoice_pdf', compact('settings','data','count','ticket','data_list'));
+            $pdf->setPaper('a4', 'portrait');
+            
+            return $pdf->download('invoice-' . str_pad($data->id, 6, '0', STR_PAD_LEFT) . '.pdf');
            }
 
     public function customer_profile_settings(){

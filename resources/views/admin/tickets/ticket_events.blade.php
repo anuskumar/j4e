@@ -10,18 +10,6 @@
                 <div class="card-header">
                     <h3 class="card-title">Events</h3>
                 </div>
-<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin: 0 auto;">
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-    <div class="navbar-nav">
-      <a class="nav-item nav-link " href="{{ route('reseller.mylistings') }}">My Listings</a>
-      <a class="nav-item nav-link" href="#">My Sales</a>
-
-    </div>
-  </div>
-</nav>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="file-datatable"
@@ -88,8 +76,8 @@
                                                     <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm bg-primary-light" title="View">
                                                         <i class="far fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm bg-info-light" title="Manage">
-                                                        <i class="far fa-cog"></i>
+                                                    <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm btn-info" title="Manage">
+                                                        <i class="far fa-cog"></i> Manage
                                                     </a>
                                                 </div>
                                             </td>
@@ -127,8 +115,8 @@
                                                 <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm bg-primary-light" title="View">
                                                     <i class="far fa-eye"></i>
                                                 </a>
-                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm bg-info-light" title="Manage">
-                                                    <i class="far fa-cog"></i>
+                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm btn-info" title="Manage">
+                                                    <i class="far fa-cog"></i> Manage
                                                 </a>
                                             </div>
                                         </td>

@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\Emailj4eController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TicketController extends Controller
 {
@@ -183,84 +185,152 @@ class TicketController extends Controller
        }
 
      public function approve_tickets(Request $request){
-
-
-        $validated = $request->validate([
-            'ticket_id' => 'required|numeric',
-
-        ]);
-        $id = $request->ticket_id;
-        $user_id = $request->created_by;
-        $user = User::where('id',$user_id)->first();
-
-       $ticket=  EventTickets::find($id);
-       $seating = VenueSeating::find($ticket->venue_seating);
-       $event = Events::where('id',$ticket->event)->first();
-
-       if($seating==null){
-
-        $data['status'] = false;
-        $data['message'] = "Cannot Approve..venue seating has some issues ..please check that";
-        return Response::json($data);
-       }
-       $count = TicketsGenerated::where('event_id',$ticket->event)
-       ->where('event_timing',$ticket->event_timing)
-       ->where('event_seating',$ticket->venue_seating)->count();
-    //    $remaining = $seating->number_of_seats - $count;
-       $diff = $ticket->seat_to - $ticket->seat_from;
-    //    dd($ticket->no_of_tickets);
-       $data= [];
-    //    if($ticket->no_of_tickets == ($diff+1)){
-
-        // $i = $ticket->seat_from;
-
-        for ($i=$ticket->seat_from; $i <= $ticket->seat_to; $i++){
-
-            $new_generate = new TicketsGenerated();
-            $new_generate->event_tickets = $id;
-            $new_generate->ticket_serial_number = $seating->seat_serial_prefix.$i.'-'.$ticket->row.'-'.time();
-            $new_generate->is_sold = 0;
-            $new_generate->under_purchase_hold = 0;
-            $new_generate->ticket_amount = $ticket->ticket_amount;
-            $new_generate->seat_number = $i;
-            $new_generate->seat_row = $ticket->row;
-            $new_generate->seat_prefix =$seating->seat_serial_prefix;
-            $new_generate->seat_number_prefix =$seating->seat_serial_prefix.'-'.$ticket->row.'-'.$i;
-            $new_generate->event_timing = $ticket->event_timing;
-            $new_generate->event_seating = $ticket->venue_seating;
-            $new_generate->event_id = $ticket->event;
-            $new_generate->save();
+        try {
+            $validated = $request->validate([
+                'ticket_id' => 'required|numeric',
+            ]);
+            
+            $id = $request->ticket_id;
+            $user_id = $request->created_by;
+            
+            // Start database transaction
+            DB::beginTransaction();
+            
+            $ticket = EventTickets::find($id);
+            if (!$ticket) {
+                DB::rollBack();
+                return Response::json([
+                    'status' => false,
+                    'message' => 'Ticket not found.'
+                ]);
+            }
+            
+            $user = User::where('id', $user_id)->first();
+            if (!$user) {
+                DB::rollBack();
+                return Response::json([
+                    'status' => false,
+                    'message' => 'User not found.'
+                ]);
+            }
+            
+            $seating = VenueSeating::find($ticket->venue_seating);
+            if (!$seating) {
+                DB::rollBack();
+                return Response::json([
+                    'status' => false,
+                    'message' => 'Cannot Approve: Venue seating has some issues. Please check that.'
+                ]);
+            }
+            
+            $event = Events::where('id', $ticket->event)->first();
+            if (!$event) {
+                DB::rollBack();
+                return Response::json([
+                    'status' => false,
+                    'message' => 'Event not found.'
+                ]);
+            }
+            
+            // Check if ticket already has TicketsGenerated records (already approved)
+            $existingTickets = TicketsGenerated::where('event_tickets', $id)->count();
+            if ($existingTickets > 0) {
+                // Ticket already has generated tickets, just update approval status
+                $ticket->is_admin_approved = 1;
+                $ticket->save();
+                DB::commit();
+                
+                return Response::json([
+                    'status' => true,
+                    'message' => 'Ticket approved successfully.'
+                ]);
+            }
+            
+            // Check if seat information is available
+            if (!$ticket->seat_from || !$ticket->seat_to || !$ticket->row) {
+                DB::rollBack();
+                return Response::json([
+                    'status' => false,
+                    'message' => 'Cannot Approve: Seat information is missing. Please check seat details.'
+                ]);
+            }
+            
+            // Generate tickets for each seat
+            $seatFrom = (int)$ticket->seat_from;
+            $seatTo = (int)$ticket->seat_to;
+            $seatPrefix = $seating->seat_serial_prefix ?? 'T';
+            
+            for ($i = $seatFrom; $i <= $seatTo; $i++) {
+                $new_generate = new TicketsGenerated();
+                $new_generate->event_tickets = $id;
+                $new_generate->ticket_serial_number = $seatPrefix . $i . '-' . $ticket->row . '-' . time() . '-' . $i;
+                $new_generate->is_sold = 0;
+                $new_generate->under_purchase_hold = 0;
+                $new_generate->ticket_amount = $ticket->ticket_amount;
+                $new_generate->seat_number = $i;
+                $new_generate->seat_row = $ticket->row;
+                $new_generate->seat_prefix = $seatPrefix;
+                $new_generate->seat_number_prefix = $seatPrefix . '-' . $ticket->row . '-' . $i;
+                $new_generate->event_timing = $ticket->event_timing;
+                $new_generate->event_seating = $ticket->venue_seating;
+                $new_generate->event_id = $ticket->event;
+                $new_generate->save();
+            }
+            
+            // Update ticket approval status
+            $ticket->is_admin_approved = 1;
+            $ticket->save();
+            
+            // Commit transaction
+            DB::commit();
+            
+            // Send approval email (outside transaction) - don't let email errors affect approval
+            try {
+                $count = TicketsGenerated::where('event_tickets', $id)->count();
+                $maildata = [
+                    'email' => $user->email,
+                    'resellername' => $user->name,
+                    'eventname' => $event->event_name,
+                    'eventdate' => $event->event_from_date,
+                    'numberoftickets' => $count,
+                    'totalamount' => $ticket->ticket_amount
+                ];
+                
+                $emailController = new Emailj4eController();
+                $emailController->ticketapprovedmail($maildata);
+            } catch (\Exception $e) {
+                // Log email error but don't fail the approval
+                Log::error('Failed to send approval email: ' . $e->getMessage(), [
+                    'ticket_id' => $id,
+                    'user_email' => $user->email ?? 'unknown',
+                    'error' => $e->getMessage()
+                ]);
+                // Continue - approval was successful even if email failed
+            }
+            
+            return Response::json([
+                'status' => true,
+                'message' => 'Ticket approved successfully!'
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return Response::json([
+                'status' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->errors()['ticket_id'] ?? ['Invalid ticket ID'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Ticket approval error: ' . $e->getMessage(), [
+                'ticket_id' => $request->ticket_id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return Response::json([
+                'status' => false,
+                'message' => 'An error occurred while approving the ticket: ' . $e->getMessage()
+            ]);
         }
-                $new = EventTickets::find($id);
-                $new->is_admin_approved = 1;
-                $new->save();
-                $data['status'] = true;
-                $data['message'] = "Approved";
-            // }
-            // else{
-            //     $data['status'] = false;
-            //     $data['message'] = "Cannot Approve..Seat Count Has Errors";
-            // }
-
-
-
-
-            $maildata = [
-                'email' => $user->email,
-                'resellername' => $user->name,
-                'eventname' => $event->event_name,
-                'eventdate' => $event->event_from_date,
-                'numberoftickets' => $count,
-                 'totalamount' => $ticket->ticket_amount
-            ];
-
-    // $userEmail = 'sheebarobert18@gmail.com';
-
-    $emailController = new Emailj4eController();
-    $emailController->ticketapprovedmail($maildata);
-
-       return Response::json($data);
-
      }
 
     public function create()
