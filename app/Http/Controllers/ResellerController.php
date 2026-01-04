@@ -1447,6 +1447,7 @@ class ResellerController extends Controller
 
 
         $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+       ->orderBy('event_tickets.id', 'desc')
        ->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
@@ -1561,7 +1562,8 @@ class ResellerController extends Controller
         $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
             ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL) as sales_count');
 
-        $data = $data_all->paginate(20)->appends(request()->all());
+        $data = $data_all->orderBy('event_tickets.id', 'desc')
+            ->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
 
