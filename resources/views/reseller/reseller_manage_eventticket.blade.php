@@ -11,13 +11,15 @@ $val = $data[0];
 
             </div>
             <div class="col-md-3">
-
-              {{-- {{ print_r($val) }} --}}
                   @if ($val['is_admin_approved'] == 1)
-                    <span class="badge text-bg-success">Approved</span>
-                  @else
-                    <span class="badge text-bg-warning">Waiting for Approval ({{ $val['is_admin_approved'] }})</span>
-                  @endif
+                                               @if($val['ticket_status'] == 1)
+                                                <span class="badge text-bg-success">Active</span>
+                                                @else
+                                                    <span class="badge text-bg-primary">Paused</span>
+                                                @endif
+                                            @else
+                                            <span class="badge text-bg-primary">Waiting for Approval</span>
+                                            @endif
             </div>
             <div class="col-md-3">
 
@@ -148,6 +150,18 @@ $val = $data[0];
                             <li class="list-group-item"><b>Original Price : {{ $val['ticket_amount'].' '.$val['short_name'] }}</b>
            </li>
                             <li class="list-group-item"><b>Your Sale Price :  {{ $val['face_value'].' '.$val['short_name'] }}</b> </li>
+                        </ul>
+                        </div>
+
+                        <div class="card mt-3" style="width: 25rem;">
+                        <div class="card-header">
+                          <b> Minimum Price </b>
+                            <button type="button" class="btn btn-light float-right" onclick="ticketPriceChange({{ $val['id'] }})">
+           <i class="fa fa-pencil"></i>
+           </button>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><b>Minimum Price : {{ ($val['web_price'] ?? 0) .' '.$val['short_name'] }}</b> </li>
                         </ul>
                         </div>
 
@@ -403,6 +417,19 @@ $val = $data[0];
          </div>
          <div class="col-md-4">
             USD
+         </div>
+         </div>
+
+           <div class="row mt-3">
+         <div class="col-md-4">
+         <span>Minimum Price</span>
+         </div>
+         <div class="col-md-4">
+
+         <input type="text" class="form-control" value="{{ $val['web_price'] ?? 0 }}" name="min_price" id="min-price">
+         </div>
+         <div class="col-md-4">
+            {{ $val['short_name'] ?? 'USD' }}
          </div>
          </div>
 
@@ -700,9 +727,10 @@ window.location.reload();
 <script>
 $(document).ready(function() {
     // Attach validation on form submit
-    $("form").on("submit", function(e) {
+    $("#tickcet-price-change-modal form").on("submit", function(e) {
         let originalPrice = $("#original-price").val().trim();
         let faceValue = $("#face_value").val().trim();
+        let minPrice = $("#min-price").val().trim();
 
         // Regex: integers or floats
         let numberPattern = /^[0-9]+(\.[0-9]+)?$/;
@@ -721,11 +749,18 @@ $(document).ready(function() {
             return false;
         }
 
+        if (minPrice && !numberPattern.test(minPrice)) {
+            alert("Please enter a valid number for Minimum Price.");
+            $("#min-price").focus();
+            e.preventDefault();
+            return false;
+        }
+
         return true; // allow submit
     });
 
     // Optional: live restriction (only numbers + dot allowed)
-    $("#original-price, #face_value").on("keypress", function(e) {
+    $("#original-price, #face_value, #min-price").on("keypress", function(e) {
         let charCode = e.which ? e.which : e.keyCode;
         // Allow: numbers (48–57), dot (46), backspace (8), delete (0)
         if ((charCode < 48 || charCode > 57) && charCode !== 46 && charCode !== 8 && charCode !== 0) {

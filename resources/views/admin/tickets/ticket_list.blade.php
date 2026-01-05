@@ -461,7 +461,7 @@
 })();
 
 $(document).ready(function() {
-    $('.select2-select').select2();
+$('.select2-select').select2();
 });
 </script>
     <!-- End Row -->
@@ -531,25 +531,25 @@ $(document).ready(function() {
             approveBtn.prop('disabled', true);
             rejectBtn.prop('disabled', true);
             
-            swal({
+                swal({
                 title: `Are you sure you want to Approve this Ticket?`,
                 text: "Once it is Approved, it cannot be revoked",
-                icon: "info",
-                buttons: true,
-                dangerMode: true,
-            })
+                        icon: "info",
+                        buttons: true,
+                        dangerMode: true,
+                    })
             .then((willApprove) => {
                 if (willApprove) {
-                    $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        url : "{{ url('tickets/approve_tickets') }}",
-                        data : {'ticket_id' : val, 'created_by': created_by},
-                        type : 'GET',
-                        dataType : 'json',
-                        success : function(data){
-                            if(data.status === true){
+                            $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        url : "{{ url('tickets/approve_tickets') }}",
+        data : {'ticket_id' : val, 'created_by': created_by},
+        type : 'GET',
+        dataType : 'json',
+        success : function(data){
+            if(data.status === true){
                                 // Show success alert
                                 swal({
                                     title: "Ticket Approved!",
@@ -558,13 +558,13 @@ $(document).ready(function() {
                                     button: "OK",
                                 }).then(() => {
                                     // Reload the page after alert is closed
-                                    location.reload();
+                location.reload();
                                 });
                             } else {
                                 // Re-enable buttons on error
                                 approveBtn.prop('disabled', false);
                                 rejectBtn.prop('disabled', false);
-                                toastr.error(data.message);
+                toastr.error(data.message);
                             }
                         },
                         error: function(xhr, status, error) {
@@ -592,14 +592,14 @@ $(document).ready(function() {
                                 text: errorMessage,
                                 icon: "error",
                                 button: "OK",
-                            });
+    });
                         }
                     });
                 } else {
                     // Re-enable buttons if user cancels
                     approveBtn.prop('disabled', false);
                     rejectBtn.prop('disabled', false);
-                }
+                        }
             });
         }
 
@@ -612,25 +612,25 @@ $(document).ready(function() {
             approveBtn.prop('disabled', true);
             rejectBtn.prop('disabled', true);
             
-            swal({
+                swal({
                 title: `Are you sure you want to Reject this Ticket?`,
                 text: "Once it is Rejected, it cannot be revoked",
                 icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            })
+                        buttons: true,
+                        dangerMode: true,
+                    })
             .then((willReject) => {
                 if (willReject) {
-                    $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        url : "{{ url('tickets/reject_tickets') }}",
-                        data : {'ticket_id' : val, 'created_by': created_by},
-                        type : 'GET',
-                        dataType : 'json',
-                        success : function(data){
-                            if(data.status === true){
+                            $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        url : "{{ url('tickets/reject_tickets') }}",
+        data : {'ticket_id' : val, 'created_by': created_by},
+        type : 'GET',
+        dataType : 'json',
+        success : function(data){
+            if(data.status === true){
                                 // Show success alert
                                 swal({
                                     title: "Ticket Rejected!",
@@ -639,13 +639,13 @@ $(document).ready(function() {
                                     button: "OK",
                                 }).then(() => {
                                     // Reload the page after alert is closed
-                                    location.reload();
+                location.reload();
                                 });
                             } else {
                                 // Re-enable buttons on error
                                 approveBtn.prop('disabled', false);
                                 rejectBtn.prop('disabled', false);
-                                toastr.error(data.message);
+                toastr.error(data.message);
                             }
                         },
                         error: function(xhr, status, error) {
@@ -653,13 +653,13 @@ $(document).ready(function() {
                             approveBtn.prop('disabled', false);
                             rejectBtn.prop('disabled', false);
                             toastr.error('An error occurred while rejecting the ticket.');
-                        }
-                    });
+        }
+    });
                 } else {
                     // Re-enable buttons if user cancels
                     approveBtn.prop('disabled', false);
                     rejectBtn.prop('disabled', false);
-                }
+                        }
             });
         }
     </script>

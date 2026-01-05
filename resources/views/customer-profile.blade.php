@@ -131,6 +131,7 @@
 																	<th>Purchased Date</th>
 																	<th>Status</th>
 																	<th>Payment Status</th>
+																	<th>Tickets</th>
 																	<th></th>
 																</tr>
 															</thead>
@@ -164,6 +165,15 @@
                                                                         {{ @$val->is_payment_completed == 1 ? "Payment Completed" :"Not Completed"}}
                                                                         {{-- <span class="badge badge-pill bg-success-light">Confirm</span> --}}
                                                                     </td>
+																	<td>
+																		@if(isset($val['tickets']) && $val['tickets']->count() > 0)
+																			<a href="{{ route('customer.ticket.details', $val->id) }}" class="btn btn-sm btn-primary" title="View Ticket Details">
+																				<i class="fas fa-ticket-alt"></i> Ticket Details
+																			</a>
+																		@else
+																			<span class="text-muted">-</span>
+																		@endif
+																	</td>
 																	<td class="text-right">
 																		<div class="table-action">
 																			<a href="{{ url('view_invoice',$val->id) }}" class="btn btn-sm bg-success-light">

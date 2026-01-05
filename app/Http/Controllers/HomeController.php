@@ -106,6 +106,28 @@ class HomeController extends Controller
 
         foreach($all_bookings as $book){
             $book['event_date'] =   TicketsGenerated::leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')->where('purchase_id',$book->id)->first();
+            // Get all tickets with full details for this purchase
+            $book['tickets'] = TicketsGenerated::where('purchase_id', $book->id)
+                ->leftjoin('event_tickets', 'event_tickets.id', 'event_ticket_tickets.event_tickets')
+                ->leftjoin('event_timings', 'event_timings.id', 'event_ticket_tickets.event_timing')
+                ->leftjoin('venue_seating', 'venue_seating.id', 'event_ticket_tickets.event_seating')
+                ->leftjoin('event', 'event.id', 'event_ticket_tickets.event_id')
+                ->select(
+                    'event_ticket_tickets.id',
+                    'event_ticket_tickets.file',
+                    'event_ticket_tickets.ticket_serial_number',
+                    'event_ticket_tickets.seat_number',
+                    'event_ticket_tickets.seat_row',
+                    'event_ticket_tickets.ticket_amount',
+                    'event_tickets.ticket_name',
+                    'event_tickets.ticket_type',
+                    'event_timings.event_date',
+                    'event_timings.from_time',
+                    'event_timings.to_time',
+                    'venue_seating.seating_type_name',
+                    'event.event_name'
+                )
+                ->get();
         }
 
         $upcomming_booking = TicketPurchase::leftjoin('event','event.id','ticket_purchase.event_id')
@@ -123,6 +145,65 @@ class HomeController extends Controller
         }
 
         return view('customer-profile',compact('last_booking','all_bookings','upcomming_booking'));
+    }
+
+    /**
+     * Show ticket details page for a purchase.
+     *
+     * @param int $id Purchase ID
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
+    public function ticketDetails($id)
+    {
+        // Verify the purchase belongs to the authenticated user
+        $purchase = TicketPurchase::where('id', $id)
+            ->where('user_id', Auth::user()->id)
+            ->first();
+
+        if (!$purchase) {
+            return redirect()->route('customer.home')->with('error', 'Purchase not found or unauthorized access.');
+        }
+
+        // Get purchase details with joins
+        $purchase_data = TicketPurchase::where('ticket_purchase.id', $id)
+            ->leftjoin('event', 'event.id', 'ticket_purchase.event_id')
+            ->leftjoin('event_tickets', 'event_tickets.id', 'ticket_purchase.event_ticket_id')
+            ->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
+            ->leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('currency', 'currency.id', 'ticket_purchase.payment_currency')
+            ->leftjoin('purchase_status', 'purchase_status.id', 'ticket_purchase.purchase_status')
+            ->select('*', 'ticket_purchase.id as id')
+            ->first();
+
+        // Get event date
+        $purchase_data->event_date = TicketsGenerated::leftjoin('event_timings', 'event_timings.id', 'event_ticket_tickets.event_timing')
+            ->where('purchase_id', $id)
+            ->first();
+
+        // Get all tickets with full details for this purchase
+        $tickets = TicketsGenerated::where('purchase_id', $id)
+            ->leftjoin('event_tickets', 'event_tickets.id', 'event_ticket_tickets.event_tickets')
+            ->leftjoin('event_timings', 'event_timings.id', 'event_ticket_tickets.event_timing')
+            ->leftjoin('venue_seating', 'venue_seating.id', 'event_ticket_tickets.event_seating')
+            ->leftjoin('event', 'event.id', 'event_ticket_tickets.event_id')
+            ->select(
+                'event_ticket_tickets.id',
+                'event_ticket_tickets.file',
+                'event_ticket_tickets.ticket_serial_number',
+                'event_ticket_tickets.seat_number',
+                'event_ticket_tickets.seat_row',
+                'event_ticket_tickets.ticket_amount',
+                'event_tickets.ticket_name',
+                'event_tickets.ticket_type',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time',
+                'venue_seating.seating_type_name',
+                'event.event_name'
+            )
+            ->get();
+
+        return view('customer.ticket_details', compact('purchase_data', 'tickets'));
     }
 
     /**

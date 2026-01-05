@@ -324,12 +324,12 @@
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <strong>Please fix the following errors:</strong>
                 <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+                </div>
         @endif
 
         <form method="POST" action="{{ route('reseller.sellticketsave', ['id' => $id]) }}"
@@ -385,30 +385,30 @@
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label required-field" for="venue_seating">Section</label>
-                        <select class="form-select" name="venue_seating" id="venue_seating">
-                            <option value="">Please select...</option>
-                            @foreach ($venue_seatings as $seating)
+                    <select class="form-select" name="venue_seating" id="venue_seating">
+                        <option value="">Please select...</option>
+                        @foreach ($venue_seatings as $seating)
                                 <option value="{{ $seating->id }}" {{ old('venue_seating') == $seating->id ? 'selected' : '' }}>
-                                    {{ $seating->seating_type_name ?? 'Unnamed Section' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('venue_seating')
+                                {{ $seating->seating_type_name ?? 'Unnamed Section' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('venue_seating')
                             <div class="error-message">
                                 <i class="bi bi-exclamation-circle"></i> {{ $message }}
                             </div>
-                        @enderror
-                    </div>
+                    @enderror
+                </div>
 
                     <div class="col-md-6">
                         <label class="form-label required-field">Row (Enter a single letter A-Z)</label>
                         <input type="text" class="form-control" name="row" placeholder="e.g., A, B, C"
                             value="{{ old('row') }}" maxlength="1" style="text-transform: uppercase;">
-                        @error('row')
+                    @error('row')
                             <div class="error-message">
                                 <i class="bi bi-exclamation-circle"></i> {{ $message }}
                             </div>
-                        @enderror
+                    @enderror
                     </div>
                 </div>
 
@@ -416,8 +416,8 @@
                     <label class="form-label required-field">Seat Number (0 - 99)</label>
                     <div class="d-flex gap-3 align-items-end">
                         <div class="flex-grow-1">
-                            <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
-                                placeholder="Seat From" maxlength="2">
+                        <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
+                            placeholder="Seat From" maxlength="2">
                         </div>
                         <span class="fw-bold text-muted mb-2">to</span>
                         <div class="flex-grow-1">
@@ -426,11 +426,11 @@
                             <small class="text-muted">Auto-calculated</small>
                         </div>
                     </div>
-                    @error('seat_to')
+                        @error('seat_to')
                         <div class="error-message mt-2">
                             <i class="bi bi-exclamation-circle"></i> {{ $message }}
                         </div>
-                    @enderror
+                        @enderror
                 </div>
 
                 <div class="mb-4">
@@ -466,9 +466,9 @@
                     @error('sell_together')
                         <div class="error-message mt-2">
                             <i class="bi bi-exclamation-circle"></i> {{ $message }}
-                        </div>
-                    @enderror
                 </div>
+                    @enderror
+            </div>
             </div>
             <div class="alert alert-success success-alert d-flex align-items-center mb-4" role="alert">
                 <i class="bi bi-check-circle me-2 fs-5"></i>
@@ -481,56 +481,56 @@
                     <h6><i class="bi bi-currency-dollar icon"></i> Enter Face Value</h6>
                 </div>
                 <div class="alert alert-light info-alert d-flex align-items-center mb-4" role="alert">
-                    <i class="bi bi-info-circle me-2"></i>
-                    <span>Face value is the price printed on the ticket, excluding any booking fees.</span>
-                </div>
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span>Face value is the price printed on the ticket, excluding any booking fees.</span>
+                    </div>
 
                 <div class="row g-3">
-                    {{-- Currency Dropdown --}}
-                    <div class="col-md-4">
+                        {{-- Currency Dropdown --}}
+                        <div class="col-md-4">
                         <label for="currency" class="form-label required-field">Currency</label>
-                        <select class="form-select" id="currency" name="currency">
+                            <select class="form-select" id="currency" name="currency">
                             <option value="">Select Currency</option>
-                            @foreach ($currency as $val)
+                                @foreach ($currency as $val)
                                 <option value="{{ $val->id }}" data-code="{{ $val->short_name }}" {{ old('currency') == $val->id ? 'selected' : '' }}>
-                                    {{ $val->symbol . ' ' . $val->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                                        {{ $val->symbol . ' ' . $val->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         @error('currency')
                             <div class="error-message">
                                 <i class="bi bi-exclamation-circle"></i> {{ $message }}
                             </div>
                         @enderror
-                    </div>
+                        </div>
 
-                    {{-- Amount Input --}}
-                    <div class="col-md-3">
+                        {{-- Amount Input --}}
+                        <div class="col-md-3">
                         <label for="amount" class="form-label required-field">Amount (Price per ticket)</label>
-                        <div class="input-group">
-                            <span class="input-group-text" id="currency-code">💱</span>
+                            <div class="input-group">
+                                <span class="input-group-text" id="currency-code">💱</span>
                             <input type="number" step="0.01" class="form-control" id="amount" name="amount"
                                 placeholder="0.00" value="{{ old('amount') }}">
-                        </div>
+                            </div>
                         @error('amount')
                             <div class="error-message">
                                 <i class="bi bi-exclamation-circle"></i> {{ $message }}
                             </div>
                         @enderror
-                    </div>
+                        </div>
 
-                    {{-- Cents Input --}}
-                    <div class="col-md-2">
-                        <label for="cents" class="form-label">Cents</label>
+                        {{-- Cents Input --}}
+                        <div class="col-md-2">
+                            <label for="cents" class="form-label">Cents</label>
                         <input type="number" class="form-control" id="cents" name="cents"
                             placeholder="00" maxlength="2" min="0" max="99" value="{{ old('cents') }}">
-                    </div>
+                        </div>
 
-                    {{-- Converted Value Display --}}
+                        {{-- Converted Value Display --}}
                     <div class="col-md-3">
                         <div class="converted-value-display">
                             <label>Converted Value</label>
-                            <div id="converted-value" class="fw-bold">$0.00 USD</div>
+                                <div id="converted-value" class="fw-bold">$0.00 USD</div>
                         </div>
                     </div>
                 </div>
@@ -543,45 +543,45 @@
                 <div class="form-section-header">
                     <h5><i class="bi bi-ticket-perforated icon"></i> Choose Ticket Type <span class="text-danger">*</span></h5>
                 </div>
-                <div class="row g-3">
+                    <div class="row g-3">
                     <input type="hidden" id="ticketTypeInput" name="ticket_type" value="{{ old('ticket_type') }}">
-                    @foreach ($ticket_type as $type)
-                        <div class="col-md-6">
+                        @foreach ($ticket_type as $type)
+                            <div class="col-md-6">
                             <div class="card ticket-type p-4"
                                 style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#e3f2fd' : '#f1f8e9') }};"
-                                onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
+                                    onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
                                 <h6 class="fw-bold mb-2">{{ $type->ticket_type_name }}</h6>
                                 <p class="text-muted mb-0 small">{{ $type->description ?? 'Select this ticket type' }}</p>
-                            </div>
+                                </div>
 
-                            <!-- Mobile App dropdown section within the same column -->
-                            @if (strtolower($type->ticket_type_name) == 'mobile ticket transfer' ||
-                                    (strpos(strtolower($type->ticket_type_name), 'mobile') !== false &&
-                                        strpos(strtolower($type->ticket_type_name), 'transfer') !== false))
-                                <div id="mobileAppSelect-{{ $type->id }}"
+                                <!-- Mobile App dropdown section within the same column -->
+                                @if (strtolower($type->ticket_type_name) == 'mobile ticket transfer' ||
+                                        (strpos(strtolower($type->ticket_type_name), 'mobile') !== false &&
+                                            strpos(strtolower($type->ticket_type_name), 'transfer') !== false))
+                                    <div id="mobileAppSelect-{{ $type->id }}"
                                     class="mt-3 d-none mobile-app-select">
                                     <input type="hidden" id="mobileAppInput" name="mobile_app" value="{{ old('mobile_app') }}">
                                     <label for="mobileApp" class="form-label required-field">Mobile Application</label>
-                                    <select id="mobileApp" class="form-select">
+                                        <select id="mobileApp" class="form-select">
                                         <option value="">Select an application</option>
-                                        @foreach ($mobile_applications as $app)
+                                            @foreach ($mobile_applications as $app)
                                             <option value="{{ $app->id }}" {{ old('mobile_app') == $app->id ? 'selected' : '' }}>{{ $app->name }}</option>
-                                        @endforeach
-                                    </select>
+                                            @endforeach
+                                        </select>
                                     @error('mobile_app')
                                         <div class="error-message">
                                             <i class="bi bi-exclamation-circle"></i> {{ $message }}
                                         </div>
                                     @enderror
-                                </div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 @error('ticket_type')
                     <div class="error-message mt-3">
                         <i class="bi bi-exclamation-circle"></i> {{ $message }}
-                    </div>
+                </div>
                 @enderror
             </div>
             
@@ -596,9 +596,9 @@
                     <h5><i class="bi bi-shield-exclamation icon"></i> Select Restrictions on Use</h5>
                 </div>
                 <p class="text-muted mb-4">If any of the following conditions apply to your tickets, please select them from the list below.</p>
-                <div class="row g-3">
-                    @foreach ($restrictions as $restriction)
-                        <div class="col-md-4">
+                    <div class="row g-3">
+                        @foreach ($restrictions as $restriction)
+                            <div class="col-md-4">
                             <div class="form-check">
                                 <input type="checkbox" id="restriction_{{ $restriction->id }}" name="restrictions[]"
                                     value="{{ $restriction->id }}" class="form-check-input restriction-checkbox"
@@ -608,8 +608,8 @@
                                     {{ $restriction->restrictions }}
                                 </label>
                             </div>
-                        </div>
-                    @endforeach
+                            </div>
+                        @endforeach
                 </div>
             </div>
 
@@ -619,38 +619,38 @@
                     <h5><i class="bi bi-list-check icon"></i> Select Required Ticket Details</h5>
                 </div>
                 <p class="text-muted mb-4">If any of the following conditions apply to your tickets, please select the corresponding options below.</p>
-                <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input" {{ old('limitedView') ? 'checked' : '' }}>
                             <label class="form-check-label" for="limitedView">Limited or restricted view</label>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        </div>
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="vipPass" name="vipPass" class="form-check-input" {{ old('vipPass') ? 'checked' : '' }}>
                             <label class="form-check-label" for="vipPass">Includes VIP pass</label>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        </div>
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="mealPackage" name="mealPackage" class="form-check-input" {{ old('mealPackage') ? 'checked' : '' }}>
                             <label class="form-check-label" for="mealPackage">Ticket and meal package</label>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        </div>
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="parking" name="parking" class="form-check-input" {{ old('parking') ? 'checked' : '' }}>
                             <label class="form-check-label" for="parking">Includes parking</label>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        </div>
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="standingOnly" name="standingOnly" class="form-check-input" {{ old('standingOnly') ? 'checked' : '' }}>
                             <label class="form-check-label" for="standingOnly">Standing Only</label>
                         </div>
-                    </div>
-                    <div class="col-md-4">
+                        </div>
+                        <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" id="aisleSeat" name="aisleSeat" class="form-check-input" {{ old('aisleSeat') ? 'checked' : '' }}>
                             <label class="form-check-label" for="aisleSeat">Aisle seat</label>
@@ -943,7 +943,7 @@
                     if (ticketTypeInput.value) {
                         const ticketTypeName = document.querySelector(`.ticket-type[onclick*="'${ticketTypeInput.value}'"]`);
                         if (ticketTypeName && ticketTypeName.textContent.toLowerCase().includes('mobile') && ticketTypeName.textContent.toLowerCase().includes('transfer')) {
-                            const mobileAppInput = document.getElementById('mobileAppInput');
+                        const mobileAppInput = document.getElementById('mobileAppInput');
                             if (!mobileAppInput || !mobileAppInput.value) {
                                 hasErrors = true;
                                 errorMessages.push('Please select a mobile application for mobile ticket transfer');
@@ -952,12 +952,12 @@
                     }
 
                     if (hasErrors) {
-                        e.preventDefault();
+                            e.preventDefault();
                         toastr.error(errorMessages.join('<br>'), 'Validation Error', {
                             timeOut: 8000,
                             extendedTimeOut: 2000
                         });
-                        return false;
+                            return false;
                     }
 
                     // Show loading message

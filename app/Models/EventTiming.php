@@ -31,7 +31,6 @@ class EventTiming extends Model
         ->where('event_ticket_tickets.event_tickets',$ticket_id)
         ->where('event_ticket_tickets.is_sold',0)
         ->where('event_ticket_tickets.under_purchase_hold',0)
-        ->where('event_ticket_tickets.on_sale',1)
         ->where('event_tickets.is_admin_approved',1)
         ->count();
 

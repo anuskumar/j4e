@@ -148,12 +148,12 @@
 											<div class="table-responsive">
 												<table class="invoice-table-two table">
 													<tbody>
-														<tr>
-															<th>Subtotal:</th>
+													<tr>
+														<th>Subtotal:</th>
 															<td><span>{{ number_format($data->payment_amount, 2) . ' ' . $data->currency_name }}</span></td>
-														</tr>
-														<tr>
-															<th>Total Amount:</th>
+													</tr>
+													<tr>
+														<th>Total Amount:</th>
 															<td><strong><span>{{ number_format($data->payment_amount, 2) . ' ' . $data->currency_name }}</span></strong></td>
 														</tr>
 													</tbody>
@@ -174,7 +174,7 @@
 											<p class="mb-0"><strong>Payment Date:</strong> {{ $data->payment_date ? date('d M Y, h:i A', strtotime($data->payment_date)) : 'N/A' }}</p>
 										</div>
 									</div>
-								</div>
+                                </div>
 								<!-- /Invoice Information -->
 
 							</div>

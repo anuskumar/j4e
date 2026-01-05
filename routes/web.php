@@ -64,6 +64,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmi
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer']], function () {
     Route::get('/home', [HomeController::class, 'customerHome'])->name('customer.home');
+    Route::get('/ticket-details/{id}', [HomeController::class, 'ticketDetails'])->name('customer.ticket.details');
 });
 
 Route::group(['prefix' => 'reseller', 'middleware' => ['auth', 'user.type:reseller']], function () {

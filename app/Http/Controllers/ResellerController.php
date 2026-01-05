@@ -948,108 +948,108 @@ class ResellerController extends Controller
         try {
             // Build validation rules
             $rules = [
-                'ticket_count'      => 'required|numeric|min:1|max:30',
-                'venue_seating'     => 'required',
-                'row'               => 'nullable|string',
-                'seat_from'         => 'nullable|numeric',
-                'seat_to'           => 'nullable|numeric',
-                'seat_reason'       => 'nullable|in:not_provided,other',
-                'sell_together'     => 'required|numeric',
-                'currency'          => 'required|numeric',
-                'amount'            => 'required|numeric|min:0',
-                'cents'             => 'nullable|numeric|min:0|max:99',
-                'ticket_type'       => 'required|exists:ticket_type,id',
+            'ticket_count'      => 'required|numeric|min:1|max:30',
+            'venue_seating'     => 'required',
+            'row'               => 'nullable|string',
+            'seat_from'         => 'nullable|numeric',
+            'seat_to'           => 'nullable|numeric',
+            'seat_reason'       => 'nullable|in:not_provided,other',
+            'sell_together'     => 'required|numeric',
+            'currency'          => 'required|numeric',
+            'amount'            => 'required|numeric|min:0',
+            'cents'             => 'nullable|numeric|min:0|max:99',
+            'ticket_type'       => 'required|exists:ticket_type,id',
                 'mobile_app'        => 'nullable|exists:mobile_applications,id',
             ];
 
             // If mobile ticket transfer, make mobile_app required
             if ($request->ticket_type == 4) {
-                $rules['mobile_app'] = 'required|exists:mobile_applications,id';
-            }
+            $rules['mobile_app'] = 'required|exists:mobile_applications,id';
+        }
 
-            // Validate the form data
-            $validated = $request->validate($rules);
+        // Validate the form data
+        $validated = $request->validate($rules);
 
-            // Retrieve event timing based on event ID
-            $eventTiming = EventTiming::where('event', $id)->first();
-            if (!$eventTiming) {
+        // Retrieve event timing based on event ID
+        $eventTiming = EventTiming::where('event', $id)->first();
+        if (!$eventTiming) {
                 return back()->with('error', 'Event timing not found for the given event ID.')->withInput();
-            }
+        }
 
-            // Create new ticket record
-            $data = new EventTickets();
+        // Create new ticket record
+        $data = new EventTickets();
 
-            // Basic ticket information
-            $data->event = $id;
-            $data->unique_id = Str::random(16);
-            $data->ticket_name = "Ticket for Event #" . $id;
+        // Basic ticket information
+        $data->event = $id;
+        $data->unique_id = Str::random(16);
+        $data->ticket_name = "Ticket for Event #" . $id;
             $data->event_timing = $eventTiming->id;
-            $data->no_of_tickets = $request->ticket_count;
+        $data->no_of_tickets = $request->ticket_count;
 
-            // Ticket details
-            $data->ticket_type = $request->ticket_type;
-            $data->venue_seating = $request->venue_seating;
-            $data->row = $request->row;
-            $data->seat_from = $request->seat_from;
-            $data->seat_to = $request->seat_to;
-            $data->split_type = $request->sell_together;
+        // Ticket details
+        $data->ticket_type = $request->ticket_type;
+        $data->venue_seating = $request->venue_seating;
+        $data->row = $request->row;
+        $data->seat_from = $request->seat_from;
+        $data->seat_to = $request->seat_to;
+        $data->split_type = $request->sell_together;
 
-            // Price information
+        // Price information
             $cents = $request->cents ?? 0;
-            $totalAmount = $request->amount + ($cents / 100); // Convert cents to decimal
+        $totalAmount = $request->amount + ($cents / 100); // Convert cents to decimal
             $data->ticket_amount = $totalAmount;
-            $data->amount_currency = $request->currency;
+        $data->amount_currency = $request->currency;
             $data->face_value = $totalAmount;
 
-            // Process restrictions (checkboxes)
-            $restrictions = $request->restrictions ?? [];
-            $data->ticket_restrictions = json_encode($restrictions);
+        // Process restrictions (checkboxes)
+        $restrictions = $request->restrictions ?? [];
+        $data->ticket_restrictions = json_encode($restrictions);
             
-            // Process features (checkboxes)
-            $features = [];
-            $featureFields = [
-                'limitedView',
-                'vipPass',
-                'mealPackage',
-                'parking',
-                'standingOnly',
-                'aisleSeat'
-            ];
+        // Process features (checkboxes)
+        $features = [];
+        $featureFields = [
+            'limitedView',
+            'vipPass',
+            'mealPackage',
+            'parking',
+            'standingOnly',
+            'aisleSeat'
+        ];
 
-            foreach ($featureFields as $field) {
-                if ($request->has($field)) {
-                    $features[] = $field;
-                }
+        foreach ($featureFields as $field) {
+            if ($request->has($field)) {
+                $features[] = $field;
             }
+        }
 
-            // Combine restrictions and features into a single JSON field
-            $allRestrictions = [
-                'features' => $features
-            ];
+        // Combine restrictions and features into a single JSON field
+        $allRestrictions = [
+            'features' => $features
+        ];
 
-            $data->features = json_encode($allRestrictions);
+        $data->features = json_encode($allRestrictions);
 
-            // Mobile app information if applicable
-            if ($request->ticket_type == 4 && $request->has('mobile_app')) {
-                $data->mobile_application_id = $request->mobile_app;
-            }
+        // Mobile app information if applicable
+        if ($request->ticket_type == 4 && $request->has('mobile_app')) {
+            $data->mobile_application_id = $request->mobile_app;
+        }
 
-            // Default values
+        // Default values
             $data->booking_expiry_date_time = $eventTiming->event_date ?? now();
             $data->cancellation_policy_notes = "Standard cancellation policy applies.";
             $data->disclaimer_note = "No refunds or exchanges.";
 
-            // Approval status
-            $data->is_admin_approved = 0;
-            $data->ticket_status = 1;
-            $data->created_by = Auth::user()->id;
+        // Approval status
+        $data->is_admin_approved = 0;
+        $data->ticket_status = 1;
+        $data->created_by = Auth::user()->id;
 
             // Use database transaction to ensure data integrity
             DB::beginTransaction();
             
             try {
                 // Save the EventTickets record
-                $data->save();
+        $data->save();
 
                 // Create TicketsGenerated records for each seat
                 // Only create if seat information is provided (seat_from, seat_to, and row)
@@ -1601,7 +1601,7 @@ class ResellerController extends Controller
         ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
         ->where('event_tickets.id', $id);
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.is_admin_approved as is_admin_approved','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.is_admin_approved as is_admin_approved','event_tickets.web_price as web_price','event_tickets.event as event_id','event.event_name as event_name','currency.short_name as short_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->get()->toArray();
 
         $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();
@@ -1760,6 +1760,7 @@ public function upload_ticket_seating(Request $request){
         $ticket_id = $request->ticket_id;
         $original_price = $request->original_price;
         $face_value = $request->face_value;
+        $min_price = $request->min_price;
 
         $data = EventTickets::find($ticket_id);
 
@@ -1771,6 +1772,11 @@ public function upload_ticket_seating(Request $request){
         if($face_value > 0){
 
             $data->face_value = $face_value;
+        }
+
+        if(isset($min_price) && $min_price >= 0){
+
+            $data->web_price = $min_price;
         }
 
         $data->save();

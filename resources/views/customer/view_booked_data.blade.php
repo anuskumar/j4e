@@ -99,7 +99,7 @@
 												<p class="mb-1"><strong>Issue Date:</strong> {{ $data->payment_date ? date('d M Y', strtotime($data->payment_date)) : date('d M Y') }}</p>
 												<p class="mb-0"><strong>Status:</strong> <span class="badge badge-info">{{ $data->status_name }}</span></p>
 											</div>
-										</div>
+                                        </div>
 									</div>
 								</div>
 
@@ -226,9 +226,9 @@
 															<th>Seat Row</th>
 														</tr>
 													</thead>
-													<tbody>
+                                                        <tbody>
 														@foreach ($data_list as $list)
-														<tr>
+                                                        <tr>
 															<td>{{ $loop->iteration }}</td>
 															<td><strong>{{ $list->ticket_serial_number ?? 'N/A' }}</strong></td>
 															<td>{{ $list->seat_number_prefix ?? 'N/A' }}</td>
@@ -244,7 +244,7 @@
 															<td>{{ $list->seat_row ?? 'N/A' }}</td>
 														</tr>
 														@endforeach
-													</tbody>
+                                                    </tbody>
 												</table>
 											</div>
 										</div>
@@ -254,32 +254,32 @@
                                                 <div class="table-responsive">
                                                     <table class="invoice-table table table-bordered">
                                                         <thead>
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th>Status</th>
-                                                                <th>Remark</th>
-                                                                <th>File</th>
-                                                                <th>Added By</th>
-                                                                @if(Auth::user()->user_type == 'superadmin')
+                                                        <tr>
+                                                            <th>Date</th>
+                                                            <th>Status</th>
+                                                            <th>Remark</th>
+                                                            <th>File</th>
+                                                            <th>Added By</th>
+                                                            @if(Auth::user()->user_type == 'superadmin')
                                                                 <th>Action</th>
-                                                                @endif
-                                                            </tr>
+                                                            @endif
+                                                        </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach ($log as $lo)
-                                                            <tr>
+                                                        @foreach ($log as $lo)
+                                                        <tr>
                                                                 <td>{{ date('d M Y', strtotime($lo->created_at)) }}</td>
                                                                 <td><span class="badge badge-info">{{ $lo->status_name }}</span></td>
                                                                 <td>{{ $lo->remark ?? 'N/A' }}</td>
-                                                                <td>
-                                                                    @if($lo->document)
+                                                            <td>
+                                                                @if($lo->document)
                                                                         <a href="{{ asset('storage/uploads/purchase_status_document/' . $lo->document) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                             <i class="fas fa-file-alt"></i> View
                                                                         </a>
-                                                                    @else
+                                                                @else
                                                                         <span class="text-muted">N/A</span>
-                                                                    @endif
-                                                                </td>
+                                                                @endif
+                                                            </td>
                                                                 <td>{{ $lo->name ?? 'N/A' }}</td>
                                                                 @if(Auth::user()->user_type == 'superadmin')
                                                                 <td>
@@ -291,7 +291,7 @@
                                                                 </td>
                                                                 @endif
                                                             </tr>
-                                                            @endforeach
+                                                        @endforeach
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -315,8 +315,8 @@
 										<div class="col-md-6 text-right">
 											<p class="text-muted mb-0">Thank you for your purchase!</p>
 										</div>
-									</div>
-								</div>
+                                </div>
+                                </div>
 								<!-- /Invoice Information -->
 
 							</div>
