@@ -1760,7 +1760,6 @@ public function upload_ticket_seating(Request $request){
         $ticket_id = $request->ticket_id;
         $original_price = $request->original_price;
         $face_value = $request->face_value;
-        $min_price = $request->min_price;
 
         $data = EventTickets::find($ticket_id);
 
@@ -1772,11 +1771,6 @@ public function upload_ticket_seating(Request $request){
         if($face_value > 0){
 
             $data->face_value = $face_value;
-        }
-
-        if(isset($min_price) && $min_price >= 0){
-
-            $data->web_price = $min_price;
         }
 
         $data->save();
