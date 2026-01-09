@@ -404,7 +404,7 @@ $val = $data[0];
          <div class="col-md-4">
             USD
          </div>
-           </div>
+         </div>
 
       </div>
       <div class="modal-footer">

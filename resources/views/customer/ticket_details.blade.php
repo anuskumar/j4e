@@ -82,17 +82,31 @@
                                                 <p><strong>Ticket File:</strong></p>
                                                 @if($ticket->file && !empty($ticket->file))
                                                     @php
-                                                        $fileUrl = (strpos($ticket->file, 'http') === 0 || strpos($ticket->file, '/') === 0) 
-                                                            ? $ticket->file 
-                                                            : asset('storage/uploads/tickets/' . $ticket->file);
+                                                        // File field contains full path like 'uploads/ticket_images/filename.pdf'
+                                                        if (strpos($ticket->file, 'http') === 0 || strpos($ticket->file, 'https') === 0) {
+                                                            // Already a full URL
+                                                            $fileUrl = $ticket->file;
+                                                        } elseif (strpos($ticket->file, '/') === 0) {
+                                                            // Absolute path starting with /
+                                                            $fileUrl = $ticket->file;
+                                                        } elseif (strpos($ticket->file, 'uploads/') === 0) {
+                                                            // Path starts with uploads/ - files are in storage/uploads/
+                                                            // Use Storage disk which points to storage/app/public, but files are in storage/uploads/
+                                                            // So use asset with storage symlink
+                                                            $fileUrl = asset('storage/' . $ticket->file);
+                                                        } else {
+                                                            // Just filename - assume it's in ticket_images folder
+                                                            $fileUrl = asset('storage/uploads/ticket_images/' . $ticket->file);
+                                                        }
+                                                        $fileExtension = strtolower(pathinfo($ticket->file, PATHINFO_EXTENSION));
                                                     @endphp
-                                                    <a href="{{ $fileUrl }}" target="_blank" class="btn btn-success btn-sm">
+                                                    <a href="{{ $fileUrl }}" target="_blank" class="btn btn-success btn-sm" download>
                                                         <i class="fas fa-file-download"></i> Download Ticket File
                                                     </a>
-                                                    @if(in_array(strtolower(pathinfo($ticket->file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'pdf']))
-                                                        <button type="button" class="btn btn-info btn-sm ml-2" onclick="window.open('{{ $fileUrl }}', '_blank')">
+                                                    @if(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']))
+                                                        <a href="{{ $fileUrl }}" target="_blank" class="btn btn-info btn-sm ml-2">
                                                             <i class="fas fa-eye"></i> View File
-                                                        </button>
+                                                        </a>
                                                     @endif
                                                 @else
                                                     <span class="text-muted"><i class="fas fa-info-circle"></i> No attachment found</span>

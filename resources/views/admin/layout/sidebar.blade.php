@@ -197,7 +197,6 @@
 							<li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-package "></i><span class="side-menu__label">Events</span><i class="angle fe fe-chevron-down"></i></a>
 								<ul class="slide-menu">
-                                    <li><a class="sub-side-menu__item" href="{{ url('events/create') }}">Create</a></li>
                                     <li><a class="sub-side-menu__item" href="{{ url('events/list') }}">List</a></li>
                                     <li><a class="sub-side-menu__item" href="{{ route('events.requestlist') }}">Requested Event List</a></li>
                                     <li class="sub-slide2">

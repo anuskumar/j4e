@@ -1655,13 +1655,18 @@ class ResellerController extends Controller
             ->where('is_sold', 1)
             ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
             ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')
+            ->leftjoin('ticket_purchase','ticket_purchase.id','event_ticket_tickets.purchase_id')
+            ->leftjoin('users','users.id','ticket_purchase.user_id')
             ->select(
                 'event_ticket_tickets.*',
                 'event_ticket_tickets.id as ticket_id',
                 'venue_seating.seating_type_name',
                 'event_timings.event_date',
                 'event_timings.from_time',
-                'event_timings.to_time'
+                'event_timings.to_time',
+                'users.name as customer_name',
+                'users.email as customer_email',
+                'users.phone as customer_phone'
             )
             ->orderBy('event_ticket_tickets.created_at', 'desc')
             ->get();

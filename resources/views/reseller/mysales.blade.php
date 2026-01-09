@@ -75,7 +75,6 @@
                                 <tr>
                                     <th>Sl</th>
                                     <th class="border-bottom-0">ID and Creation Time</th>
-                                    <th class="border-bottom-0">Status</th>
                                     <th class="border-bottom-0">Event </th>.
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Available Delivery</th>
@@ -97,33 +96,6 @@
                                         <b>{{ strtoupper(@$val['unique_id']) }}</b>
                                         <br>
                                         {{ date('d M Y',strtotime($val['created_at'])) }}
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch">
-                                        <input class="form-check-input"
-                                                type="checkbox"
-                                                role="switch"
-                                                id="switchCheckChecked_{{ $val['id'] }}"
-                                                data-id="{{ $val['id'] }}"
-                                                data-status="{{ $val['ticket_status']}}"
-                                                onchange="confirmToggleStatus(this)"
-                                                {{ $val['ticket_status'] == 1 ? 'checked':'' }}
-
-                                                value="{{ $val['ticket_status'] }}">
-
-                                            @if ($val['is_admin_approved'] == 1)
-                                               @if($val['ticket_status'] == 1)
-                                                <span class="badge text-bg-success">Active</span>
-                                                @else
-                                                    <span class="badge text-bg-primary">Paused</span>
-                                                @endif
-                                            @else
-                                            <span class="badge text-bg-primary">Waiting for Approval</span>
-                                            @endif
-
-
-
-                                            </div>
                                     </td>
                                     <td>
                                        {{ $val['event_name'] }}

@@ -9,6 +9,7 @@ use App\Models\EventTags;
 use App\Models\EventTiming;
 use App\Models\EventType;
 use App\Models\RequestEventModel;
+use App\Models\TicketType;
 use App\Models\VenueModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,8 +55,9 @@ class EventsController extends Controller
     ->get();
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
+    $ticketTypes = TicketType::where('is_active', 1)->get();
     // dd($event_type);
-    return view('admin.events.create',compact('event_type','venue','artists','eventTags'));
+    return view('admin.events.create',compact('event_type','venue','artists','eventTags','ticketTypes'));
 
      }
      public function show($id)
@@ -95,6 +97,11 @@ class EventsController extends Controller
         if(!$request->artists==null){
 
             $event->artists = json_encode($request->artists);
+
+            }
+        if(!$request->ticket_types==null){
+
+            $event->ticket_types = json_encode($request->ticket_types);
 
             }
 
