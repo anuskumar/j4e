@@ -105,12 +105,31 @@
                                             </div>
 
                                             <div class="col-md-6">
-                                                <select name="artists[]" multiple class="form-control select2">
+                                                <select name="artists[]" multiple class="form-control select2-select">
                                                         {{-- <option>Select</option> --}}
                                                         @foreach ($artists as $art)
                                                         <option value="{{ $art->id }}">{{ $art->artist_name.' [ '.$art->field_name.' ]' }}</option>
                                                         @endforeach
                                                     </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Ticket Types</label>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <select name="ticket_types[]" multiple class="form-control select2-select">
+                                                        <option value="">Select Ticket Types</option>
+                                                        @if(isset($ticketTypes) && $ticketTypes->count() > 0)
+                                                        @foreach ($ticketTypes as $ticketType)
+                                                        <option value="{{ $ticketType->id }}">{{ $ticketType->ticket_type_name }}</option>
+                                                        @endforeach
+                                                        @endif
+                                                    </select>
+                                                <small class="text-muted">Select one or more ticket types that will be available for this event</small>
                                             </div>
                                         </div>
                                     </div>
@@ -209,6 +228,9 @@
 $(document).ready(function () {
     // preventDefault();
             $('.select2').select2({
+
+            });
+            $('.select2-select').select2({
 
             });
             // $('.select2-search__field').prop('disabled', true);

@@ -109,7 +109,13 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             transition: all 0.3s ease;
-            min-height: 120px;
+            height: 150px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
         .ticket-type:hover {
@@ -546,15 +552,14 @@
                     <div class="row g-3">
                     <input type="hidden" id="ticketTypeInput" name="ticket_type" value="{{ old('ticket_type') }}">
                         @foreach ($ticket_type as $type)
-                            <div class="col-md-6">
-                            <div class="card ticket-type p-4"
-                                style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#e3f2fd' : '#f1f8e9') }};"
-                                    onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
-                                <h6 class="fw-bold mb-2">{{ $type->ticket_type_name }}</h6>
-                                <p class="text-muted mb-0 small">{{ $type->description ?? 'Select this ticket type' }}</p>
+                            <div class="col-md-6 col-lg-4 mb-3 d-flex flex-column">
+                                <div class="card ticket-type"
+                                    style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#e3f2fd' : '#f1f8e9') }};"
+                                        onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
+                                    <h6 class="fw-bold mb-0">{{ $type->ticket_type_name }}</h6>
                                 </div>
 
-                                <!-- Mobile App dropdown section within the same column -->
+                                <!-- Mobile App dropdown section - appears below card when ticket type is selected -->
                                 @if (strtolower($type->ticket_type_name) == 'mobile ticket transfer' ||
                                         (strpos(strtolower($type->ticket_type_name), 'mobile') !== false &&
                                             strpos(strtolower($type->ticket_type_name), 'transfer') !== false))

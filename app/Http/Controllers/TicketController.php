@@ -13,6 +13,7 @@ use App\Models\Currency;
 use App\Models\OutsideSellModel;
 use App\Models\RestrictionModel;
 use App\Models\VenueSeating;
+use App\Models\TicketPurchase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -524,10 +525,74 @@ class TicketController extends Controller
         // $data = TicketsGenerated::where('event_tickets',$id)->get();
 
         $data = TicketsGenerated::with('outsideSell')->where('event_tickets', $id)->get();
-    info($data);
+        
+        // Get the main event ticket to show/update ticket price
+        $eventTicket = EventTickets::find($id);
+        
+        return view('admin.tickets.generated_ticket_list', compact('data', 'eventTicket'));
 
-        return view('admin.tickets.generated_ticket_list',compact('data'));
+    }
+    
+    public function updateTicketPrice(Request $request, $id)
+    {
+        try {
+            // Check if user is admin
+            if (Auth::user()->user_type != 'superadmin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Only admin can update ticket price.'
+                ], 403);
+            }
 
+            $validated = $request->validate([
+                'ticket_amount' => 'required|numeric|min:0',
+            ]);
+
+            $eventTicket = EventTickets::find($id);
+            
+            if (!$eventTicket) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ticket not found.'
+                ], 404);
+            }
+
+            $oldAmount = $eventTicket->ticket_amount;
+            $eventTicket->ticket_amount = $validated['ticket_amount'];
+            $eventTicket->save();
+            
+            // Update ALL generated tickets (both sold and unsold) with the new amount
+            // Use DB facade to ensure update works even if ticket_amount is not in fillable
+            $updatedCount = DB::table('event_ticket_tickets')
+                ->where('event_tickets', $id)
+                ->update(['ticket_amount' => $validated['ticket_amount']]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ticket price updated successfully. ' . $updatedCount . ' ticket(s) updated.',
+                'data' => [
+                    'old_amount' => $oldAmount,
+                    'new_amount' => $eventTicket->ticket_amount,
+                    'updated_count' => $updatedCount
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $e->errors()['ticket_amount'] ?? ['Invalid amount'])
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating ticket price: ' . $e->getMessage(), [
+                'ticket_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the ticket price: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function get_individual_ticketdata(Request $request, $ticketId)
@@ -656,6 +721,53 @@ public function get_ticket_data(Request $request){
 
 }
 
+public function transactionHistory($id)
+{
+    // Get event details
+    $event = Events::find($id);
+    
+    if (!$event) {
+        return redirect()->back()->with('error', 'Event not found');
+    }
 
+    // Get all ticket purchases for this event
+    $transactions_query = TicketPurchase::where('ticket_purchase.event_id', $id)
+        ->leftjoin('event_tickets', 'event_tickets.id', 'ticket_purchase.event_ticket_id')
+        ->leftjoin('users', 'users.id', 'ticket_purchase.user_id')
+        ->leftjoin('currency', 'currency.id', 'ticket_purchase.payment_currency')
+        ->leftjoin('purchase_status', 'purchase_status.id', 'ticket_purchase.purchase_status')
+        ->leftjoin('countries', 'countries.id', 'ticket_purchase.shipping_country')
+        ->select(
+            'ticket_purchase.*',
+            'ticket_purchase.id as purchase_id',
+            'event_tickets.ticket_name',
+            'event_tickets.ticket_amount',
+            'event_tickets.created_by as ticket_created_by',
+            'users.name as user_name',
+            'users.email as user_email',
+            'currency.name as currency_name',
+            'currency.short_name as currency_short',
+            'purchase_status.status_name',
+            'countries.country_name'
+        );
+
+    // Filter based on user type - similar to OrderController
+    if(Auth::user()->user_type != 'superadmin') {
+        $transactions_query->where('event_tickets.created_by', Auth::user()->id);
+    }
+
+    $transactions = $transactions_query->orderBy('ticket_purchase.created_at', 'DESC')->get();
+
+    // Get ticket counts for each purchase
+    foreach ($transactions as $transaction) {
+        $transaction->ticket_count = TicketsGenerated::where('purchase_id', $transaction->purchase_id)->count();
+        $transaction->ticket_details = TicketsGenerated::where('purchase_id', $transaction->purchase_id)
+            ->leftjoin('event_timings', 'event_timings.id', 'event_ticket_tickets.event_timing')
+            ->select('event_ticket_tickets.*', 'event_timings.event_date', 'event_timings.from_time', 'event_timings.to_time')
+            ->get();
+    }
+
+    return view('admin.tickets.transaction_history', compact('event', 'transactions'));
+}
 
 }

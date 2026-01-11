@@ -332,8 +332,9 @@ class ResellerController extends Controller
             ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
             ->get();
         $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        $ticketTypes = TicketType::where('is_active', 1)->get();
         // dd($event_type);
-        return view('reseller.create_event', compact('event_type', 'venue', 'artists'));
+        return view('reseller.create_event', compact('event_type', 'venue', 'artists', 'ticketTypes'));
     }
 
     public function manage_event_store(Request $request)
@@ -349,6 +350,9 @@ class ResellerController extends Controller
         $event->event_type      = $request->event_type;
         $event->venue           = $request->venue;
         $event->artists         = json_encode($request->artists);
+        if (!empty($request->ticket_types)) {
+            $event->ticket_types = json_encode($request->ticket_types);
+        }
         $event->event_from_date = $request->event_from_date;
         $event->event_to_date   = $request->event_to_date;
         $event->event_desc      = $request->event_desc;
@@ -391,7 +395,8 @@ class ResellerController extends Controller
             ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
             ->get();
         $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
-        return view('reseller.event_edit', compact('data', 'event_type', 'artists', 'venue'));
+        $ticketTypes = TicketType::where('is_active', 1)->get();
+        return view('reseller.event_edit', compact('data', 'event_type', 'artists', 'venue', 'ticketTypes'));
     }
 
     public function event_update(Request $request)
@@ -410,6 +415,9 @@ class ResellerController extends Controller
         $data->event_desc      = $request->event_desc;
         $data->venue           = $request->venue;
         $data->artists         = json_encode($request->artists);
+        if (!empty($request->ticket_types)) {
+            $data->ticket_types = json_encode($request->ticket_types);
+        }
         $data->event_from_date = $request->event_from_date;
         $data->event_to_date   = $request->event_to_date;
         // $data->event_added_by =Auth::user()->id;
@@ -786,7 +794,25 @@ class ResellerController extends Controller
         $data = $data_all->select('*', 'event_tickets.id as id', 'event_tickets.is_admin_approved as is_admin_approved')->get();
 
         $event          = Events::find($id);
-        $ticket_type    = TicketType::get();
+        
+        // Filter ticket types based on event's selected ticket types
+        $allTicketTypes = TicketType::where('is_active', 1)->get();
+        $selectedTicketTypeIds = [];
+        
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true);
+        }
+        
+        // If event has selected ticket types, filter to show only those
+        // Otherwise, show all active ticket types
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)
+                ->where('is_active', 1)
+                ->get();
+        } else {
+            $ticket_type = $allTicketTypes;
+        }
+        
         $event_timing   = EventTiming::where('event', $id)->get();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
@@ -925,7 +951,25 @@ class ResellerController extends Controller
             'venue.name as venue_name',
         )->first();
         $event          = Events::find($id);
-        $ticket_type    = TicketType::get();
+        
+        // Filter ticket types based on event's selected ticket types
+        $allTicketTypes = TicketType::where('is_active', 1)->get();
+        $selectedTicketTypeIds = [];
+        
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true);
+        }
+        
+        // If event has selected ticket types, filter to show only those
+        // Otherwise, show all active ticket types
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)
+                ->where('is_active', 1)
+                ->get();
+        } else {
+            $ticket_type = $allTicketTypes;
+        }
+        
         $mobile_applications = MobileApplication::get();
         $event_timing   = EventTiming::where('event', $id)->first();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')

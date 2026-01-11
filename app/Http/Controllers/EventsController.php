@@ -137,8 +137,9 @@ class EventsController extends Controller
        ->get();
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
+    $ticketTypes = TicketType::where('is_active', 1)->get();
 
-        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags'));
+        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags','ticketTypes'));
 
      }
      public function update(Request $request){
@@ -165,6 +166,15 @@ class EventsController extends Controller
         $data->artists = json_encode($request->artists);
 
         }
+        
+        if(!$request->ticket_types==null){
+
+        $data->ticket_types = json_encode($request->ticket_types);
+
+        } else {
+            $data->ticket_types = null;
+        }
+        
         $data->event_from_date = $request->event_from_date;
         $data->event_to_date = $request->event_to_date;
         $data->event_tag = $request->event_tag;

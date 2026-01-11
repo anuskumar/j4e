@@ -51,12 +51,32 @@
 											</div>
 											<div class="col-md-6">
 												{{-- <input type="text" class="form-control"  name="venue_type"  value="{{ $data->venue_type }}"> --}}
-                                                <select name="event_type" class="form-control">
+                                                <select name="event_type" class="form-control select2-select">
                                                     <option>Select</option>
                                                     @foreach($event_type as $type)
                                                     <option value="{{ $type->id }}" {{ ($data->event_type ==  $type->id) ? "selected" :"" }}>{{ $type->event_type_name }}</option>
                                                     @endforeach
                                                 </select>
+											</div>
+										</div>
+									</div>
+
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
+												<label class="form-label">Ticket Types</label>
+											</div>
+											<div class="col-md-6">
+                                                <select name="ticket_types[]" multiple class="form-control select2-select" data-placeholder="Select ticket types (optional)">
+                                                    @foreach($ticketTypes as $ticketType)
+                                                    <option value="{{ $ticketType->id }}" 
+                                                        @if(!empty($data->ticket_types))
+                                                            {{ in_array($ticketType->id, json_decode($data->ticket_types)) ? 'selected' : '' }}
+                                                        @endif
+                                                        >{{ $ticketType->ticket_type_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <small class="form-text text-muted">You can select multiple ticket types</small>
 											</div>
 										</div>
 									</div>
