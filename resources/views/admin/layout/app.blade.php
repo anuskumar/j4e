@@ -57,6 +57,33 @@
         .hide-loader {
             display: none;
         }
+        
+        /* Ensure Feather icons are visible */
+        .side-menu__icon,
+        .fe {
+            display: inline-block;
+            font-family: 'feather' !important;
+            speak: none;
+            font-style: normal;
+            font-weight: normal;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Ensure icons show when sidebar items are clicked */
+        .side-menu__item i,
+        .slide-menu .sub-side-menu__item i {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Fix for collapsed sidebar */
+        .sidebar-mini .side-menu__icon {
+            display: inline-block !important;
+        }
     </style>
 </head>
 @php
@@ -726,6 +753,58 @@
     <!-- right-sidebar js -->
     <script src="{{ asset('admin_assets/plugins/sidebar/sidebar.js') }}"></script>
     <script src="{{ asset('admin_assets/plugins/sidebar/sidebar-custom.js') }}"></script>
+    
+    <!--- Ensure icons are visible after sidebar interactions --->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force icon visibility on page load
+            function ensureIconsVisible() {
+                const icons = document.querySelectorAll('.fe, .side-menu__icon, i[class*="fe-"]');
+                icons.forEach(function(icon) {
+                    icon.style.display = 'inline-block';
+                    icon.style.opacity = '1';
+                    icon.style.visibility = 'visible';
+                    icon.style.fontSize = icon.style.fontSize || '16px';
+                });
+            }
+            
+            // Run immediately
+            ensureIconsVisible();
+            
+            // Run after a short delay to ensure DOM is ready
+            setTimeout(ensureIconsVisible, 100);
+            setTimeout(ensureIconsVisible, 500);
+            
+            // Re-initialize icons when sidebar is toggled
+            const sidebarToggle = document.querySelector('[data-bs-toggle="sidebar"]');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    setTimeout(ensureIconsVisible, 300);
+                });
+            }
+            
+            // Re-initialize icons when menu items are clicked
+            const menuItems = document.querySelectorAll('.side-menu__item, .sub-side-menu__item');
+            menuItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    setTimeout(ensureIconsVisible, 100);
+                });
+            });
+            
+            // Watch for sidebar state changes
+            const observer = new MutationObserver(function(mutations) {
+                ensureIconsVisible();
+            });
+            
+            const sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) {
+                observer.observe(sidebar, {
+                    attributes: true,
+                    attributeFilter: ['class']
+                });
+            }
+        });
+    </script>
 
     <!-- Morris js -->
     <script src="{{ asset('admin_assets/plugins/raphael/raphael.min.js') }}"></script>
