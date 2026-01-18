@@ -73,7 +73,7 @@ class ArtistController extends Controller
         $artistuser->contact_number = $request->contact_number;
         $artistuser->about = $request->about;
         $artistuser->save();
-        return redirect('artist/list')->with('success', 'Artist created successfully!');
+        return redirect('admin/artist/list')->with('success', 'Artist created successfully!');
      }
      public function update(Request $request){
 
@@ -92,14 +92,14 @@ class ArtistController extends Controller
     //   $data->status=$request->status;
 
        $data->save();
-       return redirect('artist/list');
+       return redirect('admin/artist/list');
 
      }
      public function delete( $id)
     {
         $data=ArtistModel::find($id);
         $data->delete($id);
-        return redirect('/artist/list');
+        return redirect('/admin/artist/list');
 
     }
 }

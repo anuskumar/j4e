@@ -1,5 +1,5 @@
 <?php 
-$page="customer/update";
+$page="admin/customer/edit";
 // Parse phone number to extract country code and phone number
 $phoneNumber = $data->phone ?? '';
 $countryCode = '+91 (IN)';
@@ -38,7 +38,7 @@ if (!empty($phoneNumber)) {
 									</div>
 								@endif
 
-								<form class="form-horizontal" action="{{url('customer/update') }}" method="POST">
+								<form class="form-horizontal" action="{{url('admin/customer/update') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="id" value="{{ $data->id }}">
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}

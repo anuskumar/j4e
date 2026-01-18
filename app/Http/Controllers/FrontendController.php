@@ -417,15 +417,41 @@ class FrontendController extends Controller
                     }
                 }
             }
-            $venue_seating = VenueSeating::get();
-
-            // info($venue_seating);
-
+            
             $event_timings = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->get();
             $event_timing = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->first();
+            
+            // Get all unique seating types (zones) from tickets that have availability
+            $available_zones = [];
+            foreach ($event_timings as $timing_date) {
+                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
+                if ($event_timing_list) {
+                    foreach ($event_timing_list as $event_time) {
+                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                        foreach ($event_ticket_list as $ticket) {
+                            $ticket_availability = EventTiming::get_available_tickets($ticket->id);
+                            if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
+                                // Add zone if not already in array
+                                if (!in_array($ticket->seating_type_name, $available_zones)) {
+                                    $available_zones[] = $ticket->seating_type_name;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sort zones alphabetically
+            sort($available_zones);
+            
+            // Also get venue seating for this specific venue (as fallback/backup)
+            $venue_seating = [];
+            if ($event_datas && $event_datas->venue) {
+                $venue_seating = VenueSeating::where('venue', $event_datas->venue)->get();
+            }
 
             return view('customer.show_details_show',compact('settings','id',
-            'event_datas','event_images','event_reviews','artist_data','event_reviews_stars','event_timing','event_timings','venue_seating'));
+            'event_datas','event_images','event_reviews','artist_data','event_reviews_stars','event_timing','event_timings','venue_seating','available_zones'));
 
            }
 

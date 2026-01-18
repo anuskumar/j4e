@@ -105,32 +105,7 @@ Route::post('store_reseller', [FrontendController::class, 're_store']);
 
 
 
-Route::group(['prefix' => 'customer'], function () {
-    Route::get('create', [CustomerController::class, 'create']);
-    Route::get('list', [CustomerController::class, 'index']);
-    Route::get('view/{id}', [CustomerController::class, 'show']);
-    Route::get('edit/{id}', [CustomerController::class, 'edit']);
-    Route::post('update', [CustomerController::class, 'update']);
-    Route::get('delete/{id}', [CustomerController::class, 'delete']);
-    Route::post('store', [CustomerController::class, 'store']);
-    Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
-    Route::post('update-status/{id}', [CustomerController::class, 'updateStatus']);
-});
-
-
-
 Route::group(['prefix' => 'reseller'], function () {
-    Route::get('create', [ResellerController::class, 'create']);
-    Route::post('store', [ResellerController::class, 'store']);
-    Route::get('list', [ResellerController::class, 'index']);
-    Route::get('view/{id}', [ResellerController::class, 'show']);
-    Route::get('edit/{id}', [ResellerController::class, 'edit']);
-    Route::post('update', [ResellerController::class, 'update']);
-    Route::delete('delete/{id}', [ResellerController::class, 'delete']);
-    Route::post('store', [ResellerController::class, 'store']);
-    Route::post('update-status/{id}', [ResellerController::class, 'updateStatus']);
-    // Route::delete('destroy/{id}', [ResellerController::class,'delete']);
-
     Route::get('profile', [ResellerController::class, 'profile'])->name('reseller.profile');
     Route::any('update_profile', [ResellerController::class, 'updateprofile'])->name('reseller.updateprofile');
     Route::post('password/update', [ResellerController::class, 'updatePassword'])->name('reseller.passwordupdate');
@@ -240,6 +215,40 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('edit/{id}', [CompanySettingsController::class, 'edit']);
     // Route::post('update', [CompanySettingsController::class, 'update']);
     Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company');
+    
+    // Admin User Management Routes - Customer & Reseller
+    Route::group(['prefix' => 'customer'], function () {
+        Route::get('create', [CustomerController::class, 'create']);
+        Route::get('list', [CustomerController::class, 'index']);
+        Route::get('view/{id}', [CustomerController::class, 'show']);
+        Route::get('edit/{id}', [CustomerController::class, 'edit']);
+        Route::post('update', [CustomerController::class, 'update']);
+        Route::get('delete/{id}', [CustomerController::class, 'delete']);
+        Route::post('store', [CustomerController::class, 'store']);
+        Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
+        Route::post('update-status/{id}', [CustomerController::class, 'updateStatus']);
+    });
+    
+    Route::group(['prefix' => 'reseller'], function () {
+        Route::get('create', [ResellerController::class, 'create']);
+        Route::post('store', [ResellerController::class, 'store']);
+        Route::get('list', [ResellerController::class, 'index']);
+        Route::get('view/{id}', [ResellerController::class, 'show']);
+        Route::get('edit/{id}', [ResellerController::class, 'edit']);
+        Route::post('update', [ResellerController::class, 'update']);
+        Route::delete('delete/{id}', [ResellerController::class, 'delete']);
+        Route::post('update-status/{id}', [ResellerController::class, 'updateStatus']);
+    });
+    
+    Route::group(['prefix' => 'artist'], function () {
+        Route::get('create', [ArtistController::class, 'create']);
+        Route::post('store', [ArtistController::class, 'store']);
+        Route::get('list', [ArtistController::class, 'index']);
+        Route::get('view/{id}', [ArtistController::class, 'show']);
+        Route::get('edit/{id}', [ArtistController::class, 'edit']);
+        Route::post('update', [ArtistController::class, 'update']);
+        Route::delete('destroy/{id}', [ArtistController::class, 'delete']);
+    });
 });
 // ended Admin Section
 
@@ -366,16 +375,6 @@ Route::group(['prefix' => 'city'], function () {
     Route::delete('destroy/{id}', [CityController::class, 'delete']);
 });
 
-Route::group(['prefix' => 'artist'], function () {
-
-    Route::get('create', [ArtistController::class, 'create']);
-    Route::post('store', [ArtistController::class, 'store']);
-    Route::get('list', [ArtistController::class, 'index']);
-    Route::get('view/{id}', [ArtistController::class, 'show']);
-    Route::get('edit/{id}', [ArtistController::class, 'edit']);
-    Route::post('update', [ArtistController::class, 'update']);
-    Route::delete('destroy/{id}', [ArtistController::class, 'delete']);
-});
 
 Route::group(['prefix' => 'slide'], function () {
 

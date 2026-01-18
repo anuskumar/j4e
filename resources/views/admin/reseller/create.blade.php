@@ -1,4 +1,4 @@
-<?php $page="reseller/create";?>
+<?php $page="admin/reseller/create";?>
 @extends('admin.layout.app')
 @section('admin_content')
 
@@ -21,7 +21,7 @@
 									</div>
 								@endif
 
-								<form class="form-horizontal" action="{{ url('reseller/store') }}" method="POST">
+								<form class="form-horizontal" action="{{ url('admin/reseller/store') }}" method="POST">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
 									<div class="form-group ">

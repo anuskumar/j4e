@@ -19,10 +19,12 @@ class CustomerController extends Controller
     {
         //
         $data = User::leftjoin('customers','customers.user_id','users.id')
-        ->select('*','users.id as id','customers.id as customer_id')->where('users.user_type','customer')
+        ->select('*','users.id as id','customers.id as customer_id')
+        ->where('users.user_type','customer')
+        ->orderBy('users.created_at', 'desc')
         ->orderBy('users.id', 'desc')
-        // ->paginate(2);
         ->get();
+        
         return view('admin.customer.list',compact('data'));
     }
 
@@ -92,7 +94,7 @@ class CustomerController extends Controller
         $auth = Auth::user();
         if($auth){
 
-            return redirect('customer/list')->with('success', 'Customer created successfully!');
+            return redirect('admin/customer/list')->with('success', 'Customer created successfully!');
 
         }else{
 
@@ -175,7 +177,7 @@ class CustomerController extends Controller
        }
        
        $data->save();
-       return redirect('/customer/list')->with('success', 'Customer updated successfully!');
+       return redirect('/admin/customer/list')->with('success', 'Customer updated successfully!');
     }
 
     /**
@@ -186,7 +188,7 @@ class CustomerController extends Controller
     {
         $data=User::find($id);
         $data->delete();
-        return redirect('/customer/list');
+        return redirect('/admin/customer/list');
 
     }
 

@@ -92,14 +92,14 @@
 												<a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                                     <span class="sub-side-menu__label">Customers</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
 												<ul class="sub-slide-menu1">
-													<li><a class="sub-slide-item2" href="{{ url('customer/list') }}">List</a></li>
+													<li><a class="sub-slide-item2" href="{{ url('admin/customer/list') }}">List</a></li>
 												</ul>
 											</li>
                                             <li class="sub-slide2">
 												<a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                                     <span class="sub-side-menu__label">Resellers</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
 												<ul class="sub-slide-menu1">
-													<li><a class="sub-slide-item2" href="{{ url('reseller/list') }}">List</a></li>
+													<li><a class="sub-slide-item2" href="{{ url('admin/reseller/list') }}">List</a></li>
 												</ul>
 											</li>
 
@@ -113,7 +113,7 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('artist/list') }}">List</a></li>
+                                        <li><a class="sub-side-menu__item" href="{{ url('admin/artist/list') }}">List</a></li>
                                     </ul>
 
 

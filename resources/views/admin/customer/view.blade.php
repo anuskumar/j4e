@@ -1,4 +1,4 @@
-<?php $page="customer/view";?>
+<?php $page="admin/customer/view";?>
 @extends('admin.layout.app')
 @section('admin_content')
 
@@ -66,7 +66,7 @@
 										</div>
 									</div>
                                     <div class="card-footer">
-                                        <a href="{{ url('customer/list') }}"><button type="button" class="btn btn-primary waves-effect waves-light" style="float:right;">Back</button></a>
+                                        <a href="{{ url('admin/customer/list') }}"><button type="button" class="btn btn-primary waves-effect waves-light" style="float:right;">Back</button></a>
                                     </div>
                                     {{-- <div class="form-group ">
 										<div class="row">

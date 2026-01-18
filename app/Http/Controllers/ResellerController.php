@@ -51,11 +51,11 @@ class ResellerController extends Controller
     public function index()
     {
         $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
-            ->select('*', 'users.id as id', 'resellers.id as resellers_id')->where('users.user_type', 'reseller')
+            ->select('*', 'users.id as id', 'resellers.id as resellers_id')
+            ->where('users.user_type', 'reseller')
+            ->orderBy('users.created_at', 'desc')
             ->orderBy('users.id', 'desc')
-            // ->paginate(2);
             ->get();
-        // dd($data);
         return view('admin.reseller.list', compact('data'));
     }
     public function eventlisting()
@@ -133,7 +133,7 @@ class ResellerController extends Controller
         $reseller->user_id = $user->id;
         $reseller->save();
 
-        return redirect('reseller/list')->with('success', 'Reseller created successfully!');
+        return redirect('admin/reseller/list')->with('success', 'Reseller created successfully!');
     }
 
     /**
@@ -181,7 +181,7 @@ class ResellerController extends Controller
         $val->is_trusted        = $request->is_trusted;
         $val->save();
 
-        return redirect('/reseller/list');
+        return redirect('/admin/reseller/list');
     }
 
     /**
@@ -200,7 +200,7 @@ class ResellerController extends Controller
             $user->delete();
         }
 
-        return redirect('/reseller/list');
+        return redirect('/admin/reseller/list');
     }
 
     public function profile()
@@ -1853,14 +1853,19 @@ public function upload_ticket_seating(Request $request){
             ], 404);
         }
 
+        // Get status from request and ensure it's either 1 or 0
         $status = $request->input('status', 0);
-        $user->is_active = $status == 1 ? 1 : 0;
+        $isActive = ($status == 1 || $status === '1' || $status === true) ? 1 : 0;
+        
+        // Update the is_active field in users table
+        $user->is_active = $isActive;
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Reseller status updated successfully.',
-            'status' => $user->is_active
+            'status' => (int)$user->is_active,
+            'is_active' => (int)$user->is_active
         ]);
     }
 

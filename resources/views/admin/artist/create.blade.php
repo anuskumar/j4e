@@ -1,4 +1,4 @@
-<?php $page="artist/create";?>
+<?php $page="admin/artist/create";?>
 @extends('admin.layout.app')
 @section('admin_content')
 
@@ -21,7 +21,7 @@
 									</div>
 								@endif
 
-								<form class="form-horizontal"  action="{{ url('artist/store') }}" method="POST" enctype="multipart/form-data">
+								<form class="form-horizontal"  action="{{ url('admin/artist/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
 

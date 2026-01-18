@@ -1,4 +1,4 @@
-<?php $page="reseller/edit";?>
+<?php $page="admin/reseller/edit";?>
 @extends('admin.layout.app')
 @section('admin_content')
 
@@ -10,7 +10,7 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">update Reseller</div>
-								<form class="form-horizontal" action="{{url('reseller/update') }}" method="POST">
+								<form class="form-horizontal" action="{{url('admin/reseller/update') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="id" value="{{ $data->id }}">
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
