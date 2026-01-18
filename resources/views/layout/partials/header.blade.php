@@ -108,8 +108,8 @@ error_reporting(0);
     <form class="me-3 search-form-mobile" action="{{ url('/') }}" method="GET">
         <div class="input-group" style="max-width: 577px; width: 100%;">
             <input type="search" class="form-control rounded-pill" style="border-radius: 30px; min-height: 40px;"
-                placeholder="Event, Artist, Location" name="search" aria-label="Search" aria-describedby="search-addon"
-                value="{{ $_GET['search'] ?? '' }}" />
+                placeholder="Search by Event, Artist or Location..." name="search" aria-label="Search" aria-describedby="search-addon"
+                value="{{ request('search') ?? '' }}" required />
             <button type="submit" class="btn btn-primary rounded-pill ml-1">
                 <i class="fas fa-search"></i>
             </button>

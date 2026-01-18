@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ArtistModel;
 use App\Models\Events;
 use App\Models\EventTags;
 use App\Models\EventTickets;
@@ -18,7 +19,13 @@ class WelcomeController extends Controller
     //
     public function index(Request $request){
 
+        $search = $request->get('search');
         $type = $request->get('type');
+
+        // If search is provided, redirect to event list page with search
+        if(!empty($search)){
+            return redirect()->route('new_eventlistfrontend', ['search' => $search]);
+        }
 
         $slider = SliderModel::get();
         if(empty($type))
@@ -43,62 +50,111 @@ class WelcomeController extends Controller
 
 
     public function new_eventlistfrontend(Request $request){
+        $search = $request->get('search');
+        
         if($request->get('tag')){
             $event_tag = EventTags::find($request->get('tag'));
         }else{
             $event_tag = EventTags::first();
         }
 
-
-
-
-        $data = Events::
+        // Build the base query
+        $query = Events::
         leftjoin('event_type','event_type.id','event.event_type')
         ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
+        ->leftjoin('venue','venue.id','event.venue')
+        ->leftjoin('location','location.id','venue.location')
         ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city')
-        ->where('event.event_tag',$event_tag->id)
-      ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        ->leftjoin('cities','cities.id','location.city');
+
+        // Apply search filter if search parameter exists
+        if(!empty($search)){
+            // Get artist IDs that match the search
+            $artistIds = ArtistModel::where('artist_name', 'LIKE', "%{$search}%")->pluck('id')->toArray();
+            
+            $query->where(function($q) use ($search, $artistIds) {
+                $q->where('event.event_name', 'LIKE', "%{$search}%")
+                  ->orWhere('location.location_name', 'LIKE', "%{$search}%")
+                  ->orWhere('cities.name', 'LIKE', "%{$search}%")
+                  ->orWhere('countries.country_name', 'LIKE', "%{$search}%")
+                  ->orWhere('venue.name', 'LIKE', "%{$search}%");
+                
+                // Search in JSON artists column if artist IDs found
+                if(!empty($artistIds)){
+                    foreach($artistIds as $artistId){
+                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                    }
+                }
+            });
+        } else {
+            // If no search, filter by event tag
+            $query->where('event.event_tag',$event_tag->id);
+        }
+
+        $data = $query->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->get();
 
-       $data1 = Events::
-       leftjoin('event_type','event_type.id','event.event_type')
-       ->leftjoin('users','users.id','event.event_added_by')
-       ->leftjoin('venue','venue.id','event.venue')->
-       leftjoin('location','location.id','venue.location')
-       ->leftjoin('countries','countries.id','location.country')
-       ->leftjoin('cities','cities.id','location.city')
-       ->where('event.event_tag',$event_tag->id)
-     ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-      ->first();
+        // Get first event for display (or null if no results)
+        $data1 = $data->isNotEmpty() ? $data->first() : null;
 
-       foreach ($data as $key) {
+        foreach ($data as $key) {
+            $key['timings'] = EventTiming::where('event',$key->id)->get();
 
-        $key['timings'] = EventTiming::where('event',$key->id)->get();
+            $key['tickets_available'] = TicketsGenerated::where('event_id',$key->id)
+            ->where('is_sold',0)
+            ->where('under_purchase_hold',0)
+            ->count();
+            
+            // Get artist names from JSON array
+            if(!empty($key->artists)){
+                $artistIds = json_decode($key->artists, true);
+                if(is_array($artistIds)){
+                    $key['artist_names'] = ArtistModel::whereIn('id', $artistIds)->pluck('artist_name')->toArray();
+                } else {
+                    $key['artist_names'] = [];
+                }
+            } else {
+                $key['artist_names'] = [];
+            }
+        }
 
-        $key['tickets_available'] = TicketsGenerated::where('event_id',$key->id)
-        ->where('is_sold',0)
-        ->where('under_purchase_hold',0)
-        ->count();
-        # code...
-       }
+        // Get locations for filter
+        $locationQuery = Events::
+        leftjoin('event_type','event_type.id','event.event_type')
+        ->leftjoin('users','users.id','event.event_added_by')
+        ->leftjoin('venue','venue.id','event.venue')
+        ->leftjoin('location','location.id','venue.location')
+        ->leftjoin('countries','countries.id','location.country')
+        ->leftjoin('cities','cities.id','location.city');
 
-       $location = Events::
-       leftjoin('event_type','event_type.id','event.event_type')
-       ->leftjoin('users','users.id','event.event_added_by')
-       ->leftjoin('venue','venue.id','event.venue')->
-       leftjoin('location','location.id','venue.location')
-       ->leftjoin('countries','countries.id','location.country')
-       ->leftjoin('cities','cities.id','location.city')
-       ->where('event.event_tag',$event_tag->id)
-       ->groupBy('venue.location')
-       ->select('location.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
-    //    dd($data);
+        if(!empty($search)){
+            // Get artist IDs that match the search for location filter
+            $artistIdsForLocation = ArtistModel::where('artist_name', 'LIKE', "%{$search}%")->pluck('id')->toArray();
+            
+            $locationQuery->where(function($q) use ($search, $artistIdsForLocation) {
+                $q->where('event.event_name', 'LIKE', "%{$search}%")
+                  ->orWhere('location.location_name', 'LIKE', "%{$search}%")
+                  ->orWhere('cities.name', 'LIKE', "%{$search}%")
+                  ->orWhere('countries.country_name', 'LIKE', "%{$search}%")
+                  ->orWhere('venue.name', 'LIKE', "%{$search}%");
+                
+                // Search in JSON artists column if artist IDs found
+                if(!empty($artistIdsForLocation)){
+                    foreach($artistIdsForLocation as $artistId){
+                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                    }
+                }
+            });
+        } else {
+            $locationQuery->where('event.event_tag',$event_tag->id);
+        }
 
-        return view('new_eventlistfrontend',compact('data','event_tag','location','data1'));
+        $location = $locationQuery
+        ->groupBy('venue.location')
+        ->select('location.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        ->get();
+
+        return view('new_eventlistfrontend',compact('data','event_tag','location','data1','search'));
 
 
     }

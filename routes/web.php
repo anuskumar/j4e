@@ -48,7 +48,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
 // Route::get('/event_list_frontend', [WelcomeController::class, 'event_list_frontend']);
-Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend']);
+Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend'])->name('new_eventlistfrontend');
 Route::get('/event_ticket_listing', [WelcomeController::class, 'event_ticket_listing']);
 Route::get('/ticket_filter_action', [WelcomeController::class, 'ticket_filter_action']);
 
