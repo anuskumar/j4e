@@ -11,27 +11,129 @@
 }
 
 .caption-banner{
-
-
     margin-bottom: 10%;
-
-
 }
-/*.banner_caro{*/
-
-/*    height: 450px;*/
-/*}*/
 
 img {
-
-  /* height: 48px; */
   width: -webkit-fill-available;
 }
+
 @keyframes marquee {
-        0% { transform: translateX(100%); }
-        100% { transform: translateX(-100%); }
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    .main-menu-wrapper {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        text-align: center;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+        width: 100% !important;
+        margin: 0 !important;
     }
-    </style>
+    
+    .main-nav {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        padding: 5px !important;
+        width: 100% !important;
+        display: flex !important;
+        list-style: none;
+    }
+    
+    .main-nav a {
+        padding: 8px 12px !important;
+        display: inline-block !important;
+        text-align: center;
+        font-size: 12px !important;
+        width: auto !important;
+        margin: 3px !important;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        text-decoration: none;
+    }
+    
+    .menu-header {
+        text-align: center;
+        width: 100%;
+        display: none !important;
+    }
+    
+    /* Hide menu close button on mobile */
+    .menu-close {
+        display: none !important;
+    }
+    
+    /* Ensure parent container of menu is full width */
+    div[style*="background-color: #310e80"] {
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .carousel-caption {
+        display: none !important;
+    }
+    
+    .carousel-item img {
+        height: 250px !important;
+        object-fit: cover;
+    }
+    
+    .service-box {
+        margin-bottom: 20px;
+    }
+    
+    .service-img {
+        width: 100% !important;
+        height: 200px !important;
+    }
+    
+    .service-img img {
+        height: 100% !important;
+    }
+    
+    .section-header h2 {
+        font-size: 24px;
+    }
+    
+    .popular-events .container,
+    .testimonial-section .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .title {
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .carousel-item img {
+        height: 180px !important;
+    }
+    
+    .service-img {
+        height: 180px !important;
+    }
+    
+    .section-header h2 {
+        font-size: 20px;
+    }
+    
+    .title {
+        font-size: 14px !important;
+    }
+}
+</style>
     <div style="background-color: #7e0982; overflow: hidden; white-space: nowrap; padding: 5px;">
         <span style="display: inline-block; animation: marquee 20s linear infinite; color: white; font-size: 16px;">
             Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure!<br>
@@ -127,7 +229,7 @@ img {
 
 <!-- Popular Events -->
             <section class="popular-events">
-				<div class="container ml-2 mr-2">
+				<div class="container" style="margin-left: auto; margin-right: auto;">
 
 					<!-- Section Header -->
 					<div class="section-wraper row d-flex align-items-center">
@@ -145,13 +247,12 @@ img {
 
                         @foreach ($event_tags as $val)
 
-                        <a href="{{ url('new_eventlistfrontend?tag='.$val->id) }}">
-						<div class="col-12 col-sm-4 col-md-4  col-lg-3 ">
+                        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <a href="{{ url('new_eventlistfrontend?tag='.$val->id) }}" style="text-decoration: none;">
                             <div class="service-box">
-								<div class="service-img size" style="width: 400px;height:250px; object-fit: contain; display: block;">
+								<div class="service-img size" style="width: 100%; height: 250px; object-fit: contain; display: block;">
                                     	<img class="img-fluid" src="{{  asset('storage/uploads/event_tag_images/' . $val->tag_image) }}"
-                                     style="image-rendering: pixelated; object-fit: cover;
-                                   ;" class="img-fluid">
+                                     style="width: 100%; height: 100%; object-fit: cover;" class="img-fluid">
 								</div>
 
 
@@ -185,14 +286,9 @@ img {
 									</div>
 								</div> --}}
 							</div>
-
+                            <h3 class="title text-center font-weight-bold mt-3" style="color: #022F5C;">{{ strtoupper($val->tag_name)." TICKETS" }}</h3>
                         </a>
-                        <a href="{{ url('event_list_frontend'.'?tag='.$val->id) }}">
-                            <h3 class="title text-center font-weight-bold">{{ strtoupper($val->tag_name)." TICKETS" }}</h3>
-                        </a>
-
                         </div>
-
 
                         @endforeach
 
@@ -797,6 +893,28 @@ img {
 							<a href="reviews" class="view-all">View all</a>
 						</div>
 					</div>
+<style>
+/* Reviews section mobile responsive */
+@media (max-width: 768px) {
+    .section-wraper .col-md-8,
+    .section-wraper .col-md-4 {
+        text-align: center !important;
+    }
+    
+    .section-wraper .text-right {
+        text-align: center !important;
+        margin-top: 10px;
+    }
+    
+    .testimonial-section .section-header p {
+        font-size: 14px;
+    }
+    
+    .testimonial-section .section-header h2 {
+        font-size: 22px;
+    }
+}
+</style>
 
 					<div id="testimonial-slider" class="owl-carousel owl-theme testimonial-slider ">
 						<div class="single-testimonial">

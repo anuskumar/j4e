@@ -2,12 +2,58 @@
 error_reporting(0);
 ?>
 <style>
-    @media (max-width: 991px) {
-    .test {
-        display: none!important;
-
+    /* Hide old sidebar/mobile menu elements */
+    .main-menu-wrapper,
+    .navbar-header,
+    #mobile_btn,
+    .menu-header,
+    .menu-close {
+        display: none !important;
     }
-}
+    
+    @media (max-width: 991px) {
+        .navbar-brand img {
+            max-width: 180px !important;
+            height: auto !important;
+        }
+        
+        .navbar-collapse {
+            background: rgb(34,30,105);
+            background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+        
+        .navbar-nav {
+            margin-top: 10px;
+        }
+        
+        .navbar-nav .nav-item {
+            padding: 5px 0;
+        }
+        
+        .header-top-right {
+            margin-top: 10px;
+        }
+        
+        .search-form-mobile {
+            width: 100% !important;
+            margin-bottom: 15px;
+        }
+        
+        .search-form-mobile .input-group {
+            width: 100% !important;
+        }
+    }
+    
+    .navbar-toggler {
+        border-color: rgba(255,255,255,0.5);
+    }
+    
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
 </style>
 
 <!-- Loader -->
@@ -43,26 +89,27 @@ error_reporting(0);
     <header class="header">
     <!-- Navbar -->
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark test"  style="height: 82px;
-
-    background: rgb(34,30,105);
-    background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);
-    " >
+    <nav class="navbar navbar-expand-lg navbar-dark" style="min-height: 82px; background: rgb(34,30,105); background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
                 @if($settings && $settings->company_logo)
-                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="300px;" height="70px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
+                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" style="max-width: 300px; height: 70px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
                 @else
-                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="300px;" height="70px;" alt="Logo">
+                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="" style="max-width: 300px; height: 70px;" alt="Logo">
                 @endif
             </a>
+            
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
 
-    <form class="me-3" action="{{ url('/') }}" method="GET">
-        <div class="input-group" style="width: 577px; ">
-            <input type="search" class="form-control rounded-pill" style="border-radius: 30px; min-height: -webkit-fill-available;"
+    <form class="me-3 search-form-mobile" action="{{ url('/') }}" method="GET">
+        <div class="input-group" style="max-width: 577px; width: 100%;">
+            <input type="search" class="form-control rounded-pill" style="border-radius: 30px; min-height: 40px;"
                 placeholder="Event, Artist, Location" name="search" aria-label="Search" aria-describedby="search-addon"
-                value="{{ $_GET['search'] }}" />
+                value="{{ $_GET['search'] ?? '' }}" />
             <button type="submit" class="btn btn-primary rounded-pill ml-1">
                 <i class="fas fa-search"></i>
             </button>
@@ -221,7 +268,8 @@ error_reporting(0);
         }
     </style>
 
-    {{-- <nav class="navbar navbar-expand-lg header-nav"
+    {{-- OLD COMMENTED OUT MOBILE MENU CODE - NOT IN USE
+    <nav class="navbar navbar-expand-lg header-nav"
     @if(Request::path()=='/')
     style="background: rgb(34,30,105); background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);padding: 35px!important;"
     @else
@@ -246,13 +294,13 @@ error_reporting(0);
             @php
             $settings = \App\Models\CompanySettings::first();
             @endphp
-            {{-- <a href="index" class="navbar-brand logo">
+            <a href="index" class="navbar-brand logo">
                 @if($settings && $settings->company_logo)
                     <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="326" height="76" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
                 @else
                     <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="326" height="76" alt="Logo">
                 @endif
-            </a> --}}
+            </a>
         </div>
 
         <div class="main-menu-wrapper col-12">
@@ -270,7 +318,7 @@ error_reporting(0);
 
         </div>
 
-        {{-- <div>
+        <div>
             <ul class="main-nav text-center"> <!-- Center-align text -->
                 <li class="col-md-12">
                     <h6 class="text-white">Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</h6>

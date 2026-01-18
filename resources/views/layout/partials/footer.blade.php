@@ -159,4 +159,44 @@
     border-radius: 15px;
 }
 
+/* Footer Mobile Responsive */
+@media (max-width: 768px) {
+    .footer-about .navbar-brand img {
+        max-width: 200px !important;
+        height: auto !important;
+    }
+    
+    .footer-widget {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .footer-contact-info {
+        text-align: center;
+    }
+    
+    .footer-address {
+        text-align: center;
+    }
+    
+    .social-icon ul {
+        justify-content: center;
+        padding-left: 0;
+    }
+    
+    .footer-menu ul {
+        padding-left: 0;
+    }
+    
+    .copyright-text,
+    .copyright-menu {
+        text-align: center !important;
+    }
+    
+    .policy-menu {
+        justify-content: center;
+        padding-left: 0;
+    }
+}
+
             </style>

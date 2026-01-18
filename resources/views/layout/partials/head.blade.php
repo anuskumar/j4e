@@ -31,5 +31,74 @@
 		<!-- Main CSS -->
 		<link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
+        <!-- Custom Mobile Responsive Styles -->
+        <style>
+        /* Hide all sidebar-related elements globally */
+        .app-sidebar,
+        .app-sidebar__overlay,
+        .sidebar-mini .main-sidebar,
+        .main-sidebar,
+        .sidebar-scroll,
+        .sidebar-right,
+        .sidebar-animate,
+        .navbar-header .bar-icon,
+        #mobile_btn {
+            display: none !important;
+        }
+        
+        /* Global Mobile Fixes */
+        @media (max-width: 991px) {
+            body {
+                overflow-x: hidden;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            body.sidebar-mini {
+                padding-left: 0 !important;
+            }
+            
+            .container {
+                max-width: 100%;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .main-wrapper {
+                overflow-x: hidden;
+                margin-left: 0 !important;
+                padding-left: 0 !important;
+            }
+            
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            /* Ensure no fixed sidebars on mobile */
+            .theiaStickySidebar {
+                position: relative !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 22px;
+            }
+            
+            h3 {
+                font-size: 18px;
+            }
+            
+            .btn {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+        </style>
         
 

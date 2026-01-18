@@ -37,9 +37,18 @@
 		<!-- Custom JS -->
 		<script src="{{ asset('assets/js/script.js') }}"></script>
 		
-		<!-- Logout Handler -->
+		<!-- Disable Old Mobile Menu & Logout Handler -->
 		<script>
 			$(document).ready(function() {
+				// Disable old mobile menu functionality
+				$('#mobile_btn, .menu-close').off('click').remove();
+				$('.main-menu-wrapper').remove();
+				$('.navbar-header .bar-icon').parent().off('click').remove();
+				
+				// Prevent any mobile menu toggle
+				$(document).off('click', '#mobile_btn');
+				$(document).off('click', '.menu-close');
+				
 				// Handle logout clicks from navbar
 				$(document).on('click', '.logout-link, a[href="{{ route('logout') }}"]', function(e) {
 					e.preventDefault();
