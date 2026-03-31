@@ -22,13 +22,16 @@ class EventTiming extends Model
         return EventTickets::leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')->
         leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')->
-        where('event',$event)->where('event_timing',$timing_id)->select('*','event_tickets.id as id')->orderBy('event_tickets.web_price', 'asc')->get();
+        where('event',$event)->where('event_timing',$timing_id)->where('event_tickets.is_admin_approved', 1)->select('*','event_tickets.id as id')->orderBy('event_tickets.web_price', 'asc')->get();
     }
 
     public static function get_available_tickets($ticket_id){
 
-        $data =  TicketsGenerated::where('event_tickets',$ticket_id)->where('is_sold',0)
-        ->where('under_purchase_hold',0)
+        $data =  TicketsGenerated::leftjoin('event_tickets','event_tickets.id','=','event_ticket_tickets.event_tickets')
+        ->where('event_ticket_tickets.event_tickets',$ticket_id)
+        ->where('event_ticket_tickets.is_sold',0)
+        ->where('event_ticket_tickets.under_purchase_hold',0)
+        ->where('event_tickets.is_admin_approved',1)
         ->count();
 
         return $data;

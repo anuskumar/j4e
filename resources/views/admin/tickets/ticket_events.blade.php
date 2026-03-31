@@ -10,34 +10,19 @@
                 <div class="card-header">
                     <h3 class="card-title">Events</h3>
                 </div>
-<nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin: 0 auto;">
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-    <div class="navbar-nav">
-      <a class="nav-item nav-link " href="{{ route('reseller.mylistings') }}">My Listings</a>
-      <a class="nav-item nav-link" href="#">My Sales</a>
-
-    </div>
-  </div>
-</nav>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="file-datatable"
-                            class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom">
-                            <thead>
+                            class="table table-striped table-hover table-bordered">
+                            <thead class="table-primary">
                                 <tr>
-                                    <th>Sl</th>
-                                    <th class="border-bottom-0">Event Name</th>
-                                    <th class="border-bottom-0">Event Type</th>
-                                    <th class="border-bottom-0">Event Date</th>
-                                    <th class="border-bottom-0"> Location</th>
-                                    <th class="border-bottom-0"> Venue</th>
-                                    <th class="border-bottom-0"> Image</th>
-                                    <th class="border-bottom-0">Event Status</th>
-                                    {{-- <th class="border-bottom-0">Tickets</th> --}}
-
+                                    <th class="text-center">Sl No</th>
+                                    <th>Event Name</th>
+                                    <th>Event Type</th>
+                                    <th>Event Date</th>
+                                    <th>Location</th>
+                                    <th>Venue</th>
+                                    <th class="text-center" style="min-width: 200px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -49,73 +34,74 @@
                                     @if(Auth::user()->user_type == 'reseller')
                                         @if($val->my_tickets>0)
                                         <tr>
-                                            <td>{{ $no++ }}</td>
-
+                                            <td class="text-center">{{ $no++ }}</td>
                                             <td>
-                                                {{ $val->event_name }}
+                                                <strong>{{ $val->event_name }}</strong>
                                                 @if($val->waiting_for_approval>0)
-                                                ( {{ $val->waiting_for_approval.' Waiting ' }})
+                                                    <br><span class="badge bg-warning text-dark">{{ $val->waiting_for_approval }} Waiting for Approval</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $val->event_type_name }}</td>
-
-                                            <td>{{ $val->event_from_date ? date('d-m-Y', strtotime($val->event_from_date)) : '' }}
-                                                - {{ $val->event_to_date ? date('d-m-Y', strtotime($val->event_to_date)) : '' }}
-                                            </td>
-                                            <td>{{ $val->location_name.''.$val->city_name.' ,'.$val->country_name }}</td>
-                                            <td>{{ $val->venue_name }}</td>
-
+                                            <td>{{ $val->event_type_name ?? 'N/A' }}</td>
                                             <td>
-
-                                                <img alt=""
-                                                    @if($val->event_image)
-                                                        src="{{ asset('storage/uploads/events/' . $val->event_image) }}"
-                                                    @else
-                                                        src="{{ asset('assets/img/default-event.jpg') }}"
-                                                    @endif
+                                                @if($val->event_from_date)
+                                                    <strong>From:</strong> {{ date('d-m-Y', strtotime($val->event_from_date)) }}<br>
+                                                @endif
+                                                @if($val->event_to_date)
+                                                    <strong>To:</strong> {{ date('d-m-Y', strtotime($val->event_to_date)) }}
+                                                @endif
                                             </td>
+                                            <td>{{ ($val->location_name ?? '') . ' ' . ($val->city_name ?? '') . ', ' . ($val->country_name ?? '') }}</td>
+                                            <td>{{ $val->venue_name ?? 'N/A' }}</td>
                                             <td>
-                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}"><button type="button"
-                                                        class="btn btn-primary">Manage</button></a>
+                                                <div class="table-action" style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                                                    <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm btn-primary" title="View">
+                                                        <i class="far fa-eye"></i> View
+                                                    </a>
+                                                    <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm btn-info" title="Manage">
+                                                        <i class="far fa-cog"></i> Manage
+                                                    </a>
+                                                    <a href="{{ url('tickets/transaction-history', $val->id) }}" class="btn btn-sm btn-success" title="Transaction History">
+                                                        <i class="far fa-history"></i> Transaction History
+                                                    </a>
+                                                </div>
                                             </td>
-
-
-
                                         </tr>
                                         @endif
                                     @else
                                     <tr>
-                                        <td>{{ $no++ }}</td>
-
+                                        <td class="text-center">{{ $no++ }}</td>
                                         <td>
-                                            {{ $val->event_name }}
+                                            <strong>{{ $val->event_name }}</strong>
                                             @if($val->waiting_for_approval>0)
-                                            ( {{ $val->waiting_for_approval.' Waiting ' }})
+                                                <br><span class="badge bg-warning text-dark">{{ $val->waiting_for_approval }} Waiting for Approval</span>
                                             @endif
                                         </td>
-                                        <td>{{ $val->event_type_name }}</td>
-
-                                        <td>{{ $val->event_from_date ? date('d-m-Y', strtotime($val->event_from_date)) : '' }}
-                                            - {{ $val->event_to_date ? date('d-m-Y', strtotime($val->event_to_date)) : '' }}
-                                        </td>
-                                        <td>{{ $val->location_name.' '.$val->city_name.' ,'.$val->country_name }}</td>
-                                        <td>{{ $val->venue_name }}</td>
-                                        {{-- <td>{{ $val->name }}</td> --}}
+                                        <td>{{ $val->event_type_name ?? 'N/A' }}</td>
                                         <td>
-                                            {{-- {{ $val->image }} --}}
-                                        <img src="{{ config('app.storage') ."uploads/events/". $val->event_image }}"  alt="img">
-
-                                            {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}"> --}}
+                                            @if($val->event_from_date)
+                                                <strong>From:</strong> {{ date('d-m-Y', strtotime($val->event_from_date)) }}<br>
+                                            @endif
+                                            @if($val->event_to_date)
+                                                <strong>To:</strong> {{ date('d-m-Y', strtotime($val->event_to_date)) }}
+                                            @endif
                                         </td>
+                                        <td>{{ ($val->location_name ?? '') . ' ' . ($val->city_name ?? '') . ', ' . ($val->country_name ?? '') }}</td>
+                                        <td>{{ $val->venue_name ?? 'N/A' }}</td>
                                         <td>
-                                            <a href="{{ url('tickets/manage_tickets', $val->id) }}"><button type="button"
-                                                    class="btn btn-primary">Manage</button></a>
+                                            <div class="table-action" style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                                                <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm btn-primary" title="View">
+                                                    <i class="far fa-eye"></i> View
+                                                </a>
+                                                <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm btn-info" title="Manage">
+                                                    <i class="far fa-cog"></i> Manage
+                                                </a>
+                                                <a href="{{ url('tickets/transaction-history', $val->id) }}" class="btn btn-sm btn-success" title="Transaction History">
+                                                    <i class="far fa-history"></i> Transaction History
+                                                </a>
+                                            </div>
                                         </td>
-                                        {{-- <td>{{ $val->event_is_active == 1 ? 'Active' : 'Inactive' }}</td> --}}
-
                                     </tr>
                                     @endif
-
                                     @endif
                                 @endforeach
                             </tbody>

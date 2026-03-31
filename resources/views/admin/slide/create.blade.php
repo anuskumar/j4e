@@ -63,7 +63,7 @@
                             </div>
                             <div class="col-md-9">
                                 <div class="custom-controls-stacked">
-                                    <label class=""><input type="radio" value="1" name="is_active"><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <label class=""><input type="radio" value="1" name="is_active" checked><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                     <label class=""><input type="radio" value="0" name="is_active"><span> Inactive</span></label>
                                 </div>
                             </div>

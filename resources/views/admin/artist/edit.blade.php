@@ -1,4 +1,4 @@
-<?php $page="artist/update";?>
+<?php $page="admin/artist/edit";?>
 @extends('admin.layout.app')
 @section('admin_content')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -11,7 +11,7 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">update Artist</div>
-								<form class="form-horizontal" action="{{url('artist/update') }}" method="POST" enctype="multipart/form-data">
+								<form class="form-horizontal" action="{{url('admin/artist/update') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="id" value="{{ $data->id }}">
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}

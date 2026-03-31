@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Banner</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Banner</h3>
+                        <a href="{{ url('slide/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Banner
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -30,26 +35,39 @@
                                     <td>{{ $no++ }}</td>
 
                                     <td>
-                                        {{-- {{ $val->image }} --}}
                                         @if($val->slide_image)
-                                            <img alt="" width="100" height="100" src="{{ asset('storage/uploads/slide/' . $val->slide_image) }}" onerror="this.src='{{ asset('assets/img/default-slide.jpg') }}'">
+                                            <a href="{{ asset('storage/uploads/slide/' . $val->slide_image) }}" target="_blank" title="View Image">
+                                                <i class="far fa-image fa-2x text-primary"></i>
+                                            </a>
                                         @else
-                                            <img alt="" width="100" height="100" src="{{ asset('assets/img/default-slide.jpg') }}">
+                                            <i class="far fa-image fa-2x text-muted" title="No Image"></i>
                                         @endif
-                                        {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo) }}"> --}}
                                     </td>
                                     <td>{{ $val->meta_description }}</td>
-                                    <td>{{ $val->is_active }}</td>
+                                    <td>
+                                        @if($val->is_active == 1)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-danger">Inactive</span>
+                                        @endif
+                                    </td>
 
-                                     <td>
-                                        <form action="{{ url('slide/destroy',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('slide/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('slide/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                            {{-- <a href=""><button type="button" class="btn btn-danger" class="btn btn-danger show_confirm">Delete</button></a> --}}
-                                            <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-                                        </form>
+                                    <td>
+                                        <div class="table-action">
+                                            <a href="{{url('slide/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{url('slide/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url('slide/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

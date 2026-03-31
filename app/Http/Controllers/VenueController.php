@@ -24,6 +24,7 @@ class VenueController extends Controller
         leftjoin('countries','countries.id','location.country')
         ->leftjoin('cities','cities.id','location.city')->
         select("*","venue.id as id","venue.name as venue_name")->
+        orderBy('venue.id', 'desc')->
         get();
 
         foreach($data as $val){
@@ -85,6 +86,7 @@ class VenueController extends Controller
         $validated = $request->validate([
             'name' => 'required',
             'location' => 'required',
+            'venue_type' => 'required',
         ]);
         // dd($request->request);
         $venue = new VenueModel();
@@ -120,7 +122,7 @@ class VenueController extends Controller
 
         $validated = $request->validate([
             'id' => 'required',
-
+            'venue_type' => 'required',
         ]);
 
        $data=VenueModel::find($request->id);

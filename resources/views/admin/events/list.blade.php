@@ -8,6 +8,11 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Events</h3>
+                    <div class="ms-auto">
+                        <a href="{{ url('events/create') }}" class="btn btn-primary">
+                            <i class="fe fe-plus"></i> Create Event
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">

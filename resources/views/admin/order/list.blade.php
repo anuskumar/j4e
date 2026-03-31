@@ -1,4 +1,4 @@
-<?php $page="order/list";?>
+    <?php $page="order/list";?>
 @extends(Auth::user()->user_type == "reseller" ? 'layouts.reseller_app' : 'admin.layout.app')
 @if(Auth::user()->user_type == "reseller")
 
@@ -14,77 +14,63 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Orders</h3>
+                    <h3 class="card-title">Basic Edit Table</h3>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        {{-- <table id="file-datatable"  class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom"> --}}
-                            <div class="table-responsive">
-                                <table id="file-datatable"  class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom">
-                                    <thead>
-                                        <tr>
-                                            <th>Event</th>
-                                            <th>Event Date</th>
-                                            <th>Booking Date</th>
-                                            <th>Amount</th>
-                                            <th>Purchased Date</th>
-                                            <th>Status</th>
-                                            <th>Payment Status</th>
-                                            <th>Action</th>
-                                            <th>Customer</th>
-
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($data as $val)
-
-
-                                        <tr>
-                                            <td>
-                                                <h5 class="table-avatar">
-                                                    <a href="{{ url('show_details_show',@$val->event_id) }}" class="avatar avatar-sm mr-2">
-                                                        @if(@$val->event_image)
-                                                            <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
-                                                        @else
-                                                            <img class="avatar-img rounded-circle" src="{{ asset('assets/img/default-event.jpg') }}" alt="User Image">
-                                                        @endif
-                                                    </a>
-                                                    <a href="{{ url('show_details_show',@$val->event_id) }}">{{ @$val->event_name }} <span>{{ @$val->tag_name }}, {{ @$val->event_type_name }}</span></a>
-                                                </h5>
-                                            </td>
-                                            <td>{{ @$val['event_date']->event_date }}<span class="d-block text-info">{{ @$val['event_date']->event_time }}</span></td>
-                                            <td>{{ @$val->event_from_date }}</td>
-                                            <td>{{ @$val->payment_amount }}
-                                                {{ @$val->short_name }}
-                                                </td>
-                                            <td>{{date('d M Y',strtotime(@$val->created_at)) }}</td>
-                                            <td>
-                                               {{ @$val->status_name }}
-                                            </td>
-                                            <td>
-                                                {{ @$val->is_payment_completed == 1 ? "Payment Completed" :"Not Completed"}}
-                                                {{-- <span class="badge badge-pill bg-success-light">Confirm</span> --}}
-                                            </td>
-                                            <td class="text-right">
-                                                <div class="table-action">
-                                                    <a href="{{ url('view_invoice',@$val->id) }}" class="btn btn-sm bg-success-light">
-                                                        <i class="far fa-edit"></i> Invoice
-                                                    </a>
-                                                    <a href="{{ url('show_booking_details_show',@$val->id) }}" class="btn btn-sm bg-success-light">
-                                                        <i class="far fa-edit"></i> view
-                                                    </a>
-                                                    <a href="{{ url('customer_order/update_order_status',@$val->id) }}" class="btn btn-sm bg-success-light">
-                                                        <i class="far fa-edit"></i> Update Status
-                                                    </a>
-                                                </div>
-                                            </td>
-                                            <td>{{ $val->user_name }}</td>
-                                        </tr>
-                                        @endforeach
-
-                                    </tbody>
-                                </table>
-                            </div>
+                        <table class="table table-bordered border text-nowrap mb-0 dataTables" id="file-datatable">
+                            <thead>
+                                <tr>
+                                    <th>SL</th>
+                                    <th>Event</th>
+                                    <th>Event Date</th>
+                                    <th>Booking Date</th>
+                                    <th>Amount</th>
+                                    <th>Purchased Date</th>
+                                    <th>Status</th>
+                                    <th>Payment Status</th>
+                                    <th>Customer</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($data as $index => $val)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <a href="{{ url('show_details_show',@$val->event_id) }}">{{ @$val->event_name }} <span>{{ @$val->tag_name }}, {{ @$val->event_type_name }}</span></a>
+                                    </td>
+                                    <td>{{ @$val['event_date']->event_date }}<span class="d-block text-info">{{ @$val['event_date']->event_time }}</span></td>
+                                    <td>{{ @$val->event_from_date }}</td>
+                                    <td>{{ @$val->payment_amount }}
+                                        {{ @$val->short_name }}
+                                    </td>
+                                    <td>{{date('d M Y',strtotime(@$val->created_at)) }}</td>
+                                    <td>
+                                       {{ @$val->status_name }}
+                                    </td>
+                                    <td>
+                                        {{ @$val->is_payment_completed == 1 ? "Payment Completed" :"Not Completed"}}
+                                    </td>
+                                    <td>{{ $val->user_name }}</td>
+                                    <td class="text-right">
+                                        <div class="table-action">
+                                            <a href="{{ url('view_invoice',@$val->id) }}" class="btn btn-sm bg-success-light" title="Invoice">
+                                                <i class="far fa-file-alt"></i>
+                                            </a>
+                                            <a href="{{ url('show_booking_details_show',@$val->id) }}" class="btn btn-sm bg-success-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url('customer_order/update_order_status',@$val->id) }}" class="btn btn-sm bg-success-light" title="Update Status">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                         {{-- </table> --}}
                         <div class="d-flex justify-content-center">
                         {{-- {!! $data->links() !!} --}}

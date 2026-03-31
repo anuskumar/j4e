@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Restrictions</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Restrictions</h3>
+                        <a href="{{ url('ticket_restrictions/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Restriction
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -29,20 +34,23 @@
                                     <td>{{ $no++ }}</td>
                                     <td>{{ $val->restrictions }}</td>
 
-                                    <td>{{ $val->is_active == 1 ? "Active" :"Inactive" }}</td>
-                                    {{-- <td>{{$val->last_login ?  date('d/m/Y h:i a',strtotime($val->last_login)) :"" }}</td> --}}
-
-
                                     <td>
-                                        <form action="{{ url('venuetype/destroy',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('venuetype/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('venuetype/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                        {{-- <a href="{{url('customer/delete',$val->id)}}"><button type="button" class="btn btn-danger">Delete</button></a> --}}
-                                        <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-
-                                        </form>
+                                        @if($val->is_active == 1)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-danger">Inactive</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="table-action">
+                                            <form action="{{ url('ticket_restrictions/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

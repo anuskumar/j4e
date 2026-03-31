@@ -81,8 +81,8 @@
                                                     @if(Auth::user()->user_type=="superadmin")
 
 
-                                                    <button type="button" class="btn btn-success approve-event-btn" onclick="approval_warning({{ $val->id }}, {{ $val->created_by }})">Approve </button>
-                                                     <button type="button" class="btn btn-danger approve-event-btn" onclick="rejection_warning({{ $val->id }}, {{ $val->created_by }})">Reject </button>
+                                                    <button type="button" class="btn btn-success approve-event-btn" id="approve-btn-{{ $val->id }}" onclick="approval_warning({{ $val->id }}, {{ $val->created_by }}, this)">Approve </button>
+                                                     <button type="button" class="btn btn-danger approve-event-btn" id="reject-btn-{{ $val->id }}" onclick="rejection_warning({{ $val->id }}, {{ $val->created_by }}, this)">Reject </button>
                                                     @else
                                                     {{ 'Not Approved' }}
                                                     @endif
@@ -441,12 +441,25 @@
 			</div>
 		</div>
     </div>
-    <script src="admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="admin_assets/js/main.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{{ asset('admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('admin_assets/js/main.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js" defer></script>
 
 <script>
+// Prevent sparkline errors - add fallback if sparkline plugin is not loaded
+(function() {
+    // Wait for jQuery to be ready
+    if (typeof jQuery !== 'undefined') {
+        // Add fallback if sparkline doesn't exist
+        if (typeof jQuery.fn.sparkline === 'undefined') {
+            jQuery.fn.sparkline = function() { 
+                return this; 
+            };
+        }
+    }
+})();
+
 $(document).ready(function() {
 $('.select2-select').select2();
 });
@@ -509,106 +522,145 @@ $('.select2-select').select2();
         }
 
 
-        const approval_warning = (val,created_by) => {
-
-            // val.preventDefault();
-            $('.approve-event-btn').hide();
+        const approval_warning = (val, created_by, buttonElement) => {
+            // Store references to the specific buttons for this ticket
+            const approveBtn = $('#approve-btn-' + val);
+            const rejectBtn = $('#reject-btn-' + val);
+            
+            // Disable both buttons for this specific ticket
+            approveBtn.prop('disabled', true);
+            rejectBtn.prop('disabled', true);
+            
                 swal({
-                        title: `Are you sure you want to Approve this Tickets?`,
-                        text: "Once it is Approved..it will not revoked",
+                title: `Are you sure you want to Approve this Ticket?`,
+                text: "Once it is Approved, it cannot be revoked",
                         icon: "info",
                         buttons: true,
                         dangerMode: true,
                     })
-                    .then((willDelete) => {
-                        if (willDelete) {
-                            $('#loader').addClass("hide-loader");
+            .then((willApprove) => {
+                if (willApprove) {
                             $.ajax({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-
         url : "{{ url('tickets/approve_tickets') }}",
         data : {'ticket_id' : val, 'created_by': created_by},
         type : 'GET',
         dataType : 'json',
         success : function(data){
-
             if(data.status === true){
-                // $('.approve-event-btn').hide();
-                $('#loader').addClass("hide-loader");
-                toastr.success(data.message);
+                                // Show success alert
+                                swal({
+                                    title: "Ticket Approved!",
+                                    text: data.message,
+                                    icon: "success",
+                                    button: "OK",
+                                }).then(() => {
+                                    // Reload the page after alert is closed
                 location.reload();
-
-
-            }else{
-                $('#loader').addClass("hide-loader");
+                                });
+                            } else {
+                                // Re-enable buttons on error
+                                approveBtn.prop('disabled', false);
+                                rejectBtn.prop('disabled', false);
                 toastr.error(data.message);
-                $('.approve-event-btn').show();
-                // location.reload();
-
-            }
-
-        }
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            // Re-enable buttons on error
+                            approveBtn.prop('disabled', false);
+                            rejectBtn.prop('disabled', false);
+                            
+                            // Try to get error message from response
+                            let errorMessage = 'An error occurred while approving the ticket.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                try {
+                                    const response = JSON.parse(xhr.responseText);
+                                    if (response.message) {
+                                        errorMessage = response.message;
+                                    }
+                                } catch (e) {
+                                    // Use default message
+                                }
+                            }
+                            
+                            swal({
+                                title: "Error!",
+                                text: errorMessage,
+                                icon: "error",
+                                button: "OK",
     });
-                        }else{
-                            $('.approve-event-btn').show();
                         }
-                    }
-                    );
-
-
+                    });
+                } else {
+                    // Re-enable buttons if user cancels
+                    approveBtn.prop('disabled', false);
+                    rejectBtn.prop('disabled', false);
+                        }
+            });
         }
 
-          const rejection_warning = (val,created_by) => {
-
-            // val.preventDefault();
-            $('.approve-event-btn').hide();
+        const rejection_warning = (val, created_by, buttonElement) => {
+            // Store references to the specific buttons for this ticket
+            const approveBtn = $('#approve-btn-' + val);
+            const rejectBtn = $('#reject-btn-' + val);
+            
+            // Disable both buttons for this specific ticket
+            approveBtn.prop('disabled', true);
+            rejectBtn.prop('disabled', true);
+            
                 swal({
-                        title: `Are you sure you want to Reject this Tickets?`,
-                        text: "Once it is Rejected..it will not revoked",
-                        icon: "info",
+                title: `Are you sure you want to Reject this Ticket?`,
+                text: "Once it is Rejected, it cannot be revoked",
+                icon: "warning",
                         buttons: true,
                         dangerMode: true,
                     })
-                    .then((willDelete) => {
-                        if (willDelete) {
-                            $('#loader').addClass("hide-loader");
+            .then((willReject) => {
+                if (willReject) {
                             $.ajax({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-
         url : "{{ url('tickets/reject_tickets') }}",
         data : {'ticket_id' : val, 'created_by': created_by},
         type : 'GET',
         dataType : 'json',
         success : function(data){
-
             if(data.status === true){
-                // $('.approve-event-btn').hide();
-                $('#loader').addClass("hide-loader");
-                toastr.success(data.message);
+                                // Show success alert
+                                swal({
+                                    title: "Ticket Rejected!",
+                                    text: data.message,
+                                    icon: "info",
+                                    button: "OK",
+                                }).then(() => {
+                                    // Reload the page after alert is closed
                 location.reload();
-
-
-            }else{
-                $('#loader').addClass("hide-loader");
+                                });
+                            } else {
+                                // Re-enable buttons on error
+                                approveBtn.prop('disabled', false);
+                                rejectBtn.prop('disabled', false);
                 toastr.error(data.message);
-                $('.approve-event-btn').show();
-                // location.reload();
-
-            }
-
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            // Re-enable buttons on error
+                            approveBtn.prop('disabled', false);
+                            rejectBtn.prop('disabled', false);
+                            toastr.error('An error occurred while rejecting the ticket.');
         }
     });
-                        }else{
-                            $('.approve-event-btn').show();
+                } else {
+                    // Re-enable buttons if user cancels
+                    approveBtn.prop('disabled', false);
+                    rejectBtn.prop('disabled', false);
                         }
-                    }
-                    );
-
-
+            });
         }
     </script>
 

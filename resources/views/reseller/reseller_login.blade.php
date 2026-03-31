@@ -19,14 +19,20 @@
 										<div class="login-header">
 											<h3>{{ __('Reseller Login') }}</h3>
 
-                                            @if(count($errors) > 0)
- @foreach( $errors->all() as $message )
-  <div class="alert alert-danger display-hide">
-   <button class="close" data-close="alert"></button>
-   <span>{{ $message }}</span>
-  </div>
- @endforeach
-@endif
+                                            @if ($errors->any())
+                                                @foreach ($errors->all() as $message)
+                                                    <div class="alert alert-danger">
+                                                        <span>{{ $message }}</span>
+                                                    </div>
+                                                @endforeach
+                                                @if ($errors->has('email'))
+                                                    <div class="mt-2">
+                                                        <a href="{{ route('verification.notice') }}" class="btn btn-link p-0">
+                                                            Verify your email
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                            @endif
 										</div>
 										<form method="POST" action="{{ url('reseller/login') }}">
                                             @csrf
@@ -38,6 +44,13 @@
                                                     <strong>{{ $message }}</strong>
                                                 </span>
                                             @enderror
+                                            @if ($errors->has('email'))
+                                                <div class="mt-2">
+                                                    <a href="{{ route('verification.notice') }}" class="btn btn-link p-0">
+                                                        Verify your email
+                                                    </a>
+                                                </div>
+                                            @endif
 											</div>
 											<div class="form-group form-focus">
 												<input type="password" name="password"  class="form-control floating @error('password') is-invalid @enderror">

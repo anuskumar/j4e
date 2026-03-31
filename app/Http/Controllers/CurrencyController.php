@@ -11,7 +11,7 @@ class CurrencyController extends Controller
     {
 
 
-        $data = Currency::get();
+        $data = Currency::orderBy('id', 'desc')->get();
         // dd($data);
         return view('admin.currency.list', compact('data'));
     }

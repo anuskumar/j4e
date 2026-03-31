@@ -7,7 +7,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Currency</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Currency</h3>
+                        <a href="{{ url('currency/create') }}" class="btn btn-primary">
+                            <i class="fa fa-plus me-2"></i>Create Currency
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -32,25 +37,36 @@
                                     <td>{{ $val->name }}</td>
                                     <td>{{ $val->short_name }}</td>
                                     <td>{{ $val->symbol }}</td>
-                                    <td>{{ $val->is_active == 1 ? "Active" :"Inactive" }}</td>
+                                    <td>
+                                        @if($val->is_active == 1)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-danger">Inactive</span>
+                                        @endif
+                                    </td>
 
 
                                     {{-- <td>{{$val->last_login ?  date('d/m/Y h:i a',strtotime($val->last_login)) :"" }}</td> --}}
 
 
                                     <td>
-                                    @if($val->is_protected == 0)
-                                        <form action="{{ url('currency/destroy',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        <a href="{{url('currency/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('currency/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                        {{-- <a href="{{url('customer/delete',$val->id)}}"><button type="button" class="btn btn-danger">Delete</button></a> --}}
-                                        <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-
-                                        </form>
-
-                                    @endif
+                                        <div class="table-action">
+                                            <a href="{{url('currency/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            @if($val->is_protected == 0)
+                                                <a href="{{url('currency/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                                    <i class="far fa-edit"></i>
+                                                </a>
+                                                <form action="{{ url('currency/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                        <i class="far fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

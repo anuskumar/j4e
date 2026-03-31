@@ -19,10 +19,12 @@ class CustomerController extends Controller
     {
         //
         $data = User::leftjoin('customers','customers.user_id','users.id')
-        ->select('*','users.id as id','customers.id as customer_id')->where('users.user_type','customer')
-        // ->paginate(2);
+        ->select('*','users.id as id','customers.id as customer_id')
+        ->where('users.user_type','customer')
+        ->orderBy('users.created_at', 'desc')
+        ->orderBy('users.id', 'desc')
         ->get();
-        // dd($data);
+        
         return view('admin.customer.list',compact('data'));
     }
 
@@ -48,34 +50,41 @@ class CustomerController extends Controller
 
         // Required validation here
         $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|max:255',
+            'password' => 'required|string|min:6',
+            'phone' => 'nullable|string|max:20',
+            'country_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'is_active' => 'nullable|in:0,1',
+        ], [
+            'name.required' => 'User name is required.',
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already registered.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters long.',
         ]);
-        // if($request->has('phone')){
-
-        //     $validated = $request->validate([
-        //         'phone' => 'number',
-        //     ]);
-
-        // }
+       
 
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = $request->password;
-        $user->phone = $request->phone;
-        $user->address = $request->address;
         $user->user_type = 'customer';
         $user->password = Hash::make($request->password);
-        $user->is_active = 1 ;
-        if($request->has('phone')){
-
-            $user->phone = $request->phone;
-           }
-           if($request->has('address')){
-
+        $user->email_added_at = now();
+        $user->is_active = $request->has('is_active') ? $request->is_active : 1;
+        
+        if($request->has('phone') && !empty($request->phone)){
+            // Store country code with name and phone number
+            $countryCode = $request->has('country_code') && !empty($request->country_code) ? $request->country_code : '+91 (IN)';
+            $user->phone = $countryCode . ' ' . $request->phone;
+        }
+        
+        if($request->has('address')){
             $user->address = $request->address;
-           }
+        }
 
         $user->save();
 
@@ -86,7 +95,7 @@ class CustomerController extends Controller
         $auth = Auth::user();
         if($auth){
 
-            return redirect('customer/list');
+            return redirect('admin/customer/list')->with('success', 'Customer created successfully!');
 
         }else{
 
@@ -96,7 +105,15 @@ class CustomerController extends Controller
         $user->last_login = new DateTime();
         $user->save();
 
-        return redirect('home');
+        $userType = Auth::user()->user_type;
+        if ($userType === 'superadmin') {
+            return redirect()->route('admin.home');
+        } elseif ($userType === 'customer') {
+            return redirect()->route('customer.home');
+        } elseif ($userType === 'reseller') {
+            return redirect()->route('reseller.home');
+        }
+        return redirect()->route('home');
         }
 
 
@@ -106,33 +123,11 @@ class CustomerController extends Controller
      * Display the specified resource.
      */
     public function show(string $id)
-    {
-
-
-        // // dd($id);
-        // $data = CustomerModel::
-        // leftjoin('users','users.id','customers.user_id')
-        // // ->leftjoin('admin_country','admin_country.id','admin.admin_country')
-        // ->select('*','customers.id as id',)->where('users.id',$id) ->first();
-        // dd($data);
-        // $data = CustomerModel::find($id);
-
-
-        $data = User::leftjoin('customers','customers.user_id','users.id')
+    {  $data = User::leftjoin('customers','customers.user_id','users.id')
         ->select('*','users.id as id','customers.id as customer_id')->where('users.id',$id) ->first();
-        // ->paginate(2);
-
-
-
         return view('admin.customer.view',compact('data'));
-
-
-
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
 
@@ -150,33 +145,76 @@ class CustomerController extends Controller
         // dd($request->request);
 
         $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $request->id,
+            'phone' => 'nullable|string|max:20',
+            'country_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'is_active' => 'nullable|in:0,1',
+        ], [
+            'name.required' => 'User name is required.',
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already registered.',
         ]);
 
-       $data=User::find($request->id);
-       $data->name=$request->name;
-       $data->email=$request->email;
-       $data->phone=$request->phone;
-       $data->address=$request->address;
+       $data = User::find($request->id);
+       if ($data->email !== $request->email) {
+           $data->email_added_at = now();
+       }
+       $data->name = $request->name;
+       $data->email = $request->email;
+       $data->is_active = $request->has('is_active') ? $request->is_active : 1;
+       
+       if($request->has('phone') && !empty($request->phone)){
+           // Store country code with name and phone number
+           $countryCode = $request->has('country_code') && !empty($request->country_code) ? $request->country_code : '+91 (IN)';
+           $data->phone = $countryCode . ' ' . $request->phone;
+       } else {
+           $data->phone = null;
+       }
+       
+       if($request->has('address')){
+           $data->address=$request->address;
+       } else {
+           $data->address = null;
+       }
+       
        $data->save();
-       return redirect('/customer/list');
-    //    dd($request->request);
-    // return view('admin.customer.list');
+       return redirect('/admin/customer/list')->with('success', 'Customer updated successfully!');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
-        //
-    }
+   
     public function delete( $id)
     {
         $data=User::find($id);
         $data->delete();
-        return redirect('/customer/list');
+        return redirect('/admin/customer/list');
 
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found.',
+            ], 404);
+        }
+
+        $status = $request->input('status', 0);
+        $user->is_active = $status == 1 ? 1 : 0;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer status updated successfully.',
+            'status' => $user->is_active
+        ]);
     }
 }

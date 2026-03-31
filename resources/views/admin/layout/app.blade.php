@@ -57,6 +57,33 @@
         .hide-loader {
             display: none;
         }
+        
+        /* Ensure Feather icons are visible */
+        .side-menu__icon,
+        .fe {
+            display: inline-block;
+            font-family: 'feather' !important;
+            speak: none;
+            font-style: normal;
+            font-weight: normal;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Ensure icons show when sidebar items are clicked */
+        .side-menu__item i,
+        .slide-menu .sub-side-menu__item i {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Fix for collapsed sidebar */
+        .sidebar-mini .side-menu__icon {
+            display: inline-block !important;
+        }
     </style>
 </head>
 @php
@@ -381,10 +408,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                    class="d-none">
-                                    @csrf
-                                </form>
                                 <div class="dropdown main-profile-menu nav nav-item nav-link">
                                     <a class="profile-user d-flex" href=""><img
                                             src="{{ asset('admin_assets/img/faces/6.jpg') }}" alt="user-img"
@@ -409,11 +432,14 @@
                                         @endif
 
                                         <a class="dropdown-item" href="#"
-                                            onclick="event.preventDefault();
-                                              document.getElementById('logout-form').submit();"><i
-                                                class="fas fa-sign-out-alt"></i>Logout </a>
+                                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </a>
                                     </div>
                                 </div>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
                                 {{-- <div class="dropdown main-header-message right-toggle">
 										<a class="nav-link pe-0" data-bs-toggle="sidebar-right" data-bs-target=".sidebar-right">
 											<i class="ion ion-md-menu tx-20 bg-transparent"></i>
@@ -669,8 +695,41 @@
     <!--- Chart bundle min js --->
     <script src="{{ asset('admin_assets/plugins/chart.js/Chart.bundle.min.js') }}"></script>
 
+    <!--- Sparkline fallback - must be defined BEFORE sparkline plugin loads --->
+    <script>
+        // Define sparkline fallback immediately to prevent errors
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                // Store original if it exists, otherwise create fallback
+                var originalSparkline = jQuery.fn.sparkline;
+                jQuery.fn.sparkline = function() {
+                    // If original exists and is a function, use it
+                    if (typeof originalSparkline === 'function') {
+                        return originalSparkline.apply(this, arguments);
+                    }
+                    // Otherwise return this to allow chaining
+                    return this;
+                };
+            }
+        })();
+    </script>
+    
     <!--- JQuery sparkline js --->
     <script src="{{ asset('admin_assets/plugins/jquery-sparkline/jquery.sparkline.min.js') }}"></script>
+    
+    <!--- Ensure sparkline is available after plugin loads --->
+    <script>
+        // Re-check and ensure sparkline is available after plugin loads
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                if (typeof jQuery.fn.sparkline === 'undefined') {
+                    jQuery.fn.sparkline = function() { 
+                        return this; 
+                    };
+                }
+            }
+        })();
+    </script>
 
     <!--- Internal Sampledata js --->
     <script src="{{ asset('admin_assets/js/chart.flot.sampledata.js') }}"></script>
@@ -694,6 +753,58 @@
     <!-- right-sidebar js -->
     <script src="{{ asset('admin_assets/plugins/sidebar/sidebar.js') }}"></script>
     <script src="{{ asset('admin_assets/plugins/sidebar/sidebar-custom.js') }}"></script>
+    
+    <!--- Ensure icons are visible after sidebar interactions --->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force icon visibility on page load
+            function ensureIconsVisible() {
+                const icons = document.querySelectorAll('.fe, .side-menu__icon, i[class*="fe-"]');
+                icons.forEach(function(icon) {
+                    icon.style.display = 'inline-block';
+                    icon.style.opacity = '1';
+                    icon.style.visibility = 'visible';
+                    icon.style.fontSize = icon.style.fontSize || '16px';
+                });
+            }
+            
+            // Run immediately
+            ensureIconsVisible();
+            
+            // Run after a short delay to ensure DOM is ready
+            setTimeout(ensureIconsVisible, 100);
+            setTimeout(ensureIconsVisible, 500);
+            
+            // Re-initialize icons when sidebar is toggled
+            const sidebarToggle = document.querySelector('[data-bs-toggle="sidebar"]');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    setTimeout(ensureIconsVisible, 300);
+                });
+            }
+            
+            // Re-initialize icons when menu items are clicked
+            const menuItems = document.querySelectorAll('.side-menu__item, .sub-side-menu__item');
+            menuItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    setTimeout(ensureIconsVisible, 100);
+                });
+            });
+            
+            // Watch for sidebar state changes
+            const observer = new MutationObserver(function(mutations) {
+                ensureIconsVisible();
+            });
+            
+            const sidebar = document.querySelector('.app-sidebar');
+            if (sidebar) {
+                observer.observe(sidebar, {
+                    attributes: true,
+                    attributeFilter: ['class']
+                });
+            }
+        });
+    </script>
 
     <!-- Morris js -->
     <script src="{{ asset('admin_assets/plugins/raphael/raphael.min.js') }}"></script>
@@ -702,8 +813,23 @@
     <!--- Scripts js --->
     <script src="{{ asset('admin_assets/js/script.js') }}"></script>
 
+    <!--- Ensure sparkline is available before index.js runs --->
+    <script>
+        // Final check before index.js loads - ensure sparkline exists
+        (function() {
+            if (typeof jQuery !== 'undefined') {
+                if (typeof jQuery.fn.sparkline === 'undefined' || typeof jQuery.fn.sparkline !== 'function') {
+                    jQuery.fn.sparkline = function(options, callback) {
+                        // No-op function that returns the jQuery object for chaining
+                        return this;
+                    };
+                }
+            }
+        })();
+    </script>
+
     <!--- Index js --->
-    <script src="{{ asset('admin_assets/js/index.js') }}"></script>
+    <script src="{{ asset('admin_assets/js/index.js') }}" onerror="console.warn('index.js failed to load');"></script>
 
     <!--themecolor js-->
     <script src="{{ asset('admin_assets/js/themecolor.js') }}"></script>
@@ -824,6 +950,34 @@
                 toastr.error("{{ $error }}");
             @endforeach
         @endif
+    </script>
+
+    <script>
+        // Ensure logout functionality works
+        $(document).ready(function() {
+            // Handle logout clicks
+            $('a[href="{{ route('logout') }}"]').on('click', function(e) {
+                e.preventDefault();
+                var form = document.getElementById('logout-form');
+                if (form) {
+                    form.submit();
+                } else {
+                    // Fallback: create form dynamically
+                    var logoutForm = $('<form>', {
+                        'method': 'POST',
+                        'action': '{{ route('logout') }}',
+                        'class': 'd-none'
+                    });
+                    logoutForm.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '_token',
+                        'value': '{{ csrf_token() }}'
+                    }));
+                    $('body').append(logoutForm);
+                    logoutForm[0].submit();
+                }
+            });
+        });
     </script>
 
 </body>

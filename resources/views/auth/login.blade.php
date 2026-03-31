@@ -102,7 +102,14 @@
                                                 <span class="invalid-feedback" role="alert">
                                                     <strong>{{ $message }}</strong>
                                                 </span>
-                                            @enderror
+                                                @enderror
+                                                @if ($errors->has('email'))
+                                                    <div class="mt-2">
+                                                        <a href="{{ route('verification.notice') }}" class="btn btn-link p-0">
+                                                            Verify your email
+                                                        </a>
+                                                    </div>
+                                                @endif
 											</div>
 											<div class="form-group form-focus">
 												<input type="password" name="password"  class="form-control floating @error('password') is-invalid @enderror">

@@ -33,6 +33,7 @@ use Carbon\Carbon;
 use Faker\Provider\ar_EG\Address;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -50,10 +51,11 @@ class ResellerController extends Controller
     public function index()
     {
         $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
-            ->select('*', 'users.id as id', 'resellers.id as resellers_id')->where('users.user_type', 'reseller')
-            // ->paginate(2);
+            ->select('*', 'users.id as id', 'resellers.id as resellers_id')
+            ->where('users.user_type', 'reseller')
+            ->orderBy('users.created_at', 'desc')
+            ->orderBy('users.id', 'desc')
             ->get();
-        // dd($data);
         return view('admin.reseller.list', compact('data'));
     }
     public function eventlisting()
@@ -89,22 +91,52 @@ class ResellerController extends Controller
      */
     public function store(Request $request)
     {
-        $user          = new User();
-        $user->name    = $request->name;
-        $user->email   = $request->email;
-        $user->phone   = $request->phone;
-        $user->address = $request->address;
+        // Validation rules
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email|max:255',
+            'password' => 'required|string|min:6',
+            'phone' => 'required|string|max:20',
+            'country_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'is_active' => 'nullable|in:0,1',
+        ], [
+            'name.required' => 'User name is required.',
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'This email is already registered.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 6 characters long.',
+            'phone.required' => 'Phone number is required.',
+        ]);
 
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
         $user->user_type = 'reseller';
-        $user->password  = Hash::make($request->password);
-        $user->is_active = $request->is_active;
+        $user->password = Hash::make($request->password);
+        $user->email_added_at = now();
+        $user->is_active = $request->has('is_active') ? $request->is_active : 1;
+        
+        // Store phone number with country code
+        if ($request->has('phone') && !empty($request->phone)) {
+            $countryCode = $request->has('country_code') && !empty($request->country_code) ? $request->country_code : '+91 (IN)';
+            $user->phone = $countryCode . ' ' . $request->phone;
+        }
+        
+        if ($request->has('address')) {
+            $user->address = $request->address;
+        }
+
         $user->save();
 
-        $reseller          = new ResellerModel();
+        $reseller = new ResellerModel();
         $reseller->user_id = $user->id;
         $reseller->save();
 
-        return redirect('reseller/list');
+        $user->sendEmailVerificationNotification();
+
+        return redirect('admin/reseller/list')->with('success', 'Reseller created successfully!');
     }
 
     /**
@@ -140,6 +172,9 @@ class ResellerController extends Controller
         ]);
 
         $data            = User::find($request->id);
+        if ($data->email !== $request->email) {
+            $data->email_added_at = now();
+        }
         $data->name      = $request->name;
         $data->email     = $request->email;
         $data->phone     = $request->phone;
@@ -152,7 +187,7 @@ class ResellerController extends Controller
         $val->is_trusted        = $request->is_trusted;
         $val->save();
 
-        return redirect('/reseller/list');
+        return redirect('/admin/reseller/list');
     }
 
     /**
@@ -171,7 +206,7 @@ class ResellerController extends Controller
             $user->delete();
         }
 
-        return redirect('/reseller/list');
+        return redirect('/admin/reseller/list');
     }
 
     public function profile()
@@ -192,6 +227,9 @@ class ResellerController extends Controller
     {
 
         $profiledata        = User::where('id', $request->authid)->first();
+        if ($profiledata->email !== $request->company_email) {
+            $profiledata->email_added_at = now();
+        }
         $profiledata->name  = $request->name;
         $profiledata->email = $request->company_email;
         $profiledata->phone = $request->contact_number;
@@ -303,8 +341,9 @@ class ResellerController extends Controller
             ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
             ->get();
         $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        $ticketTypes = TicketType::where('is_active', 1)->get();
         // dd($event_type);
-        return view('reseller.create_event', compact('event_type', 'venue', 'artists'));
+        return view('reseller.create_event', compact('event_type', 'venue', 'artists', 'ticketTypes'));
     }
 
     public function manage_event_store(Request $request)
@@ -320,6 +359,9 @@ class ResellerController extends Controller
         $event->event_type      = $request->event_type;
         $event->venue           = $request->venue;
         $event->artists         = json_encode($request->artists);
+        if (!empty($request->ticket_types)) {
+            $event->ticket_types = json_encode($request->ticket_types);
+        }
         $event->event_from_date = $request->event_from_date;
         $event->event_to_date   = $request->event_to_date;
         $event->event_desc      = $request->event_desc;
@@ -362,7 +404,8 @@ class ResellerController extends Controller
             ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
             ->get();
         $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
-        return view('reseller.event_edit', compact('data', 'event_type', 'artists', 'venue'));
+        $ticketTypes = TicketType::where('is_active', 1)->get();
+        return view('reseller.event_edit', compact('data', 'event_type', 'artists', 'venue', 'ticketTypes'));
     }
 
     public function event_update(Request $request)
@@ -381,6 +424,9 @@ class ResellerController extends Controller
         $data->event_desc      = $request->event_desc;
         $data->venue           = $request->venue;
         $data->artists         = json_encode($request->artists);
+        if (!empty($request->ticket_types)) {
+            $data->ticket_types = json_encode($request->ticket_types);
+        }
         $data->event_from_date = $request->event_from_date;
         $data->event_to_date   = $request->event_to_date;
         // $data->event_added_by =Auth::user()->id;
@@ -643,6 +689,7 @@ class ResellerController extends Controller
         $validated = $request->validate([
             'name'     => 'required',
             'location' => 'required',
+            'venue_type' => 'required',
         ]);
         // dd($request->request);
         $venue                  = new VenueModel();
@@ -691,7 +738,7 @@ class ResellerController extends Controller
 
         $validated = $request->validate([
             'id' => 'required',
-
+            'venue_type' => 'required',
         ]);
 
         $data                  = VenueModel::find($request->id);
@@ -756,7 +803,25 @@ class ResellerController extends Controller
         $data = $data_all->select('*', 'event_tickets.id as id', 'event_tickets.is_admin_approved as is_admin_approved')->get();
 
         $event          = Events::find($id);
-        $ticket_type    = TicketType::get();
+        
+        // Filter ticket types based on event's selected ticket types
+        $allTicketTypes = TicketType::where('is_active', 1)->get();
+        $selectedTicketTypeIds = [];
+        
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true);
+        }
+        
+        // If event has selected ticket types, filter to show only those
+        // Otherwise, show all active ticket types
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)
+                ->where('is_active', 1)
+                ->get();
+        } else {
+            $ticket_type = $allTicketTypes;
+        }
+        
         $event_timing   = EventTiming::where('event', $id)->get();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
@@ -895,7 +960,25 @@ class ResellerController extends Controller
             'venue.name as venue_name',
         )->first();
         $event          = Events::find($id);
-        $ticket_type    = TicketType::get();
+        
+        // Filter ticket types based on event's selected ticket types
+        $allTicketTypes = TicketType::where('is_active', 1)->get();
+        $selectedTicketTypeIds = [];
+        
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true);
+        }
+        
+        // If event has selected ticket types, filter to show only those
+        // Otherwise, show all active ticket types
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)
+                ->where('is_active', 1)
+                ->get();
+        } else {
+            $ticket_type = $allTicketTypes;
+        }
+        
         $mobile_applications = MobileApplication::get();
         $event_timing   = EventTiming::where('event', $id)->first();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
@@ -915,8 +998,9 @@ class ResellerController extends Controller
     }
     public function savesellticket(Request $request, $id)
     {
-        // Validate the form data with new field names
-        $validated = $request->validate([
+        try {
+            // Build validation rules
+            $rules = [
             'ticket_count'      => 'required|numeric|min:1|max:30',
             'venue_seating'     => 'required',
             'row'               => 'nullable|string',
@@ -928,13 +1012,12 @@ class ResellerController extends Controller
             'amount'            => 'required|numeric|min:0',
             'cents'             => 'nullable|numeric|min:0|max:99',
             'ticket_type'       => 'required|exists:ticket_type,id',
-            'mobile_app'        => 'nullable|exists:ticket_type,id',
-        ]);
+                'mobile_app'        => 'nullable|exists:mobile_applications,id',
+            ];
 
-        if ($request->ticket_type == 4) { // Assuming '4' is the ID for mobile ticket transfer
+            // If mobile ticket transfer, make mobile_app required
+            if ($request->ticket_type == 4) {
             $rules['mobile_app'] = 'required|exists:mobile_applications,id';
-        } else {
-            $rules['mobile_app'] = 'nullable|exists:mobile_applications,id';
         }
 
         // Validate the form data
@@ -943,11 +1026,8 @@ class ResellerController extends Controller
         // Retrieve event timing based on event ID
         $eventTiming = EventTiming::where('event', $id)->first();
         if (!$eventTiming) {
-            // Handle the case where the event timing is not found
-            return back()->withErrors(['event_timing' => 'Event timing not found for the given event ID.']);
+                return back()->with('error', 'Event timing not found for the given event ID.')->withInput();
         }
-
-        // dd($eventTiming);
 
         // Create new ticket record
         $data = new EventTickets();
@@ -956,7 +1036,7 @@ class ResellerController extends Controller
         $data->event = $id;
         $data->unique_id = Str::random(16);
         $data->ticket_name = "Ticket for Event #" . $id;
-        $data->event_timing = $eventTiming->event;
+            $data->event_timing = $eventTiming->id;
         $data->no_of_tickets = $request->ticket_count;
 
         // Ticket details
@@ -968,15 +1048,16 @@ class ResellerController extends Controller
         $data->split_type = $request->sell_together;
 
         // Price information
-        $cents = $request->cents ?? 00;
+            $cents = $request->cents ?? 0;
         $totalAmount = $request->amount + ($cents / 100); // Convert cents to decimal
-        $data->ticket_amount = $totalAmount; // This should be selling price if different from face value
+            $data->ticket_amount = $totalAmount;
         $data->amount_currency = $request->currency;
-        $data->face_value = $totalAmount; // Using the same amount as face value
+            $data->face_value = $totalAmount;
 
         // Process restrictions (checkboxes)
         $restrictions = $request->restrictions ?? [];
         $data->ticket_restrictions = json_encode($restrictions);
+            
         // Process features (checkboxes)
         $features = [];
         $featureFields = [
@@ -1006,26 +1087,109 @@ class ResellerController extends Controller
             $data->mobile_application_id = $request->mobile_app;
         }
 
-
         // Default values
-        $data->booking_expiry_date_time = $eventTiming->event_date; // Set default or calculate based on business rules
-        $data->cancellation_policy_notes = "Standard cancellation policy applies."; // Default value
-        $data->disclaimer_note = "No refunds or exchanges."; // Default value
+            $data->booking_expiry_date_time = $eventTiming->event_date ?? now();
+            $data->cancellation_policy_notes = "Standard cancellation policy applies.";
+            $data->disclaimer_note = "No refunds or exchanges.";
 
         // Approval status
         $data->is_admin_approved = 0;
         $data->ticket_status = 1;
         $data->created_by = Auth::user()->id;
 
-        // Save the record
+            // Use database transaction to ensure data integrity
+            DB::beginTransaction();
+            
+            try {
+                // Save the EventTickets record
         $data->save();
-        Log::info('Ticket submission data:', $request->all());
 
-        // Get the last inserted ID
-        $lastRecordId = $data->id;
+                // Create TicketsGenerated records for each seat
+                // Only create if seat information is provided (seat_from, seat_to, and row)
+                if ($data->seat_from && $data->seat_to && $data->row && $data->venue_seating) {
+                    // Get venue seating information
+                    $seating = VenueSeating::find($data->venue_seating);
+                    
+                    if (!$seating) {
+                        throw new \Exception('Venue seating not found for the given venue seating ID.');
+                    }
+                    
+                    // Calculate seat range
+                    $seatFrom = (int)$data->seat_from;
+                    $seatTo = (int)$data->seat_to;
+                    $ticketCount = $seatTo - $seatFrom + 1;
+                    
+                    // Validate that ticket count matches
+                    if ($ticketCount != $data->no_of_tickets) {
+                        throw new \Exception("Ticket count mismatch. Expected {$data->no_of_tickets} tickets but seat range provides {$ticketCount} tickets.");
+                    }
+                    
+                    // Create a ticket for each seat number
+                    for ($i = $seatFrom; $i <= $seatTo; $i++) {
+                        $ticketGenerated = new TicketsGenerated();
+                        $ticketGenerated->event_tickets = $data->id;
+                        $ticketGenerated->ticket_serial_number = ($seating->seat_serial_prefix ?? 'T') . $i . '-' . $data->row . '-' . time() . '-' . $i;
+                        $ticketGenerated->is_sold = 0;
+                        $ticketGenerated->under_purchase_hold = 0;
+                        $ticketGenerated->ticket_amount = $data->ticket_amount;
+                        $ticketGenerated->seat_number = $i;
+                        $ticketGenerated->seat_row = $data->row;
+                        $ticketGenerated->seat_prefix = $seating->seat_serial_prefix ?? 'T';
+                        $ticketGenerated->seat_number_prefix = ($seating->seat_serial_prefix ?? 'T') . '-' . $data->row . '-' . $i;
+                        $ticketGenerated->event_timing = $data->event_timing;
+                        $ticketGenerated->event_seating = $data->venue_seating;
+                        $ticketGenerated->event_id = $data->event;
+                        $ticketGenerated->save();
+                    }
+                    
+                    Log::info('TicketsGenerated records created', [
+                        'event_tickets_id' => $data->id,
+                        'tickets_created' => $ticketCount
+                    ]);
+                } else {
+                    Log::info('TicketsGenerated not created - missing seat information', [
+                        'event_tickets_id' => $data->id,
+                        'has_seat_from' => !empty($data->seat_from),
+                        'has_seat_to' => !empty($data->seat_to),
+                        'has_row' => !empty($data->row),
+                        'has_venue_seating' => !empty($data->venue_seating)
+                    ]);
+                }
 
-        // Redirect to the next step
-        return redirect()->route('reseller.savesecond', ['id' => $lastRecordId]);
+                // Commit the transaction
+                DB::commit();
+
+            } catch (\Exception $e) {
+                // Rollback the transaction on any error
+                DB::rollBack();
+                
+                Log::error('Error in ticket creation transaction: ' . $e->getMessage(), [
+                    'event_tickets_id' => $data->id ?? null,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // Re-throw the exception to be caught by outer catch block
+                throw $e;
+            }
+
+            // Redirect to the next step with success message
+            return redirect()->route('reseller.savesecond', ['id' => $data->id])
+                ->with('success', 'Ticket created successfully!');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Validation errors
+            return back()->withErrors($e->errors())->withInput()
+                ->with('error', 'Please fix the validation errors below.');
+        } catch (\Exception $e) {
+            // Other errors (database, etc.)
+            Log::error('Ticket creation error: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'An error occurred while creating the ticket: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function savesellticketsecond(Request $request)
@@ -1335,7 +1499,8 @@ class ResellerController extends Controller
         }
 
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.is_admin_approved as is_admin_approved','event_tickets.ticket_status as ticket_status','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+       ->orderBy('event_tickets.id', 'desc')
        ->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
@@ -1450,7 +1615,8 @@ class ResellerController extends Controller
         $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
             ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL) as sales_count');
 
-        $data = $data_all->paginate(20)->appends(request()->all());
+        $data = $data_all->orderBy('event_tickets.id', 'desc')
+            ->paginate(20)->appends(request()->all());
 
        foreach($data as $val){
 
@@ -1486,10 +1652,9 @@ class ResellerController extends Controller
         ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')
         ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
-        ;
+        ->where('event_tickets.id', $id);
 
-        $data_all->find($id);
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select('*','event_tickets.id as id','event_tickets.created_by as created_by','event_tickets.is_admin_approved as is_admin_approved','event_tickets.web_price as web_price','event_tickets.event as event_id','event.event_name as event_name','currency.short_name as short_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
        ->get()->toArray();
 
         $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();
@@ -1543,13 +1708,18 @@ class ResellerController extends Controller
             ->where('is_sold', 1)
             ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
             ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')
+            ->leftjoin('ticket_purchase','ticket_purchase.id','event_ticket_tickets.purchase_id')
+            ->leftjoin('users','users.id','ticket_purchase.user_id')
             ->select(
                 'event_ticket_tickets.*',
                 'event_ticket_tickets.id as ticket_id',
                 'venue_seating.seating_type_name',
                 'event_timings.event_date',
                 'event_timings.from_time',
-                'event_timings.to_time'
+                'event_timings.to_time',
+                'users.name as customer_name',
+                'users.email as customer_email',
+                'users.phone as customer_phone'
             )
             ->orderBy('event_ticket_tickets.created_at', 'desc')
             ->get();
@@ -1679,6 +1849,33 @@ public function upload_ticket_seating(Request $request){
         $generatedTicket->delete();
 
         return response()->json(['status' => 'success']);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reseller not found.',
+            ], 404);
+        }
+
+        // Get status from request and ensure it's either 1 or 0
+        $status = $request->input('status', 0);
+        $isActive = ($status == 1 || $status === '1' || $status === true) ? 1 : 0;
+        
+        // Update the is_active field in users table
+        $user->is_active = $isActive;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reseller status updated successfully.',
+            'status' => (int)$user->is_active,
+            'is_active' => (int)$user->is_active
+        ]);
     }
 
 }

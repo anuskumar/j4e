@@ -11,6 +11,17 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">Create Location</div>
+								
+								@if ($errors->any())
+									<div class="alert alert-danger">
+										<ul class="mb-0">
+											@foreach ($errors->all() as $error)
+												<li>{{ $error }}</li>
+											@endforeach
+										</ul>
+									</div>
+								@endif
+								
 								<form class="form-horizontal"  action="{{ url('location/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
@@ -19,10 +30,13 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Location Name</label>
+												<label class="form-label">Location Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="location_name" placeholder="Enter name"  value="{{ old('location_name') }}">
+												<input type="text" class="form-control @error('location_name') is-invalid @enderror" name="location_name" placeholder="Enter location name" value="{{ old('location_name') }}" required>
+												@error('location_name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -31,28 +45,34 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Country</label>
+												<label class="form-label">Country <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<select name="country" id="country-id" class="form-control select2-select" required>
-                                                    <option>Select</option>
+												<select name="country" id="country-id" class="form-control select2-select @error('country') is-invalid @enderror" required>
+                                                    <option value="">Select</option>
                                                     @foreach($country as $loc)
-                                                    <option value="{{ $loc->id }}">{{ $loc->country_name }}</option>
+                                                    <option value="{{ $loc->id }}" {{ old('country') == $loc->id ? 'selected' : '' }}>{{ $loc->country_name }}</option>
                                                     @endforeach
                                                 </select>
+												@error('country')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">City</label>
+												<label class="form-label">City <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<select name="city" required class="form-control" id="select2-city">
-                                                    <option>Select</option>
+												<select name="city" required class="form-control @error('city') is-invalid @enderror" id="select2-city">
+                                                    <option value="">Select</option>
 
                                                 </select>
+												@error('city')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -66,7 +86,7 @@
 											<div class="col-md-6">
 												<div class="col-md-6">
                                                     <div class="custom-controls-stacked">
-                                                        <label class=""><input  type="radio" value="1" name="is_active"><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                        <label class=""><input  type="radio" value="1" name="is_active" checked><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                                         <label class=""><input  type="radio" value="0" name="is_active"><span> Inactive</span></label>
                                                     </div>
                                                 </div>

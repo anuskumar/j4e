@@ -17,6 +17,7 @@ class LocationController extends Controller
         leftjoin('countries','countries.id','location.country')
        ->leftjoin('cities','cities.id','location.city')
        ->select('location.id as id','location_name','country_name','cities.name as city_name','location_name')
+       ->orderBy('location.id', 'desc')
        ->get();
 
         return view('admin.location.index',compact('data'));

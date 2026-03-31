@@ -832,18 +832,13 @@
                                         <!-- Add more list items as needed -->
                                     </div>
                                 @endforeach
-                            @endif
-
-                            <div class="list-group">
-                                <div class="list-group-item border-top-0">
-                                    <div class="event-indicator bg-primary-gradient"></div><label>Nov 20
-                                        <span>Tuesday</span></label>
-                                    <h6>PH World Mall Lantern Festival</h6>
-                                    <p><strong>8AM - 4PM</strong> Bay Area, San Francisco</p><small><span
-                                            class="tx-danger">Sold Out</span> (3000 tickets sold)</small>
+                            @else
+                                <div class="list-group">
+                                    <div class="list-group-item border-top-0">
+                                        <p class="text-center text-muted">No upcoming events found.</p>
+                                    </div>
                                 </div>
-                                <!-- Add more list items as needed -->
-                                <!--</div>-->
+                            @endif
                                 <!--<div class="list-group">-->
                                 <!--    <div class="list-group-item border-top-0">-->
                                 <!--        <div class="event-indicator bg-primary-gradient"></div><label>Nov 20 <span>Tuesday</span></label>-->

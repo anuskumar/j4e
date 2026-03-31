@@ -113,6 +113,35 @@
                                     <div class="form-group ">
                                         <div class="row">
                                             <div class="col-md-3">
+                                                <label class="form-label">Ticket Types</label>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <select name="ticket_types[]" multiple class="form-control select2-select">
+                                                    <option value="">Select Ticket Types</option>
+                                                    @if(isset($ticketTypes) && $ticketTypes->count() > 0)
+                                                    @php
+                                                        $selectedTicketTypes = [];
+                                                        if (!empty($data->ticket_types)) {
+                                                            $selectedTicketTypes = json_decode($data->ticket_types, true);
+                                                        }
+                                                    @endphp
+                                                    @foreach ($ticketTypes as $ticketType)
+                                                    <option value="{{ $ticketType->id }}" 
+                                                        @if(is_array($selectedTicketTypes) && in_array($ticketType->id, $selectedTicketTypes))
+                                                            selected
+                                                        @endif
+                                                    >{{ $ticketType->ticket_type_name }}</option>
+                                                    @endforeach
+                                                    @endif
+                                                </select>
+                                                <small class="text-muted">Select one or more ticket types that will be available for this event</small>
+											</div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Event From</label>
                                             </div>
                                             <div class="col-md-6">
@@ -199,5 +228,17 @@
 
     </div>
     <!-- /Page Content -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+    $(document).ready(function () {
+        $('.select2-select').select2({
+            placeholder: 'Select an option',
+            allowClear: true
+        });
+    });
+    </script>
 
 @endsection

@@ -108,6 +108,62 @@
         color: #ffffff;
     }
 
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .event-item {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 15px;
+        }
+        
+        .event-date {
+            flex-direction: row;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .event-date .date,
+        .event-date .day {
+            font-size: 16px;
+        }
+        
+        .event-details {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .event-name {
+            font-size: 16px;
+        }
+        
+        .event-location,
+        .event-time {
+            font-size: 12px;
+        }
+        
+        .event-cta {
+            margin-left: 0;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .ticket-button {
+            width: 100%;
+            text-align: center;
+            display: block;
+        }
+        
+        .alert-heading {
+            font-size: 18px;
+        }
+        
+        .alert p {
+            font-size: 14px;
+        }
+    }
+
     .event-item:hover {
         background-color: #F3EAFF; /* Light blue background on hover */
         box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
@@ -189,13 +245,23 @@
     <div class="container ml-2 mr-2">
         <!-- Section Header -->
         <div class="section-wraper row d-flex align-items-center">
-            {{-- <div class="col-md-6 text-right" >
-                <h4>Events</h4>
-            </div> --}}
+            @if(!empty($search))
+                <div class="col-md-12">
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading">Search Results for "{{ $search }}"</h4>
+                        <p class="mb-0">Found {{ count($data) }} event(s) matching your search.</p>
+                    </div>
+                </div>
+            @else
+                {{-- <div class="col-md-6 text-right" >
+                    <h4>Events</h4>
+                </div> --}}
+            @endif
         </div>
         <!-- /Section Header -->
 
         <!-- Events List -->
+        @if(count($data) > 0)
         <div class="event-list">
             @foreach ($data as $val)
                 @php
@@ -230,6 +296,11 @@
                     </div>
                     <div class="event-details">
                         <h3 class="event-name">{{ $val->event_name }}</h3>
+                        @if(!empty($val->artist_names) && count($val->artist_names) > 0)
+                            <p class="event-artist" style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">
+                                <i class="fas fa-user"></i> {{ implode(', ', $val->artist_names) }}
+                            </p>
+                        @endif
                         <p class="event-location">
                             {{ $val->location_name . ' ' . $val->city_name . ', ' . $val->country_name }}
                         </p>
@@ -256,6 +327,13 @@
             @endforeach
 
         </div>
+        @else
+        <div class="alert alert-warning text-center" role="alert">
+            <h4>No Events Found</h4>
+            <p>We couldn't find any events matching your search criteria. Please try a different search term.</p>
+            <a href="{{ url('/') }}" class="btn btn-primary mt-3">Back to Home</a>
+        </div>
+        @endif
         <!-- /Events List -->
     </div>
 </section>

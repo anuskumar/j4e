@@ -54,6 +54,9 @@ class CompanySettingsController extends Controller
         } else{
             $user = User::find($settings->user_id);
             if ($user) {
+                if ($user->email !== $request->company_email) {
+                    $user->email_added_at = now();
+                }
                 $user->email = $request->company_email;
                 $user->save();
             }

@@ -32,18 +32,7 @@
                             data-bs-toggle="dropdown">Sell</a>
                         <ul class="dropdown-menu" aria-labelledby="sellDropdown">
                             <li><a class="dropdown-item" href="{{ route('reseller.eventlisting') }}">Sell Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ route('reseller.mylistings') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ url('customer_order/list') }}">My Sales</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button"
-                            data-bs-toggle="dropdown">My Tickets</a>
-                        <ul class="dropdown-menu" aria-labelledby="ticketDropdown">
-                            <li><a class="dropdown-item" href="{{ url('customer_order/list') }}">Orders</a></li>
-                            <li><a class="dropdown-item" href="{{ route('reseller.mylistings') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
-                            <li><a class="dropdown-item" href="#">Payments</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.mysales') }}">My Sales</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -53,17 +42,16 @@
                         <ul class="dropdown-menu" aria-labelledby="profileDropdown">
                             <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">My Profile</a></li>
                             <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">Settings</a></li>
-                            {{-- <li><a class="dropdown-item" href="#">Log Out</a></li> --}}
-                              <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item logout-link" href="{{ route('logout') }}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>{{ __('Logout') }}
+                                </a>
+                            </li>
                         </ul>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
                     </li>
                 </ul>
             </div>
@@ -143,6 +131,70 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Ensure logout functionality works
+        $(document).ready(function() {
+            // Handle logout clicks using event delegation for dynamically added elements
+            $(document).on('click', '.logout-link, a[href="{{ route('logout') }}"]', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var form = document.getElementById('logout-form');
+                if (form) {
+                    form.submit();
+                } else {
+                    // Fallback: create form dynamically
+                    var logoutForm = $('<form>', {
+                        'method': 'POST',
+                        'action': '{{ route('logout') }}',
+                        'id': 'logout-form',
+                        'class': 'd-none'
+                    });
+                    logoutForm.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '_token',
+                        'value': '{{ csrf_token() }}'
+                    }));
+                    $('body').append(logoutForm);
+                    logoutForm[0].submit();
+                }
+                return false;
+            });
+        });
+        
+        // Also add vanilla JS handler as backup
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoutLinks = document.querySelectorAll('.logout-link');
+            logoutLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    var form = document.getElementById('logout-form');
+                    if (form) {
+                        form.submit();
+                    } else {
+                        // Fallback: create form dynamically
+                        var logoutForm = document.createElement('form');
+                        logoutForm.method = 'POST';
+                        logoutForm.action = '{{ route('logout') }}';
+                        logoutForm.id = 'logout-form';
+                        logoutForm.style.display = 'none';
+                        
+                        var csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = '{{ csrf_token() }}';
+                        logoutForm.appendChild(csrfInput);
+                        
+                        document.body.appendChild(logoutForm);
+                        logoutForm.submit();
+                    }
+                    return false;
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

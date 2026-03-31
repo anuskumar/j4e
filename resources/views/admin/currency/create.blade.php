@@ -10,6 +10,17 @@
 						<div class="card">
 							<div class="card-body">
 								<div class="mb-4 main-content-label">Add Currency</div>
+								
+								@if ($errors->any())
+									<div class="alert alert-danger">
+										<ul class="mb-0">
+											@foreach ($errors->all() as $error)
+												<li>{{ $error }}</li>
+											@endforeach
+										</ul>
+									</div>
+								@endif
+								
 								<form class="form-horizontal"  action="{{ url('currency/store') }}" method="POST" enctype="multipart/form-data">
                                     @csrf
 									{{-- <div class="mb-4 main-content-label">Name</div> --}}
@@ -18,10 +29,13 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label"> Name</label>
+												<label class="form-label">Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="name"  value="{{ old('name') }}">
+												<input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Enter currency name" value="{{ old('name') }}" required>
+												@error('name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -29,10 +43,13 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Short Name</label>
+												<label class="form-label">Short Name <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="short_name"   value="{{ old('short_name') }}">
+												<input type="text" class="form-control @error('short_name') is-invalid @enderror" name="short_name" placeholder="Enter short name (e.g., USD, EUR)" value="{{ old('short_name') }}" required maxlength="10">
+												@error('short_name')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
@@ -42,17 +59,24 @@
 												<label class="form-label">Symbol</label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="symbol"   value="{{ old('symbol') }}">
+												<input type="text" class="form-control @error('symbol') is-invalid @enderror" name="symbol" placeholder="Enter currency symbol (e.g., $, €)" value="{{ old('symbol') }}" maxlength="10">
+												@error('symbol')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
 											</div>
 										</div>
 									</div>
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Echange Rate with 1 USD</label>
+												<label class="form-label">Exchange Rate with 1 USD <span class="text-danger">*</span></label>
 											</div>
 											<div class="col-md-6">
-												<input type="text" class="form-control" name="currency_rate"   value="{{ old('currency_rate') }}">
+												<input type="number" step="0.0001" min="0" class="form-control @error('currency_rate') is-invalid @enderror" name="currency_rate" placeholder="Enter exchange rate" value="{{ old('currency_rate') }}" required>
+												@error('currency_rate')
+													<div class="invalid-feedback">{{ $message }}</div>
+												@enderror
+												<small class="form-text text-muted">Enter the exchange rate relative to 1 USD.</small>
 											</div>
 										</div>
 									</div>

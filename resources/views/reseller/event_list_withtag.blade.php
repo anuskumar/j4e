@@ -35,6 +35,105 @@
             pointer-events: none;
             z-index: 1;
         }
+
+        .event-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .event-card img {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .event-card-body {
+            padding: 1.25rem;
+        }
+
+        .event-date {
+            background: linear-gradient(135deg, #d20ae9 0%, #8b00a8 100%);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .event-date-day {
+            font-size: 1.5rem;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .event-date-month {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .event-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .event-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .event-location {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+        }
+
+        .event-card-footer {
+            background: transparent;
+            border-top: 1px solid #e9ecef;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .btn-sell-tickets {
+            background: linear-gradient(135deg, #d20ae9 0%, #8b00a8 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sell-tickets:hover {
+            background: linear-gradient(135deg, #8b00a8 0%, #d20ae9 100%);
+            transform: scale(1.05);
+            color: white;
+        }
+
+        .event-image-placeholder {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+        }
     </style>
 
 </head>
@@ -57,18 +156,7 @@
                             data-bs-toggle="dropdown">Sell</a>
                         <ul class="dropdown-menu" aria-labelledby="sellDropdown">
                             <li><a class="dropdown-item" href="#">Sell Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ url('tickets') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="ticketDropdown" role="button"
-                            data-bs-toggle="dropdown">My Tickets</a>
-                        <ul class="dropdown-menu" aria-labelledby="ticketDropdown">
-                            <li><a class="dropdown-item" href="#">Orders</a></li>
-                            <li><a class="dropdown-item" href="{{ url('tickets') }}">My Tickets</a></li>
-                            <li><a class="dropdown-item" href="#">My Sales</a></li>
-                            <li><a class="dropdown-item" href="#">Payments</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.mysales') }}">My Sales</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -118,38 +206,72 @@
 
         <!-- Events Listing -->
         <div class="mt-4">
-            <p class=" text-muted fw-bold">{{ $events->count() }} events in all locations</p>
+            <p class="text-muted fw-bold mb-4">{{ $events->count() }} events in all locations</p>
 
-            <div class="list-group">
+            <div class="row g-4">
                 @foreach ($events as $val)
-                    <a href="{{ route('reseller.selltickets', ['id' => $val->id]) }}"
-                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div class="row">
-                            <div class="col-3 text-center">
-                                <h4 class="fw-bold mb-0">{{ date('d M', strtotime($val->event_from_date)) }}</h4>
-                                <div><span class="text-muted">{{ date('D', strtotime($val->event_from_date)) }}</span>
+                    <div class="col-lg-3 col-md-6 col-sm-12">
+                        <div class="card event-card h-100">
+                            @if (!empty($val->event_image))
+                                <img src="{{ asset('storage/uploads/event/' . $val->event_image) }}" 
+                                     class="card-img-top" 
+                                     alt="{{ $val->event_name }}"
+                                     onerror="this.src='https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=2070&auto=format&fit=crop'">
+                            @else
+                                <div class="event-image-placeholder">
+                                    <i class="bi bi-calendar-event"></i>
                                 </div>
-                                <div><span class="text-muted">{{ date('H:i', strtotime($val->event_from_time)) }}</span>
+                            @endif
+                            
+                            <div class="card-body event-card-body">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="event-date me-3">
+                                        <div class="event-date-day">{{ date('d', strtotime($val->event_from_date)) }}</div>
+                                        <div class="event-date-month">{{ date('M', strtotime($val->event_from_date)) }}</div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="event-time">
+                                            <i class="bi bi-calendar3"></i> {{ date('D', strtotime($val->event_from_date)) }}
+                                        </div>
+                                        <div class="event-time">
+                                            <i class="bi bi-clock"></i> {{ date('H:i', strtotime($val->event_from_time)) }}
+                                        </div>
+                                    </div>
                                 </div>
+                                
+                                <h5 class="event-title">{{ $val->event_name }}</h5>
+                                
+                                <p class="event-location mb-0">
+                                    <i class="bi bi-geo-alt"></i> 
+                                    @if($val->venue_name)
+                                        {{ $val->venue_name }}, 
+                                    @endif
+                                    @if($val->city_name)
+                                        {{ $val->city_name }}, 
+                                    @endif
+                                    @if($val->country_name)
+                                        {{ $val->country_name }}
+                                    @endif
+                                </p>
                             </div>
-                            <div class="col-1 text-center text-dark">
-                                <div class="border-end" style="height: 75px;"></div>
-                            </div>
-                            <div class="col-8">
-                                <h5 class="mb-0">{{ $val->event_name }}</h5>
-                                <p class="text-muted small mb-0 mt-3">{{ $val->venue_name }}, {{ $val->city_name }},
-                                    {{ $val->country_name }}</p>
+                            
+                            <div class="card-footer event-card-footer">
+                                <a href="{{ route('reseller.selltickets', ['id' => $val->id]) }}" 
+                                   class="btn btn-sell-tickets w-100">
+                                    <i class="bi bi-ticket-perforated"></i> Sell Tickets
+                                </a>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <!-- Show text on desktop -->
-                            <p class="text-muted d-none d-md-inline">Sell Tickets</p>
-                            <!-- Show icon on mobile -->
-                            <i class="bi bi-chevron-right d-md-none fs-1 text-muted"></i>
                         </div>
-                    </a>
                 @endforeach
             </div>
+            
+            @if($events->count() == 0)
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+                    <p class="text-muted mt-3">No events found</p>
+                </div>
+            @endif
         </div>
 
     </div>

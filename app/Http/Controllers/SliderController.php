@@ -16,7 +16,7 @@ class SliderController extends Controller
     public function index()
     {
 
-        $data = SliderModel::get();
+        $data = SliderModel::orderBy('id', 'desc')->get();
         // dd($data);
         return view('admin.slide.list',compact('data'));
 

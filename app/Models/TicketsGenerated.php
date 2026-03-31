@@ -12,7 +12,7 @@ class TicketsGenerated extends Model
     use SoftDeletes;
     protected $table = 'event_ticket_tickets';
 
-    protected $fillable = ['seat_id', 'file'];
+    protected $fillable = ['seat_id', 'file', 'ticket_amount'];
 
     public static function get_the_number_of_tickets($id){
 

@@ -74,6 +74,7 @@
                                             <th>Event Date</th>
                                             <th>Event Time</th>
                                             <th>Status</th>
+                                            <th>Customer Details</th>
                                             <th>Ticket File</th>
                                         </tr>
                                     </thead>
@@ -109,6 +110,19 @@
                                                         <span class="badge text-bg-success">Sold</span>
                                                     @else
                                                         <span class="badge text-bg-secondary">Available</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($ticket->customer_name) && $ticket->customer_name)
+                                                        <div>
+                                                            <strong>{{ $ticket->customer_name }}</strong><br>
+                                                            <small class="text-muted">
+                                                                <i class="fa fa-envelope"></i> {{ $ticket->customer_email ?? 'N/A' }}<br>
+                                                                <i class="fa fa-phone"></i> {{ $ticket->customer_phone ?? 'N/A' }}
+                                                            </small>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
                                                     @endif
                                                 </td>
                                                 <td>

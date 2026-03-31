@@ -7,7 +7,35 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Generated Tickets</h3>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="card-title mb-0">Generated Tickets</h3>
+                            @if(isset($eventTicket))
+                                <p class="text-muted mb-0 mt-1">
+                                    <strong>Ticket Name:</strong> {{ $eventTicket->ticket_name ?? 'N/A' }}
+                                </p>
+                            @endif
+                        </div>
+                        @if(Auth::user()->user_type == 'superadmin' && isset($eventTicket) && $eventTicket)
+                        <div class="d-flex align-items-center gap-2" style="display: flex; gap: 10px; align-items: center;">
+                            <label class="mb-0"><strong>Ticket Price:</strong></label>
+                            <input type="number" 
+                                   step="0.01" 
+                                   min="0" 
+                                   class="form-control form-control-sm" 
+                                   id="ticket-price-input"
+                                   style="width: 150px;" 
+                                   value="{{ number_format($eventTicket->ticket_amount ?? 0, 2, '.', '') }}" 
+                                   placeholder="0.00">
+                            <button type="button" 
+                                    class="btn btn-sm btn-primary" 
+                                    id="update-ticket-price-btn"
+                                    data-ticket-id="{{ $eventTicket->id }}">
+                                <i class="far fa-save"></i> Update Price
+                            </button>
+                        </div>
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -67,7 +95,7 @@
 
                                     </td>
 
-                                    <td>{{ $val->ticket_amount }}  </td>
+                                    <td class="ticket-amount-cell" data-ticket-id="{{ $val->id }}">{{ $val->ticket_amount }}</td>
 
                                     <td>
                                         <form action="{{ url('generated_tickets/destroy',$val->id) }}" method="POST">
@@ -529,6 +557,73 @@ $(document).ready(function () {
         // Attach the click event handler to the toggle button
         $(document).on('click', '.main-toggle', function () {
             toggleHoldStatus(this);
+        });
+
+        // Handle ticket price update
+        $('#update-ticket-price-btn').on('click', function() {
+            var ticketId = $(this).data('ticket-id');
+            var input = $('#ticket-price-input');
+            var amount = input.val();
+            var button = $(this);
+
+            // Validation
+            if (!amount || amount < 0) {
+                alert('Please enter a valid price (greater than or equal to 0)');
+                return;
+            }
+
+            // Show loading state
+            var originalHtml = button.html();
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+
+            // Make AJAX request
+            // Try without /public/ first, as Laravel routes don't typically include it
+            var updateUrl = '/tickets/update-ticket-price/' + ticketId;
+            
+            $.ajax({
+                url: updateUrl,
+                type: 'POST',
+                data: {
+                    ticket_amount: amount,
+                    _token: '{{ csrf_token() }}'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Update all ticket amount cells in the table with new amount
+                        $('.ticket-amount-cell').text(response.data.new_amount);
+                        
+                        // Update the input field value as well
+                        $('#ticket-price-input').val(parseFloat(response.data.new_amount).toFixed(2));
+                        
+                        alert('Ticket price updated successfully from ' + response.data.old_amount + ' to ' + response.data.new_amount);
+                        
+                        // Reload page after a short delay to ensure all data is refreshed
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('Error: ' + response.message);
+                        button.prop('disabled', false).html(originalHtml);
+                    }
+                },
+                error: function(xhr) {
+                    var errorMessage = 'An error occurred while updating the ticket price.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    alert(errorMessage);
+                    button.prop('disabled', false).html(originalHtml);
+                }
+            });
+        });
+
+        // Handle Enter key press in ticket price input
+        $('#ticket-price-input').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                $('#update-ticket-price-btn').click();
+            }
         });
     });
 

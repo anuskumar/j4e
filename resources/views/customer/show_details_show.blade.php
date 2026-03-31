@@ -75,10 +75,14 @@
             <div class="card ">
                 <div class="row align-items-center" style="padding: 10px; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3); ">
                     <div class="col-md-3">
-                        @if(@$event_datas->event_image)
-                            <img src="{{ asset('storage/uploads/events/' . $event_datas->event_image) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                        @php
+                            $eventImagePath = @$event_datas->event_image ? 'uploads/events/' . $event_datas->event_image : null;
+                            $hasEventImage = $eventImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($eventImagePath);
+                        @endphp
+                        @if($hasEventImage)
+                            <img src="{{ asset('storage/' . $eventImagePath) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}'">
                         @else
-                            <img src="{{ asset('assets/img/default-event.jpg') }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
+                            <img src="{{ asset('assets/img/events/event-01.jpg') }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
                         @endif
                     </div>
                     <div class="col-md-9">
@@ -105,16 +109,30 @@
                             <li>
                                 <a class="dropdown-item" href="#" data-value="all">Show All</a>
                             </li>
-                            @foreach($venue_seating as $seating)
-                                <li>
-                                    <a
-                                        class="dropdown-item"
-                                        href="#"
-                                        data-value="{{ $seating->seating_type_name }}">
-                                        {{ $seating->seating_type_name }}
-                                    </a>
-                                </li>
-                            @endforeach
+                            @if(!empty($available_zones) && count($available_zones) > 0)
+                                @foreach($available_zones as $zone)
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            data-value="{{ $zone }}">
+                                            {{ $zone }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            @else
+                                {{-- Fallback to venue seating if no zones found in tickets --}}
+                                @foreach($venue_seating as $seating)
+                                    <li>
+                                        <a
+                                            class="dropdown-item"
+                                            href="#"
+                                            data-value="{{ $seating->seating_type_name }}">
+                                            {{ $seating->seating_type_name }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            @endif
                         </ul>
 
 
@@ -139,10 +157,14 @@
             </div>
             <div class="card mt-3 shadow-sm">
                 <div class="image-container">
-                    @if(@$event_datas->venue_image)
-                        <img src="{{ asset('storage/uploads/venue/' . $event_datas->venue_image) }}" alt="Venue Image" class="zoomable-image" onerror="this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                    @php
+                        $venueImagePath = @$event_datas->venue_image ? 'uploads/venue/' . $event_datas->venue_image : null;
+                        $hasVenueImage = $venueImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($venueImagePath);
+                    @endphp
+                    @if($hasVenueImage)
+                        <img src="{{ asset('storage/' . $venueImagePath) }}" alt="Venue Image" class="zoomable-image" onerror="this.onerror=null;this.src='{{ asset('assets/img/img-01.jpg') }}'">
                     @else
-                        <img src="{{ asset('assets/img/default-venue.jpg') }}" alt="Venue Image" class="zoomable-image">
+                        <img src="{{ asset('assets/img/img-01.jpg') }}" alt="Venue Image" class="zoomable-image">
                     @endif
                     <div class="zoom-controls">
                         <button id="zoom-in" class="zoom-btn">+</button>
@@ -161,6 +183,12 @@
  <!-- Right Section -->
 
  <div class="col-md-6" style="max-height: 90vh; overflow-y: auto; padding-right: 15px;">
+    <!-- No Results Message (hidden by default) -->
+    <div id="no-results-message" style="display: none;" class="alert alert-info text-center mt-3">
+        <h5>No tickets match your filters</h5>
+        <p>Try adjusting your zone or quantity selections to see more options.</p>
+    </div>
+    
     @php
         $lowestPrice = PHP_INT_MAX;
         // Precompute the lowest price
@@ -341,41 +369,8 @@
     }
 });
 
-    document.addEventListener('DOMContentLoaded', function () {
-    const zoneDropdown = document.getElementById('zoneDropdown');
-    const zoneOptions = document.getElementById('zoneOptions');
-
-    zoneDropdown.addEventListener('click', function () {
-        const eventId = this.getAttribute('data-event-id'); // Fetch event ID from the button
-
-        // Make an AJAX call to fetch seating_type_name
-        fetch(`/get-seating-types/${eventId}`, {
-            method: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Clear existing options
-            zoneOptions.innerHTML = '';
-
-            // Populate dropdown with new options
-            if (data.seating_types && data.seating_types.length > 0) {
-                data.seating_types.forEach(type => {
-                    const option = document.createElement('li');
-                    option.innerHTML = `<a class="dropdown-item" href="#" data-value="${type.id}">${type.seating_type_name}</a>`;
-                    zoneOptions.appendChild(option);
-                });
-            } else {
-                zoneOptions.innerHTML = '<li><a class="dropdown-item" href="#">No Zones Available</a></li>';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching seating types:', error);
-        });
-    });
-});
+    // Zones are now loaded dynamically from the controller based on actual available tickets
+    // No need for AJAX call - zones are already populated in the dropdown from $available_zones
 
 
 
@@ -428,114 +423,183 @@
 });
 
 
-document.addEventListener('DOMContentLoaded', function () {
-    const dropdownItems = document.querySelectorAll('.dropdown-item');
-    const ticketContainers = document.querySelectorAll('.ticket-container');
+// Global filter state
+let currentZone = 'all';
+let currentQuantity = 1;
 
-    dropdownItems.forEach(item => {
+document.addEventListener('DOMContentLoaded', function () {
+    // Zone filter - only zone dropdown items (not quantity)
+    const zoneDropdownItems = document.querySelectorAll('#zoneOptions .dropdown-item');
+    const zoneButton = document.getElementById('zoneDropdown');
+    
+    zoneDropdownItems.forEach(item => {
         item.addEventListener('click', function (e) {
             e.preventDefault();
-            const selectedZone = this.getAttribute('data-value');
-
-            ticketContainers.forEach(container => {
-                const zone = container.getAttribute('data-zone');
-                if (zone === selectedZone || selectedZone === 'all') {
-                    container.style.display = 'block';
+            currentZone = this.getAttribute('data-value');
+            console.log('Zone selected:', currentZone);
+            
+            // Update button text
+            if (zoneButton) {
+                if (currentZone === 'all') {
+                    zoneButton.textContent = 'Zone';
                 } else {
-                    container.style.display = 'none';
+                    zoneButton.textContent = currentZone;
                 }
-            });
+            }
+            
+            // Apply combined filters
+            applyCombinedFilters();
         });
     });
-});
 
-
-document.addEventListener('DOMContentLoaded', function () {
+    // Quantity filter
+    const quantityButton = document.getElementById('quantityDropdown');
     document.querySelectorAll('.quantity-option').forEach(function (item) {
         item.addEventListener('click', function (e) {
             e.preventDefault();
-            const quantity = parseInt(this.getAttribute('data-value'), 10);
-            filterTicketsByQuantity(quantity);
-            updateTicketDisplay(quantity);
-            updateInputFields(quantity);
+            currentQuantity = parseInt(this.getAttribute('data-value'), 10);
+            console.log('Quantity selected:', currentQuantity);
+            
+            // Update button text
+            if (quantityButton) {
+                quantityButton.textContent = `${currentQuantity} Ticket${currentQuantity > 1 ? 's' : ''}`;
+            }
+            
+            // Apply combined filters
+            applyCombinedFilters();
         });
     });
+    
+    // Initial filter application
+    applyCombinedFilters();
 });
 
-function filterTicketsByQuantity(quantity) {
+/**
+ * Combined filter function that applies both zone and quantity filters together
+ * 
+ * Filter Logic:
+ * 1. Zone Filter: Shows tickets matching selected zone (or "all" for all zones)
+ * 2. Quantity Filter: Shows tickets that can fulfill the selected quantity based on:
+ *    - Availability must be >= selected quantity
+ *    - Split Type Rules:
+ *      - Type 1 (Any): Allow any quantity if available
+ *      - Type 2 (None): Must match exactly (availability === quantity)
+ *      - Type 3: Cannot leave exactly 1 ticket remaining
+ *      - Type 4: Cannot leave 1 or 3 tickets remaining
+ *      - Type 5: Must leave even number of tickets (avoid odd numbers)
+ * 
+ * Both filters work together - a ticket must pass BOTH zone AND quantity filters to be shown
+ */
+function applyCombinedFilters() {
     const tickets = document.querySelectorAll('.ticket-container');
+    let visibleCount = 0;
+    
     tickets.forEach(ticket => {
+        const zone = ticket.getAttribute('data-zone');
         const availability = parseInt(ticket.dataset.availability, 10);
-        const splitType = parseInt(ticket.dataset.splitType, 10);
+        const splitType = parseInt(ticket.dataset.splitType, 10) || 1;
 
         let shouldShow = true;
 
-        // Availability must always be >= quantity
-        if (availability < quantity) {
+        // Step 1: Check zone filter
+        if (currentZone !== 'all' && zone !== currentZone) {
             shouldShow = false;
-        } else {
-            // Additional split type rules
-            switch (splitType) {
-                case 1: // Any
-                    shouldShow = true;
-                    break;
+        }
 
-                case 2: // None
-                    shouldShow = availability === quantity;
-                    break;
+        // Step 2: Check quantity filter (only if zone filter passed)
+        if (shouldShow) {
+            // Availability must always be >= quantity
+            if (availability < currentQuantity) {
+                shouldShow = false;
+            } else {
+                // Additional split type rules
+                switch (splitType) {
+                    case 1: // Any - allow any quantity
+                        shouldShow = true;
+                        break;
 
-                case 3: // Avoid leaving one ticket
-                    shouldShow = (availability - quantity) !== 1;
-                    break;
+                    case 2: // None - must match exactly
+                        shouldShow = availability === currentQuantity;
+                        break;
 
-                case 4: // Avoid leaving one or three tickets
-                    shouldShow = (availability - quantity) !== 1 && (availability - quantity) !== 3;
-                    break;
+                    case 3: // Avoid leaving one ticket
+                        shouldShow = (availability - currentQuantity) !== 1;
+                        break;
 
-                case 5: // Avoid odd numbers
-                    shouldShow = (availability - quantity) % 2 === 0;
-                    break;
+                    case 4: // Avoid leaving one or three tickets
+                        shouldShow = (availability - currentQuantity) !== 1 && (availability - currentQuantity) !== 3;
+                        break;
 
-                default:
-                    shouldShow = true; // Default behavior for unknown split type
+                    case 5: // Avoid odd numbers
+                        shouldShow = (availability - currentQuantity) % 2 === 0;
+                        break;
+
+                    default:
+                        shouldShow = true; // Default behavior for unknown split type
+                }
             }
         }
 
+        // Apply display
         ticket.style.display = shouldShow ? 'block' : 'none';
+        
+        // Update display and input fields if ticket is visible
+        if (shouldShow) {
+            visibleCount++;
+            updateSingleTicketDisplay(ticket, currentQuantity, availability);
+            updateSingleTicketInput(ticket, currentQuantity, availability);
+        }
     });
+    
+    // Show/hide no results message
+    const noResultsMessage = document.getElementById('no-results-message');
+    if (noResultsMessage) {
+        noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    console.log('Filter applied - Zone:', currentZone, 'Quantity:', currentQuantity, 'Visible tickets:', visibleCount);
+}
+
+// Update display for a single ticket
+function updateSingleTicketDisplay(ticket, quantity, totalAvailability) {
+    const availabilityElement = ticket.querySelector('p');
+    const remainingElement = ticket.querySelector('.remaining-tickets');
+    
+    if (totalAvailability >= quantity) {
+        const ticketLabel = quantity === 1 ? 'ticket' : 'tickets';
+        if (availabilityElement) {
+            availabilityElement.textContent = `${quantity} ${ticketLabel}`;
+        }
+        
+        const remainingTickets = totalAvailability - quantity;
+        if (remainingElement) {
+            remainingElement.textContent = `${remainingTickets} tickets remaining in this listing on our site`;
+        }
+    }
+}
+
+// Update input field for a single ticket
+function updateSingleTicketInput(ticket, quantity, totalAvailability) {
+    const inputField = ticket.querySelector('input[name="buy_count"]');
+    if (inputField && totalAvailability >= quantity) {
+        inputField.value = quantity;
+    }
+}
+
+// Legacy functions kept for compatibility (now handled by applyCombinedFilters)
+function filterTicketsByQuantity(quantity) {
+    currentQuantity = quantity;
+    applyCombinedFilters();
 }
 
 function updateTicketDisplay(quantity) {
-    const tickets = document.querySelectorAll('.ticket-container');
-    tickets.forEach(ticket => {
-        const availabilityElement = ticket.querySelector('p'); // For selected tickets
-        const remainingElement = ticket.querySelector('.remaining-tickets'); // For remaining tickets
-        const totalAvailability = parseInt(ticket.dataset.availability, 10);
-
-        if (totalAvailability >= quantity) {
-            // Update the text content for selected tickets
-            const ticketLabel = quantity === 1 ? 'ticket' : 'tickets'; // Use 'ticket' if quantity is 1, else 'tickets'
-            availabilityElement.textContent = `${quantity} ${ticketLabel}`;
-
-            // Update the text content for remaining tickets
-            const remainingTickets = totalAvailability - quantity;
-            if (remainingElement) {
-                remainingElement.textContent = `${remainingTickets} tickets remaining in this listing on our site`;
-            }
-        }
-    });
+    currentQuantity = quantity;
+    applyCombinedFilters();
 }
 
 function updateInputFields(quantity) {
-    const tickets = document.querySelectorAll('.ticket-container');
-    tickets.forEach(ticket => {
-        const inputField = ticket.querySelector('input[name="buy_count"]');
-        const totalAvailability = parseInt(ticket.dataset.availability, 10);
-
-        if (inputField && totalAvailability >= quantity) {
-            inputField.value = quantity; // Set the input box value to the selected quantity
-        }
-    });
+    currentQuantity = quantity;
+    applyCombinedFilters();
 }
 
 // function updateTicketList(tickets) {

@@ -71,9 +71,9 @@
 										<div class="media align-items-center">
 											<div class="mr-3">
 												@if($val->event_image)
-                                                    <img alt="Image placeholder" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" class="avatar rounded-circle" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                    <img alt="Image placeholder" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" class="avatar rounded-circle" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
                                                 @else
-                                                    <img alt="Image placeholder" src="{{ asset('assets/img/default-event.jpg') }}" class="avatar rounded-circle">
+                                                    <img alt="Image placeholder" src="{{ asset('assets/img/events/event-01.jpg') }}" class="avatar rounded-circle">
                                                 @endif
 											</div>
 											<div class="media-body">
@@ -131,6 +131,7 @@
 																	<th>Purchased Date</th>
 																	<th>Status</th>
 																	<th>Payment Status</th>
+																	<th>Tickets</th>
 																	<th></th>
 																</tr>
 															</thead>
@@ -143,9 +144,9 @@
 																		<h2 class="table-avatar">
 																			<a href="{{ url('show_details_show',$val->event_id) }}" class="avatar avatar-sm mr-2">
 																				@if($val->event_image)
-                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
+                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
                                                                                 @else
-                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('assets/img/default-event.jpg') }}" alt="User Image">
+                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('assets/img/events/event-01.jpg') }}" alt="User Image">
                                                                                 @endif
 																			</a>
 																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }}</span></a>
@@ -163,6 +164,15 @@
 																	<td>
                                                                         {{ @$val->is_payment_completed == 1 ? "Payment Completed" :"Not Completed"}}
                                                                         {{-- <span class="badge badge-pill bg-success-light">Confirm</span> --}}
+                                                                    </td>
+																	<td>
+																		@if(isset($val['tickets']) && $val['tickets']->count() > 0)
+																			<a href="{{ route('customer.ticket.details', $val->id) }}" class="btn btn-sm btn-primary" title="View Ticket Details">
+																				<i class="fas fa-ticket-alt"></i> Ticket Details
+																			</a>
+																		@else
+																			<span class="text-muted">-</span>
+																		@endif
                                                                     </td>
 																	<td class="text-right">
 																		<div class="table-action">
@@ -211,7 +221,11 @@
 																	<td>
 																		<h2 class="table-avatar">
 																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}" alt="User Image">
+																				@if($val->event_image)
+																					<img class="avatar-img rounded-circle" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
+																				@else
+																					<img class="avatar-img rounded-circle" src="{{ asset('assets/img/events/event-01.jpg') }}" alt="User Image">
+																				@endif
 																			</a>
 																			<a href="speaker-profile">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }} <span></span></a>
 																		</h2>

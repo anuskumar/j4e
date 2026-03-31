@@ -48,13 +48,47 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
 // Route::get('/event_list_frontend', [WelcomeController::class, 'event_list_frontend']);
-Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend']);
+Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend'])->name('new_eventlistfrontend');
 Route::get('/event_ticket_listing', [WelcomeController::class, 'event_ticket_listing']);
 Route::get('/ticket_filter_action', [WelcomeController::class, 'ticket_filter_action']);
 
 
 
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Legacy home route - redirects based on user type
+Route::get('/home', [HomeController::class, 'redirectToRoleHome'])->name('home');
+
+// Role-based home routes
+Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmin']], function () {
+    Route::get('/home', [HomeController::class, 'adminHome'])->name('admin.home');
+});
+
+Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer']], function () {
+    Route::get('/home', [HomeController::class, 'customerHome'])->name('customer.home');
+    Route::get('/ticket-details/{id}', [HomeController::class, 'ticketDetails'])->name('customer.ticket.details');
+});
+
+Route::group(['prefix' => 'reseller', 'middleware' => ['auth', 'user.type:reseller']], function () {
+    Route::get('/home', [HomeController::class, 'resellerHome'])->name('reseller.home');
+});
+
 Route::get('/sell_tickets', [FrontendController::class, 'sell_tickets'])->name('sell_tickets');
 
 
@@ -71,30 +105,7 @@ Route::post('store_reseller', [FrontendController::class, 're_store']);
 
 
 
-Route::group(['prefix' => 'customer'], function () {
-    Route::get('create', [CustomerController::class, 'create']);
-    Route::get('list', [CustomerController::class, 'index']);
-    Route::get('view/{id}', [CustomerController::class, 'show']);
-    Route::get('edit/{id}', [CustomerController::class, 'edit']);
-    Route::post('update', [CustomerController::class, 'update']);
-    Route::get('delete/{id}', [CustomerController::class, 'delete']);
-    Route::post('store', [CustomerController::class, 'store']);
-    Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
-});
-
-
-
 Route::group(['prefix' => 'reseller'], function () {
-    Route::get('create', [ResellerController::class, 'create']);
-    Route::post('store', [ResellerController::class, 'store']);
-    Route::get('list', [ResellerController::class, 'index']);
-    Route::get('view/{id}', [ResellerController::class, 'show']);
-    Route::get('edit/{id}', [ResellerController::class, 'edit']);
-    Route::post('update', [ResellerController::class, 'update']);
-    Route::delete('delete/{id}', [ResellerController::class, 'delete']);
-    Route::post('store', [ResellerController::class, 'store']);
-    // Route::delete('destroy/{id}', [ResellerController::class,'delete']);
-
     Route::get('profile', [ResellerController::class, 'profile'])->name('reseller.profile');
     Route::any('update_profile', [ResellerController::class, 'updateprofile'])->name('reseller.updateprofile');
     Route::post('password/update', [ResellerController::class, 'updatePassword'])->name('reseller.passwordupdate');
@@ -200,9 +211,44 @@ Route::group(['prefix' => 'reseller'], function () {
 });
 
 Route::group(['prefix' => 'admin'], function () {
+    Route::get('customer-neworder', [OrderController::class, 'index'])->name('admin.customer.neworder');
     Route::get('edit/{id}', [CompanySettingsController::class, 'edit']);
     // Route::post('update', [CompanySettingsController::class, 'update']);
     Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company');
+    
+    // Admin User Management Routes - Customer & Reseller
+    Route::group(['prefix' => 'customer'], function () {
+        Route::get('create', [CustomerController::class, 'create']);
+        Route::get('list', [CustomerController::class, 'index']);
+        Route::get('view/{id}', [CustomerController::class, 'show']);
+        Route::get('edit/{id}', [CustomerController::class, 'edit']);
+        Route::post('update', [CustomerController::class, 'update']);
+        Route::get('delete/{id}', [CustomerController::class, 'delete']);
+        Route::post('store', [CustomerController::class, 'store']);
+        Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
+        Route::post('update-status/{id}', [CustomerController::class, 'updateStatus']);
+    });
+    
+    Route::group(['prefix' => 'reseller'], function () {
+        Route::get('create', [ResellerController::class, 'create']);
+        Route::post('store', [ResellerController::class, 'store']);
+        Route::get('list', [ResellerController::class, 'index']);
+        Route::get('view/{id}', [ResellerController::class, 'show']);
+        Route::get('edit/{id}', [ResellerController::class, 'edit']);
+        Route::post('update', [ResellerController::class, 'update']);
+        Route::delete('delete/{id}', [ResellerController::class, 'delete']);
+        Route::post('update-status/{id}', [ResellerController::class, 'updateStatus']);
+    });
+    
+    Route::group(['prefix' => 'artist'], function () {
+        Route::get('create', [ArtistController::class, 'create']);
+        Route::post('store', [ArtistController::class, 'store']);
+        Route::get('list', [ArtistController::class, 'index']);
+        Route::get('view/{id}', [ArtistController::class, 'show']);
+        Route::get('edit/{id}', [ArtistController::class, 'edit']);
+        Route::post('update', [ArtistController::class, 'update']);
+        Route::delete('destroy/{id}', [ArtistController::class, 'delete']);
+    });
 });
 // ended Admin Section
 
@@ -303,6 +349,8 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::post('update-ticket-status/{id}', [TicketController::class, 'updateStatus']);
     Route::post('update-ticket-sale-status/{id}', [TicketController::class, 'updatesaleStatus']);
     Route::get('get-ticket-data', [TicketController::class, 'get_ticket_data']);
+    Route::get('transaction-history/{id}', [TicketController::class, 'transactionHistory'])->name('tickets.transaction-history');
+    Route::post('update-ticket-price/{id}', [TicketController::class, 'updateTicketPrice'])->name('tickets.update-ticket-price');
 });
 
 Route::group(['prefix' => 'location'], function () {
@@ -321,21 +369,12 @@ Route::group(['prefix' => 'city'], function () {
     Route::get('list', [CityController::class, 'index']);
     Route::get('create', [CityController::class, 'create']);
     Route::post('store', [CityController::class, 'store']);
+    Route::get('view/{id}', [CityController::class, 'show']);
     Route::get('edit/{id}', [CityController::class, 'edit']);
     Route::post('update', [CityController::class, 'update']);
     Route::delete('destroy/{id}', [CityController::class, 'delete']);
 });
 
-Route::group(['prefix' => 'artist'], function () {
-
-    Route::get('create', [ArtistController::class, 'create']);
-    Route::post('store', [ArtistController::class, 'store']);
-    Route::get('list', [ArtistController::class, 'index']);
-    Route::get('view/{id}', [ArtistController::class, 'show']);
-    Route::get('edit/{id}', [ArtistController::class, 'edit']);
-    Route::post('update', [ArtistController::class, 'update']);
-    Route::delete('destroy/{id}', [ArtistController::class, 'delete']);
-});
 
 Route::group(['prefix' => 'slide'], function () {
 
@@ -434,6 +473,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');
     Route::get('show_details_show/{id}', 'show_details_show');
     Route::get('show_booking_details_show/{id}', 'show_booking_details_show')->middleware('auth');
+    Route::get('invoice/pdf/{id}', 'downloadInvoicePdf')->middleware('auth')->name('invoice.pdf');
     Route::post('update-facevalue-ticket', 'updatefacevalueticket')->middleware('auth');
 
 
@@ -470,138 +510,14 @@ Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_fail
 
 
 
-
-// Route::get('/index', function () {
-//     return view('index');
-// })->name('page');
-// Route::get('/add-billing', function () {
-//     return view('add-billing');
-// })->name('add-billing');
-// Route::get('/blank-page', function () {
-//     return view('blank-page');
-// })->name('blank-page');
-// Route::get('/blog-details', function () {
-//     return view('blog-details');
-// })->name('blog-details');
-// Route::get('/blog-grid', function () {
-//     return view('blog-grid');
-// })->name('blog-grid');
-// Route::get('/blog-list', function () {
-//     return view('blog-list');
-// })->name('blog-list');
-// Route::get('/booking-success', function () {
-//     return view('booking-success');
-// })->name('booking-success');
-// Route::get('/booking', function () {
-//     return view('booking');
-// })->name('booking');
-// Route::get('/calendar', function () {
-//     return view('calendar');
-// })->name('calendar');
-// Route::get('/change-password', function () {
-//     return view('change-password');
-// })->name('change-password');
-// Route::get('/chat', function () {
-//     return view('chat');
-// })->name('chat');
-// Route::get('/checkout', function () {
-//     return view('checkout');
-// })->name('checkout');
-// Route::get('/components', function () {
-//     return view('components');
-// })->name('components');
-// Route::get('/favourites', function () {
-//     return view('favourites');
-// })->name('favourites');
-// Route::get('/forgot-password', function () {
-//     return view('forgot-password');
-// })->name('forgot-password');
-// Route::get('/invoice-view', function () {
-//     return view('invoice-view');
-// })->name('invoice-view');
-// Route::get('/invoices', function () {
-//     return view('invoices');
-// })->name('invoices');
-// Route::get('/login-old', function () {
-//     return view('login');
-// })->name('login');
-// Route::get('/map-grid', function () {
-//     return view('map-grid');
-// })->name('map-grid');
-// Route::get('/voice-call', function () {
-//     return view('voice-call');
-// })->name('voice-call');
-// Route::get('/video-call', function () {
-//     return view('video-call');
-// })->name('video-call');
-// Route::get('/term-condition', function () {
-//     return view('term-condition');
-// })->name('term-condition');
-// Route::get('/social-media', function () {
-//     return view('social-media');
-// })->name('social-media');
-// Route::get('/search', function () {
-//     return view('search');
-// })->name('search');
-// Route::get('/schedule-timings', function () {
-//     return view('schedule-timings');
-// })->name('schedule-timings');
-// Route::get('/reviews', function () {
-//     return view('reviews');
-// })->name('reviews');
-// Route::get('/register-old', function () {
-//     return view('register');
-// })->name('register');
-// Route::get('/profile-settings', function () {
-//     return view('profile-settings');
-// })->name('profile-settings');
-// Route::get('/privacy-policy', function () {
-//     return view('privacy-policy');
-// })->name('privacy-policy');
-// Route::get('/map-list', function () {
-//     return view('map-list');
-// })->name('map-list');
-// Route::get('/add-programs', function () {
-//     return view('add-programs');
-// })->name('add-programs');
-// Route::get('/chat-speaker', function () {
-//     return view('chat-speaker');
-// })->name('chat-speaker');
-// Route::get('/customer-dashboard', function () {
-//     return view('customer-dashboard');
-// })->name('customer-dashboard');
-// Route::get('/customer-profile', function () {
-//     return view('customer-profile');
-// })->name('customer-profile');
-// Route::get('/edit-billing', function () {
-//     return view('edit-billing');
-// })->name('edit-billing');
-// Route::get('/edit-programs', function () {
-//     return view('edit-programs');
-// })->name('edit-programs');
-// Route::get('/event-details', function () {
-//     return view('event-details');
-// })->name('event-details');
-// Route::get('/events', function () {
-//     return view('events');
-// })->name('events');
-// Route::get('/my-customers', function () {
-//     return view('my-customers');
-// })->name('my-customers');
-// Route::get('/speaker-change-password', function () {
-//     return view('speaker-change-password');
-// })->name('speaker-change-password');
-// Route::get('/speaker-dashboard', function () {
-//     return view('speaker-dashboard');
-// })->name('speaker-dashboard');
-// Route::get('/speaker-profile-settings', function () {
-//     return view('speaker-profile-settings');
-// })->name('speaker-profile-settings');
-// Route::get('/speaker-profile', function () {
-//     return view('speaker-profile');
-// })->name('speaker-profile');
-// Route::get('/speaker-register', function () {
-//     return view('speaker-register');
-// })->name('speaker-register');
-
 Auth::routes();
+
+Route::view('/email/verify', 'auth.verify')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::post('/email/resend', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])
+    ->middleware('throttle:6,1')
+    ->name('verification.resend');

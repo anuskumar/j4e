@@ -73,7 +73,7 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('customer_order/list') }}">New Orders</a></li>
+                                        <li><a class="sub-side-menu__item" href="{{ route('admin.customer.neworder') }}">New Orders</a></li>
                                         <li><a class="sub-side-menu__item" href="{{ url('customer_order/old_list') }}">Older Orders</a></li>
                                     </ul>
 
@@ -82,7 +82,7 @@
 
                             </li>
 
-                            @if(Auth::user()->user_type='superadmin')
+                            @if(Auth::user()->user_type == 'superadmin')
                             <li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">User Management</span><i class="angle fe fe-chevron-down"></i></a>
 								<ul class="slide-menu">
@@ -92,16 +92,14 @@
 												<a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                                     <span class="sub-side-menu__label">Customers</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
 												<ul class="sub-slide-menu1">
-													<li><a class="sub-slide-item2" href="{{ url('customer/create') }}">Create</a></li>
-													<li><a class="sub-slide-item2" href="{{ url('customer/list') }}">List</a></li>
+													<li><a class="sub-slide-item2" href="{{ url('admin/customer/list') }}">List</a></li>
 												</ul>
 											</li>
                                             <li class="sub-slide2">
 												<a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                                     <span class="sub-side-menu__label">Resellers</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
 												<ul class="sub-slide-menu1">
-													<li><a class="sub-slide-item2" href="{{ url('reseller/create') }}">Create</a></li>
-													<li><a class="sub-slide-item2" href="{{ url('reseller/list') }}">List</a></li>
+													<li><a class="sub-slide-item2" href="{{ url('admin/reseller/list') }}">List</a></li>
 												</ul>
 											</li>
 
@@ -115,8 +113,7 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('artist/create') }}">Create</a></li>
-                                        <li><a class="sub-side-menu__item" href="{{ url('artist/list') }}">List</a></li>
+                                        <li><a class="sub-side-menu__item" href="{{ url('admin/artist/list') }}">List</a></li>
                                     </ul>
 
 
@@ -129,7 +126,6 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('slide/create') }}">Create</a></li>
                                         <li><a class="sub-side-menu__item" href="{{ url('slide/list') }}">List</a></li>
                                     </ul>
 
@@ -158,7 +154,6 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('artistfield/create') }}">Create</a></li>
                                         <li><a class="sub-side-menu__item" href="{{ url('artistfield/list') }}">List</a></li>
                                     </ul>
 
@@ -172,7 +167,6 @@
 
 
                                     <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('currency/create') }}">Create</a></li>
                                         <li><a class="sub-side-menu__item" href="{{ url('currency/list') }}">List</a></li>
                                     </ul>
 
@@ -184,7 +178,6 @@
 							<li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-box"></i><span class="side-menu__label">Venue</span><i class="angle fe fe-chevron-down"></i></a>
 								<ul class="slide-menu">
-                                            <li><a class="sub-side-menu__item" href="{{ url('venue/create') }}">Create</a></li>
                                             <li><a class="sub-side-menu__item" href="{{ url('venue/list') }}">List</a></li>
                                         {{-- <ul class="sub-slide-menu1">
 
@@ -193,7 +186,6 @@
                                             <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                                 <span class="sub-side-menu__label">Venue Type</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                             <ul class="sub-slide-menu1">
-                                                <li><a class="sub-slide-item2" href="{{ url('venuetype/create') }}">Create</a></li>
                                                 <li><a class="sub-slide-item2" href="{{ url('venuetype/list') }}">List</a></li>
                                             </ul>
                                         </li>
@@ -205,7 +197,6 @@
 							<li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-package "></i><span class="side-menu__label">Events</span><i class="angle fe fe-chevron-down"></i></a>
 								<ul class="slide-menu">
-                                    <li><a class="sub-side-menu__item" href="{{ url('events/create') }}">Create</a></li>
                                     <li><a class="sub-side-menu__item" href="{{ url('events/list') }}">List</a></li>
                                     <li><a class="sub-side-menu__item" href="{{ route('events.requestlist') }}">Requested Event List</a></li>
                                     <li class="sub-slide2">
@@ -235,7 +226,6 @@
                                     <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                         <span class="sub-side-menu__label">Location</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                     <ul class="sub-slide-menu1">
-                                        <li><a class="sub-slide-item2" href="{{ url('location/create') }}">Create</a></li>
                                         <li><a class="sub-slide-item2" href="{{ url('location/list') }}">List</a></li>
                                     </ul>
                                 </li>
@@ -243,7 +233,6 @@
                                     <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                         <span class="sub-side-menu__label">City</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                     <ul class="sub-slide-menu1">
-                                        <li><a class="sub-slide-item2" href="{{ url('city/create') }}">Create</a></li>
                                         <li><a class="sub-slide-item2" href="{{ url('city/list') }}">List</a></li>
                                     </ul>
                                 </li>
@@ -270,7 +259,6 @@
                                     <a class="sub-side-menu__item" data-bs-toggle="sub-slide2" href="javascript:void(0);">
                                         <span class="sub-side-menu__label">Ticket Restrictions</span><i class="sub-angle2 fe fe-chevron-down"></i></a>
                                     <ul class="sub-slide-menu1">
-                                        <li><a class="sub-slide-item2" href="{{ url('ticket_restrictions/create') }}">Create</a></li>
                                         <li><a class="sub-slide-item2" href="{{ url('ticket_restrictions/list') }}">List</a></li>
                                     </ul>
                                 </li>

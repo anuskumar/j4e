@@ -140,11 +140,9 @@ $val = $data[0];
                         <div class="card" style="width: 25rem;">
                         <div class="card-header">
                           <b> Price per Ticket </b>
- @if($val['is_admin_approved'] <> 1)
                             <button type="button" class="btn btn-light float-right" onclick="ticketPriceChange({{ $val['id'] }})">
            <i class="fa fa-pencil"></i>
            </button>
-@endif
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item"><b>Original Price : {{ $val['ticket_amount'].' '.$val['short_name'] }}</b>
@@ -702,7 +700,7 @@ window.location.reload();
 <script>
 $(document).ready(function() {
     // Attach validation on form submit
-    $("form").on("submit", function(e) {
+    $("#tickcet-price-change-modal form").on("submit", function(e) {
         let originalPrice = $("#original-price").val().trim();
         let faceValue = $("#face_value").val().trim();
 

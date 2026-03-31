@@ -12,7 +12,7 @@ class ArtistController extends Controller
     {
 
 
-        $data=ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id','field_name')->get();
+        $data=ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id','field_name')->orderBy('artist.id', 'desc')->get();
         // dd($data);
         return view('admin.artist.list',compact('data'));
 
@@ -56,8 +56,15 @@ class ArtistController extends Controller
         // dd($request->request);
 
         $validated = $request->validate([
-            'artist_name' => 'required',
-
+            'artist_name' => 'required|string|max:255',
+            'field' => 'required|exists:artist_field,id',
+            'contact_number' => 'required|string|max:20',
+            'about' => 'nullable|string|max:1000',
+        ], [
+            'artist_name.required' => 'Artist name is required.',
+            'field.required' => 'Artist field is required.',
+            'field.exists' => 'Please select a valid artist field.',
+            'contact_number.required' => 'Contact number is required.',
         ]);
 
         $artistuser = new ArtistModel();
@@ -66,7 +73,7 @@ class ArtistController extends Controller
         $artistuser->contact_number = $request->contact_number;
         $artistuser->about = $request->about;
         $artistuser->save();
-        return redirect('artist/list');
+        return redirect('admin/artist/list')->with('success', 'Artist created successfully!');
      }
      public function update(Request $request){
 
@@ -85,14 +92,14 @@ class ArtistController extends Controller
     //   $data->status=$request->status;
 
        $data->save();
-       return redirect('artist/list');
+       return redirect('admin/artist/list');
 
      }
      public function delete( $id)
     {
         $data=ArtistModel::find($id);
         $data->delete($id);
-        return redirect('/artist/list');
+        return redirect('/admin/artist/list');
 
     }
 }

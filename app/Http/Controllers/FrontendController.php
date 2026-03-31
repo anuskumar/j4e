@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class FrontendController extends Controller
@@ -37,7 +38,7 @@ class FrontendController extends Controller
 
             if(Auth::user()->user_type == "reseller"){
 
-                return redirect('home')->with('success','Logged in Successfully');
+                return redirect()->route('reseller.home')->with('success','Logged in Successfully');
 
             }else{
 
@@ -66,6 +67,13 @@ class FrontendController extends Controller
             'password' => 'required',
         ]);
 
+        $user = User::where('email', $request->email)->first();
+        if ($user && $user->user_type !== 'superadmin' && ! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->withErrors(['email' => "Your email doesn't verified"])
+                ->with('unverified_email', $request->email);
+        }
+
         $credentials = $request->only('email', 'password');
         if (Auth::attempt($credentials)) {
 
@@ -81,19 +89,23 @@ class FrontendController extends Controller
                     ->withErrors('Not Approved By Admin');
 
             }else{
-
-
-                return redirect()->intended('home')
-                ->withSuccess('Signed in');
-
+                $userType = Auth::user()->user_type;
+                if ($userType === 'superadmin') {
+                    return redirect()->intended(route('admin.home'))->withSuccess('Signed in');
+                } elseif ($userType === 'customer') {
+                    return redirect()->intended(route('customer.home'))->withSuccess('Signed in');
+                }
+                return redirect()->intended(route('reseller.home'))->withSuccess('Signed in');
             }
 
-
             }else{
-
-
-                return redirect()->intended('home')
-                ->withSuccess('Login to Admin Dashboard');
+                $userType = Auth::user()->user_type;
+                if ($userType === 'superadmin') {
+                    return redirect()->intended(route('admin.home'))->withSuccess('Login to Admin Dashboard');
+                } elseif ($userType === 'customer') {
+                    return redirect()->intended(route('customer.home'))->withSuccess('Login to Customer Dashboard');
+                }
+                return redirect()->intended(route('reseller.home'))->withSuccess('Login to Reseller Dashboard');
 
 
             }
@@ -146,6 +158,7 @@ class FrontendController extends Controller
                $user->country_code = $request->country_code;
                $user->user_type = 'reseller';
                $user->password = Hash::make($request->password);
+               $user->email_added_at = now();
                $user->is_active = 0;
                if($request->has('phone')){
 
@@ -161,18 +174,31 @@ class FrontendController extends Controller
 
                $auth = Auth::user();
                if($auth){
-
-                   return redirect('home');
-
+                   $userType = Auth::user()->user_type;
+                   if ($userType === 'superadmin') {
+                       return redirect()->route('admin.home');
+                   } elseif ($userType === 'customer') {
+                       return redirect()->route('customer.home');
+                   } elseif ($userType === 'reseller') {
+                       return redirect()->route('reseller.home');
+                   }
+                   return redirect()->route('home');
                }else{
-
                $login = User::find($user->id);
                Auth::login($login);
                $user = User::find(Auth::user()->id);
                $user->last_login = new DateTime();
                $user->save();
 
-               return redirect('home');
+               $userType = Auth::user()->user_type;
+               if ($userType === 'superadmin') {
+                   return redirect()->route('admin.home');
+               } elseif ($userType === 'customer') {
+                   return redirect()->route('customer.home');
+               } elseif ($userType === 'reseller') {
+                   return redirect()->route('reseller.home');
+               }
+               return redirect()->route('home');
                }
 
 
@@ -257,8 +283,22 @@ class FrontendController extends Controller
             ->leftjoin('cities','cities.id','location.city')
             ->leftjoin('currency','currency.id','event_tickets.amount_currency')
             ->where('event_tickets.id',$id)
-            ->select('*','event_tickets.id as id','venue.name as venue_name','event_timings.event_date as event_date',
-            'event_timings.from_time as event_time','event.id as event_id','currency.short_name as currency_name')->first();
+            ->select('event_tickets.*',
+                'event_tickets.id as id',
+                'event_tickets.web_price',
+                'event_tickets.ticket_amount',
+                'event_tickets.face_value',
+                'venue.name as venue_name',
+                'event_timings.event_date as event_date',
+                'event_timings.from_time as event_time',
+                'event.id as event_id',
+                'event.event_name as event_name',
+                'event.event_image as event_image',
+                'currency.short_name as currency_name',
+                'currency.short_name as short_name',
+                'location.location_name as location_name',
+                'countries.country_name as country_name',
+                'cities.name as city_name')->first();
             // dd($data);
 
             $ticket_count = TicketsGenerated::where('event_tickets', $id)
@@ -385,15 +425,41 @@ class FrontendController extends Controller
                     }
                 }
             }
-            $venue_seating = VenueSeating::get();
-
-            // info($venue_seating);
-
+            
             $event_timings = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->get();
             $event_timing = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->first();
+            
+            // Get all unique seating types (zones) from tickets that have availability
+            $available_zones = [];
+            foreach ($event_timings as $timing_date) {
+                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
+                if ($event_timing_list) {
+                    foreach ($event_timing_list as $event_time) {
+                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                        foreach ($event_ticket_list as $ticket) {
+                            $ticket_availability = EventTiming::get_available_tickets($ticket->id);
+                            if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
+                                // Add zone if not already in array
+                                if (!in_array($ticket->seating_type_name, $available_zones)) {
+                                    $available_zones[] = $ticket->seating_type_name;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sort zones alphabetically
+            sort($available_zones);
+            
+            // Also get venue seating for this specific venue (as fallback/backup)
+            $venue_seating = [];
+            if ($event_datas && $event_datas->venue) {
+                $venue_seating = VenueSeating::where('venue', $event_datas->venue)->get();
+            }
 
             return view('customer.show_details_show',compact('settings','id',
-            'event_datas','event_images','event_reviews','artist_data','event_reviews_stars','event_timing','event_timings','venue_seating'));
+            'event_datas','event_images','event_reviews','artist_data','event_reviews_stars','event_timing','event_timings','venue_seating','available_zones'));
 
            }
 
@@ -457,6 +523,34 @@ class FrontendController extends Controller
 
             return view('customer.view_booked_data',compact('settings','data','count','ticket','data_list','log'));
 
+           }
+
+           public function downloadInvoicePdf($id){
+            $settings = \App\Models\CompanySettings::first();
+
+            $data = TicketPurchase::where('ticket_purchase.id',$id)
+            ->leftjoin('countries','countries.id','shipping_country')
+            ->leftjoin('event','event.id','ticket_purchase.event_id')
+           ->leftjoin('currency','currency.id','ticket_purchase.payment_currency')
+           ->leftjoin('purchase_status','purchase_status.id','ticket_purchase.purchase_status')
+            ->select('*','ticket_purchase.id as id','currency.name as currency_name')->first();
+
+            $data_list = TicketsGenerated::where('event_ticket_tickets.purchase_id',$id)
+           ->leftjoin('ticket_purchase','ticket_purchase.id','event_ticket_tickets.purchase_id')
+            ->leftjoin('countries','countries.id','shipping_country')
+            ->leftjoin('event','event.id','ticket_purchase.event_id')
+           ->leftjoin('currency','currency.id','ticket_purchase.payment_currency')
+           ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
+           ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')
+            ->select('*','event_ticket_tickets.id as id','currency.name as currency_name')->get();
+
+            $count = TicketsGenerated::where('purchase_id',$data->id)->count();
+            $ticket = TicketsGenerated::where('purchase_id',$data->id)->first();
+
+            $pdf = Pdf::loadView('customer.invoice_pdf', compact('settings','data','count','ticket','data_list'));
+            $pdf->setPaper('a4', 'portrait');
+            
+            return $pdf->download('invoice-' . str_pad($data->id, 6, '0', STR_PAD_LEFT) . '.pdf');
            }
 
     public function customer_profile_settings(){

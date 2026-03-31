@@ -9,6 +9,7 @@ use App\Models\EventTags;
 use App\Models\EventTiming;
 use App\Models\EventType;
 use App\Models\RequestEventModel;
+use App\Models\TicketType;
 use App\Models\VenueModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,8 +55,9 @@ class EventsController extends Controller
     ->get();
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
+    $ticketTypes = TicketType::where('is_active', 1)->get();
     // dd($event_type);
-    return view('admin.events.create',compact('event_type','venue','artists','eventTags'));
+    return view('admin.events.create',compact('event_type','venue','artists','eventTags','ticketTypes'));
 
      }
      public function show($id)
@@ -97,6 +99,11 @@ class EventsController extends Controller
             $event->artists = json_encode($request->artists);
 
             }
+        if(!$request->ticket_types==null){
+
+            $event->ticket_types = json_encode($request->ticket_types);
+
+            }
 
         $event->event_from_date = $request->event_from_date;
         $event->event_tag = $request->event_tag;
@@ -130,8 +137,9 @@ class EventsController extends Controller
        ->get();
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
+    $ticketTypes = TicketType::where('is_active', 1)->get();
 
-        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags'));
+        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags','ticketTypes'));
 
      }
      public function update(Request $request){
@@ -158,6 +166,15 @@ class EventsController extends Controller
         $data->artists = json_encode($request->artists);
 
         }
+        
+        if(!$request->ticket_types==null){
+
+        $data->ticket_types = json_encode($request->ticket_types);
+
+        } else {
+            $data->ticket_types = null;
+        }
+        
         $data->event_from_date = $request->event_from_date;
         $data->event_to_date = $request->event_to_date;
         $data->event_tag = $request->event_tag;
