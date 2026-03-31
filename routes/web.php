@@ -510,4 +510,14 @@ Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_fail
 
 
 
-Auth::routes(['verify' => true]);
+Auth::routes();
+
+Route::view('/email/verify', 'auth.verify')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::post('/email/resend', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])
+    ->middleware('throttle:6,1')
+    ->name('verification.resend');

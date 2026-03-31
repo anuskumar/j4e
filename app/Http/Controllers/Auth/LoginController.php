@@ -49,9 +49,9 @@ class LoginController extends Controller
         );
 
         if ($user && $user->user_type !== 'superadmin' && ! $user->hasVerifiedEmail()) {
-            return back()
+            return redirect()->route('verification.notice')
                 ->withErrors(['email' => "Your email doesn't verified"])
-                ->withInput($request->only($this->username(), 'remember'));
+                ->with('unverified_email', $request->input($this->username()));
         }
 
         if (method_exists($this, 'hasTooManyLoginAttempts') &&
@@ -70,14 +70,4 @@ class LoginController extends Controller
         return $this->sendFailedLoginResponse($request);
     }
 
-    protected function authenticated(Request $request, $user)
-    {
-        if ($user->user_type !== 'superadmin' && ! $user->hasVerifiedEmail()) {
-            Auth::logout();
-
-            return redirect()
-                ->route('verification.notice')
-                ->withErrors(['email' => 'Your email doesn\'t verified']);
-        }
-    }
 }

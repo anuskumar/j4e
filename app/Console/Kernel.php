@@ -17,6 +17,8 @@ class Kernel extends ConsoleKernel
 
         // New currency rate update command (once a day at 1 AM)
         $schedule->command('currency:update-rates')->everyMinute();
+
+        $schedule->command('users:purge-unverified')->hourly();
     }
 
     /**

@@ -67,6 +67,13 @@ class FrontendController extends Controller
             'password' => 'required',
         ]);
 
+        $user = User::where('email', $request->email)->first();
+        if ($user && $user->user_type !== 'superadmin' && ! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice')
+                ->withErrors(['email' => "Your email doesn't verified"])
+                ->with('unverified_email', $request->email);
+        }
+
         $credentials = $request->only('email', 'password');
         if (Auth::attempt($credentials)) {
 
