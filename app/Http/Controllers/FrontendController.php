@@ -151,6 +151,7 @@ class FrontendController extends Controller
                $user->country_code = $request->country_code;
                $user->user_type = 'reseller';
                $user->password = Hash::make($request->password);
+               $user->email_added_at = now();
                $user->is_active = 0;
                if($request->has('phone')){
 

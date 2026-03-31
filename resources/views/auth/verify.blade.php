@@ -25,4 +25,12 @@
         </div>
     </div>
 </div>
+
+@if ($errors->any())
+    <div class="container mt-3">
+        <div class="alert alert-danger" role="alert">
+            {{ $errors->first() }}
+        </div>
+    </div>
+@endif
 @endsection

@@ -115,6 +115,7 @@ class ResellerController extends Controller
         $user->email = $request->email;
         $user->user_type = 'reseller';
         $user->password = Hash::make($request->password);
+        $user->email_added_at = now();
         $user->is_active = $request->has('is_active') ? $request->is_active : 1;
         
         // Store phone number with country code
@@ -132,6 +133,8 @@ class ResellerController extends Controller
         $reseller = new ResellerModel();
         $reseller->user_id = $user->id;
         $reseller->save();
+
+        $user->sendEmailVerificationNotification();
 
         return redirect('admin/reseller/list')->with('success', 'Reseller created successfully!');
     }
@@ -169,6 +172,9 @@ class ResellerController extends Controller
         ]);
 
         $data            = User::find($request->id);
+        if ($data->email !== $request->email) {
+            $data->email_added_at = now();
+        }
         $data->name      = $request->name;
         $data->email     = $request->email;
         $data->phone     = $request->phone;
@@ -221,6 +227,9 @@ class ResellerController extends Controller
     {
 
         $profiledata        = User::where('id', $request->authid)->first();
+        if ($profiledata->email !== $request->company_email) {
+            $profiledata->email_added_at = now();
+        }
         $profiledata->name  = $request->name;
         $profiledata->email = $request->company_email;
         $profiledata->phone = $request->contact_number;

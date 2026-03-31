@@ -73,6 +73,7 @@ class CustomerController extends Controller
         $user->password = $request->password;
         $user->user_type = 'customer';
         $user->password = Hash::make($request->password);
+        $user->email_added_at = now();
         $user->is_active = $request->has('is_active') ? $request->is_active : 1;
         
         if($request->has('phone') && !empty($request->phone)){
@@ -157,9 +158,12 @@ class CustomerController extends Controller
             'email.unique' => 'This email is already registered.',
         ]);
 
-       $data=User::find($request->id);
-       $data->name=$request->name;
-       $data->email=$request->email;
+       $data = User::find($request->id);
+       if ($data->email !== $request->email) {
+           $data->email_added_at = now();
+       }
+       $data->name = $request->name;
+       $data->email = $request->email;
        $data->is_active = $request->has('is_active') ? $request->is_active : 1;
        
        if($request->has('phone') && !empty($request->phone)){

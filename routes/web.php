@@ -510,4 +510,4 @@ Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_fail
 
 
 
-Auth::routes();
+Auth::routes(['verify' => true]);
