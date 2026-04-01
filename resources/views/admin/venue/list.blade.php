@@ -44,24 +44,30 @@
                                     <td>{{ $val->venue_type_name }}</td>
                                     <td>
                                         @if($val->image)
-                                            <a href="{{ config('app.storage') .'uploads/venue/'. $val->image }}" target="_blank" title="View Image">
-                                                <i class="far fa-image fa-2x text-primary"></i>
+                                            <a href="{{ asset('storage/uploads/venue/' . $val->image) }}" target="_blank" title="View Image">
+                                                <img src="{{ asset('storage/uploads/venue/' . $val->image) }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">
                                             </a>
                                         @else
-                                            <i class="far fa-image fa-2x text-muted" title="No Image"></i>
+                                            <span class="text-muted">N/A</span>
                                         @endif
                                     </td>
                                     <td>{{ $val->venue_name }}</td>
-                                    <td>{{ $val->location_name }}</td>
+                                    <td>{{ $val->location_name ?? '-' }}</td>
                                     <td>
-                                        <a href="{{ $val->google_map_link }}"> Link </a></td>
+                                        @if(!empty($val->google_map_link))
+                                            <a href="{{ $val->google_map_link }}" target="_blank" rel="noopener">Map</a>
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
+                                    </td>
                                     {{-- <td>{{ $val->latitude }}</td>
                                     <td>{{ $val->longitude }}</td> --}}
-                                    <td>{{ $val->total_seats }}</td>
-                                    <td>{{ $val->total_seat_types }}</td>
+                                    <td>{{ $val->total_seats ?? 0 }}</td>
+                                    <td>{{ $val->total_seat_types ?? 0 }}</td>
                                     <td>
-                                        <a href="{{url('venue/manage_Seating',$val->id)}}" class="btn btn-sm bg-primary-light" title="Manage Seating">
+                                        <a href="{{url('venue/manage_Seating',$val->id)}}" class="btn btn-sm btn-primary" title="Manage Seating">
                                             <i class="far fa-cog"></i>
+                                           Manage Seating
                                         </a>
                                     </td>
 

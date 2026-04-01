@@ -14,7 +14,7 @@ class TagController extends Controller
     }
     public function index()
     {
-        $tags=Tag::get();
+        $tags = Tag::orderByDesc('id')->get();
         return view('admin.eventtags.list',compact('tags'));
 
     }

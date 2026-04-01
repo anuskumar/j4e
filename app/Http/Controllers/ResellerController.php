@@ -567,15 +567,22 @@ class ResellerController extends Controller
         // dd($request->request);
 
         $validated = $request->validate([
-            'artist_name' => 'required',
+            'artist_name' => 'required|string|max:255',
+            'field' => 'required|exists:artist_field,id',
+            'contact_number' => 'required|string|max:20',
 
+        ], [
+            'artist_name.required' => 'Artist name is required.',
+            'field.required' => 'Artist field is required.',
+            'field.exists' => 'Please select a valid artist field.',
+            'contact_number.required' => 'Contact number is required.',
         ]);
 
         $artistuser                 = new ArtistModel();
         $artistuser->artist_name    = $request->artist_name;
         $artistuser->field          = $request->field;
         $artistuser->contact_number = $request->contact_number;
-        $artistuser->about          = $request->about;
+        $artistuser->about          = $request->about ?? '';
         $artistuser->save();
         return redirect('reseller/manage_artist');
     }
@@ -613,7 +620,7 @@ class ResellerController extends Controller
         $data->artist_name    = $request->artist_name;
         $data->field          = $request->field;
         $data->contact_number = $request->contact_number;
-        $data->about          = $request->about;
+        $data->about          = $request->about ?? '';
 
         //   $data->status=$request->status;
 

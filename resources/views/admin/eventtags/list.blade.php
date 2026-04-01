@@ -31,7 +31,7 @@
                                     <td>{{ $val->tag_name }}</td>
                                     <td>
                                         @if($val->tag_image)
-                                            <img alt="image" src="{{ asset('storage/uploads/event_tag_images/' . $val->tag_image) }}" width="100" onerror="this.src='{{ asset('assets/img/default-tag.jpg') }}'">
+                                            <img alt="image" src="{{ asset('storage/uploads/event_tag_images/' . $val->tag_image) }}" width="100" >
                                         @else
                                             <img alt="image" src="{{ asset('assets/img/default-tag.jpg') }}" width="100">
                                         @endif

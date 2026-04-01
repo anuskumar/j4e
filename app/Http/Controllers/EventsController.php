@@ -34,7 +34,8 @@ class EventsController extends Controller
         ->leftjoin('countries','countries.id','location.country')
         ->leftjoin('cities','cities.id','location.city')
       ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
+      ->orderByDesc('event.id')
+      ->get();
     //    dd($data);
       return view('admin.events.list',compact('data'));
 

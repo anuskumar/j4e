@@ -6,6 +6,7 @@ use App\Models\CompanySettings;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class CompanySettingsController extends Controller
 {
@@ -68,20 +69,20 @@ class CompanySettingsController extends Controller
         $settings->company_about = $request->company_about;
         $settings->contact_number = $request->contact_number;
         $settings->company_email = $request->company_email;
-        if($request->hasFile('company_logo')){
-            $imageName = rand().'.'.$request->company_logo->extension();
-            $request->company_logo->move(storage_path('uploads/images'), $imageName);
-            $settings->company_logo =  $imageName;
+        if ($request->hasFile('company_logo')) {
+            $imageName = time() . '.' . $request->company_logo->extension();
+            Storage::disk('public')->putFileAs('uploads/images', $request->company_logo, $imageName);
+            $settings->company_logo = $imageName;
         }
-        if($request->hasFile('company_logo_small')){
-            $imageName = rand().'.'.$request->company_logo_small->extension();
-            $request->company_logo_small->move(storage_path('uploads/images'), $imageName);
-            $settings->company_logo_small =  $imageName;
+        if ($request->hasFile('company_logo_small')) {
+            $imageName = time() . '.' . $request->company_logo_small->extension();
+            Storage::disk('public')->putFileAs('uploads/images', $request->company_logo_small, $imageName);
+            $settings->company_logo_small = $imageName;
         }
-        if($request->hasFile('company_favicon')){
-            $imageName = rand().'.'.$request->company_favicon->extension();
-            $request->company_favicon->move(storage_path('uploads/images'), $imageName);
-            $settings->company_favicon =  $imageName;
+        if ($request->hasFile('company_favicon')) {
+            $imageName = time() . '.' . $request->company_favicon->extension();
+            Storage::disk('public')->putFileAs('uploads/images', $request->company_favicon, $imageName);
+            $settings->company_favicon = $imageName;
         }
 
 

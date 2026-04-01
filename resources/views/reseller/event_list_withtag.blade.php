@@ -210,6 +210,11 @@
 
             <div class="row g-4">
                 @foreach ($events as $val)
+                    @php
+                        $eventEnded = !empty($val->event_to_date)
+                            ? \Carbon\Carbon::parse($val->event_to_date)->endOfDay()->isPast()
+                            : false;
+                    @endphp
                     <div class="col-lg-3 col-md-6 col-sm-12">
                         <div class="card event-card h-100">
                             @if (!empty($val->event_image))
@@ -237,6 +242,9 @@
                                             <i class="bi bi-clock"></i> {{ date('H:i', strtotime($val->event_from_time)) }}
                                         </div>
                                     </div>
+                                    @if ($eventEnded)
+                                        <span class="badge bg-secondary ms-2">Event Ended</span>
+                                    @endif
                                 </div>
                                 
                                 <h5 class="event-title">{{ $val->event_name }}</h5>
@@ -256,8 +264,9 @@
                             </div>
                             
                             <div class="card-footer event-card-footer">
-                                <a href="{{ route('reseller.selltickets', ['id' => $val->id]) }}" 
-                                   class="btn btn-sell-tickets w-100">
+                                <a href="{{ $eventEnded ? 'javascript:void(0);' : route('reseller.selltickets', ['id' => $val->id]) }}" 
+                                   class="btn btn-sell-tickets w-100 {{ $eventEnded ? 'disabled' : '' }}"
+                                   aria-disabled="{{ $eventEnded ? 'true' : 'false' }}">
                                     <i class="bi bi-ticket-perforated"></i> Sell Tickets
                                 </a>
                             </div>

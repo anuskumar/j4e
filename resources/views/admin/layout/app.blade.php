@@ -424,8 +424,8 @@
                                                 class="far fa-user"></i> My Profile</a>
                                         {{-- <a class="dropdown-item" href="profile.html"><i class="far fa-edit"></i> Edit Profile</a> --}}
                                         {{-- <a class="dropdown-item" href="profile.html"><i class="far fa-clock"></i> Activity Logs</a> --}}
-                                        <a class="dropdown-item" href="profile.html"><i class="fas fa-sliders-h"></i>
-                                            Account Settings</a>
+                                        <!-- <a class="dropdown-item" href="profile.html"><i class="fas fa-sliders-h"></i>
+                                            Account Settings</a> -->
                                         @if (Auth::user()->user_type == 'superadmin')
                                             <a class="dropdown-item" href="{{ url('admin/company_settings') }}"><i
                                                     class="fas fa-sliders-h"></i> Company Settings</a>
