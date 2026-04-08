@@ -36,6 +36,11 @@ class HomeController extends Controller
         if ($userType === 'superadmin') {
             return redirect()->route('admin.home');
         } elseif ($userType === 'customer') {
+            if (! Auth::user()->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice')
+                    ->withErrors(['email' => "Your email doesn't verified"])
+                    ->with('unverified_email', Auth::user()->email);
+            }
             return redirect()->route('customer.home');
         } elseif ($userType === 'reseller') {
             return redirect()->route('reseller.home');
@@ -66,7 +71,16 @@ class HomeController extends Controller
                         ->leftjoin('countries','countries.id','location.country')
                         ->leftjoin('cities','cities.id','location.city')
 
-                      ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name', DB::raw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_id = event.id AND is_sold = 1) as sold_ticket_count'))
+                      ->select(
+                          '*',
+                          'event.id as id',
+                          'country_name',
+                          'cities.name as city_name',
+                          'location_name',
+                          'venue.name as venue_name',
+                          DB::raw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_id = event.id) as total_ticket_count'),
+                          DB::raw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_id = event.id AND is_sold = 1) as sold_ticket_count')
+                      )
                       ->where('event.event_from_date', '>=', $current_date)
                        ->get();
 

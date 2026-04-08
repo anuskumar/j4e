@@ -80,7 +80,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmi
     Route::get('/home', [HomeController::class, 'adminHome'])->name('admin.home');
 });
 
-Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer']], function () {
+Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
     Route::get('/home', [HomeController::class, 'customerHome'])->name('customer.home');
     Route::get('/ticket-details/{id}', [HomeController::class, 'ticketDetails'])->name('customer.ticket.details');
 });

@@ -479,14 +479,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * 
  * Filter Logic:
  * 1. Zone Filter: Shows tickets matching selected zone (or "all" for all zones)
- * 2. Quantity Filter: Shows tickets that can fulfill the selected quantity based on:
- *    - Availability must be >= selected quantity
- *    - Split Type Rules:
- *      - Type 1 (Any): Allow any quantity if available
- *      - Type 2 (None): Must match exactly (availability === quantity)
- *      - Type 3: Cannot leave exactly 1 ticket remaining
- *      - Type 4: Cannot leave 1 or 3 tickets remaining
- *      - Type 5: Must leave even number of tickets (avoid odd numbers)
+ * 2. Quantity Filter: Shows tickets where availability >= selected quantity
  * 
  * Both filters work together - a ticket must pass BOTH zone AND quantity filters to be shown
  */
@@ -508,36 +501,7 @@ function applyCombinedFilters() {
 
         // Step 2: Check quantity filter (only if zone filter passed)
         if (shouldShow) {
-            // Availability must always be >= quantity
-            if (availability < currentQuantity) {
-                shouldShow = false;
-            } else {
-                // Additional split type rules
-                switch (splitType) {
-                    case 1: // Any - allow any quantity
-                        shouldShow = true;
-                        break;
-
-                    case 2: // None - must match exactly
-                        shouldShow = availability === currentQuantity;
-                        break;
-
-                    case 3: // Avoid leaving one ticket
-                        shouldShow = (availability - currentQuantity) !== 1;
-                        break;
-
-                    case 4: // Avoid leaving one or three tickets
-                        shouldShow = (availability - currentQuantity) !== 1 && (availability - currentQuantity) !== 3;
-                        break;
-
-                    case 5: // Avoid odd numbers
-                        shouldShow = (availability - currentQuantity) % 2 === 0;
-                        break;
-
-                    default:
-                        shouldShow = true; // Default behavior for unknown split type
-                }
-            }
+            shouldShow = availability >= currentQuantity;
         }
 
         // Apply display
@@ -565,16 +529,13 @@ function updateSingleTicketDisplay(ticket, quantity, totalAvailability) {
     const availabilityElement = ticket.querySelector('p');
     const remainingElement = ticket.querySelector('.remaining-tickets');
     
-    if (totalAvailability >= quantity) {
-        const ticketLabel = quantity === 1 ? 'ticket' : 'tickets';
-        if (availabilityElement) {
-            availabilityElement.textContent = `${quantity} ${ticketLabel}`;
-        }
-        
-        const remainingTickets = totalAvailability - quantity;
-        if (remainingElement) {
-            remainingElement.textContent = `${remainingTickets} tickets remaining in this listing on our site`;
-        }
+    if (availabilityElement) {
+        const ticketLabel = totalAvailability === 1 ? 'ticket' : 'tickets';
+        availabilityElement.textContent = `${totalAvailability} ${ticketLabel}`;
+    }
+
+    if (remainingElement) {
+        remainingElement.textContent = `${totalAvailability} tickets remaining in this listing on our site`;
     }
 }
 

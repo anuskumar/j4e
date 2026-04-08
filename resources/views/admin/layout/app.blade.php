@@ -92,11 +92,7 @@
 
 <body class="main-body app sidebar-mini ltr">
 
-    <!-- Loader -->
-    <div id="global-loader">
-        <img src="{{ asset('admin_assets/img/loaders/loader-4.svg') }}" class="loader-img" alt="Loader">
-    </div>
-    <!-- /Loader -->
+    
 
     <!-- page -->
     <div class="page custom-index">
@@ -670,7 +666,7 @@
         <!-- Footer closed -->
     </div>
 
-    <div class="loader" id="loader">
+    <!-- <div class="loader" id="loader"> -->
     </div>
     <!-- page closed -->
 

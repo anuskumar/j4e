@@ -15,10 +15,6 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Tickets</h3>
-                    <div class="card-body" style="float:right;">
-
-                        <a class="btn ripple btn-info" data-bs-target="#modaldemo3" data-bs-toggle="modal" href="#">Create Ticket</a>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -105,10 +101,7 @@
                                                 @method('DELETE')
                                             <a href="{{ url('tickets/ticket_view',$val->id) }}"><button type="button" class="btn btn-primary" title="View"><i class="fas fa-eye"></i></button></a>
                                             {{-- <a href="{{url('customer/delete',$val->id)}}"><button type="button" class="btn btn-danger">Delete</button></a> --}}
-                                            @if($val->is_admin_approved==0)
-                                            <a href="{{ url('tickets/ticket_edit',$val->id) }}"><button type="button" class="btn btn-info" title="Edit"><i class="fas fa-pencil-alt"></i></button></a>
-                                            <button type="submit" class="btn btn-danger show_confirm" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                            @endif
+                                            
                                             </form>
 
                                         </td>
