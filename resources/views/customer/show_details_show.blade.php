@@ -77,10 +77,15 @@
                     <div class="col-md-3">
                         @php
                             $eventImagePath = @$event_datas->event_image ? 'uploads/events/' . $event_datas->event_image : null;
-                            $hasEventImage = $eventImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($eventImagePath);
+                            $eventImageUrl = null;
+                            if ($eventImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($eventImagePath)) {
+                                $eventImageUrl = asset('storage/' . $eventImagePath);
+                            } elseif (@$event_datas->event_image && file_exists(storage_path('uploads/events/' . $event_datas->event_image))) {
+                                $eventImageUrl = config('app.storage') . 'uploads/events/' . $event_datas->event_image;
+                            }
                         @endphp
-                        @if($hasEventImage)
-                            <img src="{{ asset('storage/' . $eventImagePath) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}'">
+                        @if($eventImageUrl)
+                            <img src="{{ $eventImageUrl }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}'">
                         @else
                             <img src="{{ asset('assets/img/events/event-01.jpg') }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
                         @endif
@@ -159,10 +164,15 @@
                 <div class="image-container">
                     @php
                         $venueImagePath = @$event_datas->venue_image ? 'uploads/venue/' . $event_datas->venue_image : null;
-                        $hasVenueImage = $venueImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($venueImagePath);
+                        $venueImageUrl = null;
+                        if ($venueImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($venueImagePath)) {
+                            $venueImageUrl = asset('storage/' . $venueImagePath);
+                        } elseif (@$event_datas->venue_image && file_exists(storage_path('uploads/venue/' . $event_datas->venue_image))) {
+                            $venueImageUrl = config('app.storage') . 'uploads/venue/' . $event_datas->venue_image;
+                        }
                     @endphp
-                    @if($hasVenueImage)
-                        <img src="{{ asset('storage/' . $venueImagePath) }}" alt="Venue Image" class="zoomable-image" onerror="this.onerror=null;this.src='{{ asset('assets/img/img-01.jpg') }}'">
+                    @if($venueImageUrl)
+                        <img src="{{ $venueImageUrl }}" alt="Venue Image" class="zoomable-image" onerror="this.onerror=null;this.src='{{ asset('assets/img/img-01.jpg') }}'">
                     @else
                         <img src="{{ asset('assets/img/img-01.jpg') }}" alt="Venue Image" class="zoomable-image">
                     @endif
@@ -250,7 +260,7 @@
 
                                 <!-- Right Section -->
                                 <div class="text-end">
-                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->face_value.' '.$dat->short_name }}</h5>
+                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->ticket_amount.' '.$dat->short_name }}</h5>
                                     <h6>each</h6>
                                     @if($ticket_availability > 0)
                                         <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">

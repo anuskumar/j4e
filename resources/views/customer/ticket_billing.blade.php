@@ -97,8 +97,8 @@
                             <div class="booking-summary">
                                 <div class="booking-item-wrap">
                                     @php
-                                        // Use face_value if available and > 0, otherwise use ticket_amount
-                                        $ticket_price = ($data->face_value && $data->face_value > 0) ? $data->face_value : ($data->ticket_amount ?? 0);
+                                        // Billing must use ticket_amount (customer selling price)
+                                        $ticket_price = $data->ticket_amount ?? 0;
                                         $total_amount = $ticket_price * $ticket_count;
                                     @endphp
                                     <ul class="booking-date">
@@ -205,8 +205,8 @@
                                 </div> -->
 
                                 @php
-                                    // Calculate ticket price and total amount for form submission
-                                    $ticket_price_form = ($data->face_value && $data->face_value > 0) ? $data->face_value : ($data->ticket_amount ?? 0);
+                                    // Keep submitted payable amount aligned with displayed ticket amount
+                                    $ticket_price_form = $data->ticket_amount ?? 0;
                                     $total_amount_form = $ticket_price_form * $ticket_count;
                                     // Round to 2 decimal places to preserve cents
                                     $total_amount_form = round($total_amount_form, 2);

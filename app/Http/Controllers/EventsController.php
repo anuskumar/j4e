@@ -87,7 +87,8 @@ class EventsController extends Controller
         $validated = $request->validate([
             'event_name' => 'required',
             'event_is_active' => 'required',
-            'event_tag' => 'required'
+            'event_tag' => 'required',
+            'seller_fee_percent' => 'required|numeric|min:0|max:100',
 
         ]);
 
@@ -108,6 +109,7 @@ class EventsController extends Controller
 
         $event->event_from_date = $request->event_from_date;
         $event->event_tag = $request->event_tag;
+        $event->seller_fee_percent = $request->seller_fee_percent;
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
@@ -151,7 +153,8 @@ class EventsController extends Controller
 
         $validated = $request->validate([
             'event_name' => 'required',
-            'event_tag' => 'required'
+            'event_tag' => 'required',
+            'seller_fee_percent' => 'required|numeric|min:0|max:100'
 
             // 'event_is_active' => 'required'
         ]);
@@ -179,6 +182,7 @@ class EventsController extends Controller
         $data->event_from_date = $request->event_from_date;
         $data->event_to_date = $request->event_to_date;
         $data->event_tag = $request->event_tag;
+        $data->seller_fee_percent = $request->seller_fee_percent;
         // $data->event_added_by =Auth::user()->id;
         $data->event_is_active = $request->event_is_active;
 

@@ -80,6 +80,17 @@
 											</div>
 										</div>
 									</div>
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
+												<label class="form-label">Seller Fee (%)</label>
+											</div>
+											<div class="col-md-6">
+                                                <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                                       name="seller_fee_percent" value="{{ old('seller_fee_percent', $data->seller_fee_percent ?? 10) }}" required>
+											</div>
+										</div>
+									</div>
 
                                     <div class="form-group ">
 										<div class="row">

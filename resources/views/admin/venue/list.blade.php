@@ -43,12 +43,24 @@
 
                                     <td>{{ $val->venue_type_name }}</td>
                                     <td>
-                                        @if($val->image)
-                                            <a href="{{ asset('storage/uploads/venue/' . $val->image) }}" target="_blank" title="View Image">
-                                                <img src="{{ asset('storage/uploads/venue/' . $val->image) }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">
+                                        @php
+                                            $venueImage = $val->image ?? null;
+                                            $venueImageUrl = null;
+                                            if ($venueImage) {
+                                                $publicPath = 'uploads/venue/' . $venueImage;
+                                                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($publicPath)) {
+                                                    $venueImageUrl = asset('storage/' . $publicPath);
+                                                } elseif (file_exists(storage_path('uploads/venue/' . $venueImage))) {
+                                                    $venueImageUrl = config('app.storage') . 'uploads/venue/' . $venueImage;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($venueImageUrl)
+                                            <a href="{{ $venueImageUrl }}" target="_blank" title="View Image">
+                                                <img src="{{ $venueImageUrl }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" onerror="this.onerror=null;this.src='{{ asset('assets/img/default-venue.jpg') }}'">
                                             </a>
                                         @else
-                                            <span class="text-muted">N/A</span>
+                                            <img src="{{ asset('assets/img/default-venue.jpg') }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">
                                         @endif
                                     </td>
                                     <td>{{ $val->venue_name }}</td>
@@ -65,9 +77,8 @@
                                     <td>{{ $val->total_seats ?? 0 }}</td>
                                     <td>{{ $val->total_seat_types ?? 0 }}</td>
                                     <td>
-                                        <a href="{{url('venue/manage_Seating',$val->id)}}" class="btn btn-sm btn-primary" title="Manage Seating">
-                                            <i class="far fa-cog"></i>
-                                           Manage Seating
+                                        <a href="{{ url('venue/manage_Seating', $val->id) }}" class="btn btn-sm btn-primary" title="Manage Seating">
+                                            <i class="fa fa-cog me-1"></i>Manage Seating
                                         </a>
                                     </td>
 
@@ -75,6 +86,9 @@
                                         <div class="table-action">
                                             <a href="{{url('venue/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
                                                 <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url('venue/manage_Seating', $val->id) }}" class="btn btn-sm bg-warning-light" title="Manage Seating">
+                                                <i class="fa fa-cog"></i>
                                             </a>
                                             <a href="{{url('venue/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
                                                 <i class="far fa-edit"></i>

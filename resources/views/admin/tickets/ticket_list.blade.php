@@ -24,6 +24,7 @@
                                 <tr>
                                     <th>Sl</th>
                                     <th class="border-bottom-0">Ticket Name</th>
+                                    <th class="border-bottom-0">Reseller Details</th>
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Event Timing</th>
                                     <th class="border-bottom-0">Total Tickets</th>
@@ -47,13 +48,11 @@
 
                                         <td>
                                             {{ $val->ticket_name }}<br>
-                                            <?php
-                                            $user = DB::table('users')->where('id', $val->created_by)->first();
-                                            ?>
-                                           @if(Auth::user()->user_type == 'superadmin')
-
-                                            <span class="tx-success">{{ $user->name}}</span>
-                                            @endif
+                                        </td>
+                                        <td>
+                                            <b>{{ $val->reseller_name ?? 'N/A' }}</b><br>
+                                            <small>{{ $val->reseller_email ?? 'N/A' }}</small><br>
+                                            <small>{{ $val->reseller_phone ?? 'N/A' }}</small>
                                         </td>
                                         <td>{{ $val->ticket_type_name }}</td>
 

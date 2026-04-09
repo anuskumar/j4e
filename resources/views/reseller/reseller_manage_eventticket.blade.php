@@ -145,9 +145,9 @@ $val = $data[0];
            </button>
                         </div>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><b>Original Price : {{ $val['ticket_amount'].' '.$val['short_name'] }}</b>
+                            <li class="list-group-item"><b>Original Price : {{ $val['face_value'].' '.$val['short_name'] }}</b>
            </li>
-                            <li class="list-group-item"><b>Your Sale Price :  {{ $val['face_value'].' '.$val['short_name'] }}</b> </li>
+                            <li class="list-group-item"><b>Your Sale Price :  {{ $val['ticket_amount'].' '.$val['short_name'] }}</b> </li>
                         </ul>
                         </div>
 
@@ -384,7 +384,7 @@ $val = $data[0];
          </div>
          <div class="col-md-4">
 
-         <input type="text" class="form-control" value="{{ $val['ticket_amount']}}" name="original_price" id="original-price">
+         <input type="text" class="form-control" value="{{ $val['face_value']}}" name="original_price" id="original-price">
          </div>
          <div class="col-md-4">
             USD
@@ -399,7 +399,7 @@ $val = $data[0];
          </div>
          <div class="col-md-4">
 
-         <input type="text" class="form-control" value="{{ $val['face_value']}}" name="face_value" id="face_value">
+         <input type="text" class="form-control" value="{{ $val['ticket_amount']}}" name="sale_price" id="sale_price">
          </div>
          <div class="col-md-4">
             USD
@@ -702,7 +702,7 @@ $(document).ready(function() {
     // Attach validation on form submit
     $("#tickcet-price-change-modal form").on("submit", function(e) {
         let originalPrice = $("#original-price").val().trim();
-        let faceValue = $("#face_value").val().trim();
+        let salePrice = $("#sale_price").val().trim();
 
         // Regex: integers or floats
         let numberPattern = /^[0-9]+(\.[0-9]+)?$/;
@@ -714,9 +714,9 @@ $(document).ready(function() {
             return false;
         }
 
-        if (!numberPattern.test(faceValue)) {
+        if (!numberPattern.test(salePrice)) {
             alert("Please enter a valid number for Sale Price.");
-            $("#face_value").focus();
+            $("#sale_price").focus();
             e.preventDefault();
             return false;
         }
@@ -725,7 +725,7 @@ $(document).ready(function() {
     });
 
     // Optional: live restriction (only numbers + dot allowed)
-    $("#original-price, #face_value").on("keypress", function(e) {
+    $("#original-price, #sale_price").on("keypress", function(e) {
         let charCode = e.which ? e.which : e.keyCode;
         // Allow: numbers (48–57), dot (46), backspace (8), delete (0)
         if ((charCode < 48 || charCode > 57) && charCode !== 46 && charCode !== 8 && charCode !== 0) {
