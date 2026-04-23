@@ -29,10 +29,11 @@ class EventTiming extends Model
 
         $data =  TicketsGenerated::leftjoin('event_tickets','event_tickets.id','=','event_ticket_tickets.event_tickets')
         ->where('event_ticket_tickets.event_tickets',$ticket_id)
-        ->where('event_ticket_tickets.is_sold',0)
         ->where(function ($query) {
-            $query->where('event_ticket_tickets.on_sale', 1)
-                  ->orWhere('event_ticket_tickets.under_purchase_hold', 0);
+            $query->where(function ($saleQuery) {
+                $saleQuery->where('event_ticket_tickets.on_sale', 1)
+                    ->where('event_ticket_tickets.is_sold', 0);
+            })->orWhere('event_ticket_tickets.under_purchase_hold', 0);
         })
         ->where('event_tickets.is_admin_approved',1)
         ->count();

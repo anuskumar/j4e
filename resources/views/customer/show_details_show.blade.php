@@ -244,8 +244,17 @@
                             <!-- Left Section -->
                             <div>
                                 <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
-                                <!-- <p>{{ $ticket_availability }} tickets</p> -->
-                                {{-- <p>Split Type: {{ $dat->split_type }}</p> --}}
+                                <div style="font-size: 13px; color: #555;">
+                                    <div><strong>Ticket:</strong> {{ $dat->ticket_name ?? 'N/A' }}</div>
+                                    <div><strong>Type:</strong> {{ $dat->ticket_type_name ?? 'N/A' }}</div>
+                                    <div><strong>Date:</strong> {{ isset($event_time->event_date) ? date('d M Y', strtotime($event_time->event_date)) : '-' }}</div>
+                                    <div><strong>Time:</strong>
+                                        {{ isset($event_time->from_time) ? date('g:i A', strtotime($event_time->from_time)) : '-' }}
+                                        -
+                                        {{ isset($event_time->to_time) ? date('g:i A', strtotime($event_time->to_time)) : '-' }}
+                                    </div>
+                                   
+                                </div>
 
                                 @if ($dat->web_price == $lowestPrice)
                                     <span class="badge lowest-price" style="background-color: #d4edda; color: #155724; border-radius: 5px; padding: 5px 10px;">
