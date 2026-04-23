@@ -477,7 +477,7 @@ class FrontendController extends Controller
                 $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
                 if ($event_timing_list) {
                     foreach ($event_timing_list as $event_time) {
-                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $event_time->id);
                         foreach ($event_ticket_list as $ticket) {
                             $ticket_availability = EventTiming::get_available_tickets($ticket->id);
                             if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {

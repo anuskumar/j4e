@@ -206,7 +206,7 @@
             $event_timing = App\Models\EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
             if ($event_timing) {
                 foreach ($event_timing as $event_time) {
-                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $event_time->id);
                     foreach ($event_ticket_list as $dat) {
                         if ($dat->web_price < $lowestPrice) {
                             $lowestPrice = $dat->web_price;
@@ -225,7 +225,7 @@
         @if ($event_timing)
             @foreach ($event_timing as $event_time)
                 @php
-                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $event_time->id);
                 @endphp
 
                 @foreach ($event_ticket_list as $dat)
