@@ -28,6 +28,7 @@
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Event Timing</th>
                                     <th class="border-bottom-0">Total Tickets</th>
+                                    <th class="border-bottom-0">Price / Ticket</th>
                                     <th class="border-bottom-0">Final Price</th>
                                     <th class="border-bottom-0">Seating</th>
                                     <th class="border-bottom-0">Expiry Date</th>
@@ -61,6 +62,7 @@
                                         </td>
                                         {{-- <td>{{ $val->location_name.' '.$val->city_name.' ,'.$val->country_name }}</td> --}}
                                         <td>{{ $val->no_of_tickets }}</td>
+                                        <td>{{ number_format((float) $val->ticket_amount, 2) }} {{ $val->currency_short_name ?? '' }}</td>
                                         <td>{{ $val->total_recive }}</td>
                                         <td>{{ $val->seating_type_name }}</td>
                                         <td>{{ $val->booking_expiry_date_time ? date('D d-m-Y H:i A',strtotime($val->booking_expiry_date_time)):'' }}</td>

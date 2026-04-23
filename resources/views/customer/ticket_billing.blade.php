@@ -97,9 +97,17 @@
                             <div class="booking-summary">
                                 <div class="booking-item-wrap">
                                     @php
+                                        $max_calculator_tickets = max(1, (int) ($available_ticket_count ?? $ticket_count ?? 1));
+                                        $initial_ticket_count = (int) ($ticket_count ?? 1);
+                                        if ($initial_ticket_count < 1) {
+                                            $initial_ticket_count = 1;
+                                        }
+                                        if ($initial_ticket_count > $max_calculator_tickets) {
+                                            $initial_ticket_count = $max_calculator_tickets;
+                                        }
                                         // Billing must use ticket_amount (customer selling price)
                                         $ticket_price = $data->ticket_amount ?? 0;
-                                        $total_amount = $ticket_price * $ticket_count;
+                                        $total_amount = $ticket_price * $initial_ticket_count;
                                     @endphp
                                     <ul class="booking-date">
                                         <li>Date <span>{{ date('d M Y',strtotime($data->event_date)) }}</span></li>
@@ -107,15 +115,28 @@
                                     </ul>
                                     <ul class="booking-fee">
                                         <li>Ticket Name <span>{{ Str::ucfirst($data->ticket_name) }}</span></li>
-                                        <li>Number of Tickets <span>{{ $ticket_count }}</span></li>
-                                        <li>Ticket Amount <span>{{ number_format($ticket_price, 2) . ' ' . $data->short_name }}</span></li>
-                                        <li>Total Amount <span>{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span></li>
+                                        <li>Number of Tickets <span id="selected-qty-display">{{ $initial_ticket_count }}</span></li>
+                                        <li>Ticket Amount <span id="ticket-amount-display">{{ number_format($ticket_price, 2) . ' ' . $data->short_name }}</span></li>
+                                        <li>Total Amount <span id="total-amount-display">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span></li>
                                     </ul>
+                                    <div class="mt-3 p-2 border rounded">
+                                        <label class="form-label mb-2"><b>Ticket Number Calculator</b></label>
+                                        <div class="input-group input-group-sm" style="max-width: 220px;">
+                                            <button type="button" class="btn btn-outline-secondary" id="qty-minus">-</button>
+                                            <input type="number" id="ticket-count-input" class="form-control text-center" min="1" max="{{ $max_calculator_tickets }}" value="{{ $initial_ticket_count }}">
+                                            <button type="button" class="btn btn-outline-secondary" id="qty-plus">+</button>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">Available tickets: {{ $available_ticket_count ?? $max_calculator_tickets }}</small>
+                                        <small class="text-muted d-block mt-1">Maximum reserved tickets: {{ $max_calculator_tickets }}</small>
+                                        <small class="text-muted d-block mt-1">
+                                            <span id="calc-formula-display">{{ number_format($ticket_price, 2) }} x {{ $initial_ticket_count }} = {{ number_format($total_amount, 2) }} {{ $data->short_name }}</span>
+                                        </small>
+                                    </div>
                                     <div class="booking-total">
                                         <ul class="booking-total-list">
                                             <li>
                                                 <span>Final Amount</span>
-                                                <span class="total-cost">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span>
+                                                <span class="total-cost" id="final-amount-display">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -140,7 +161,7 @@
                             action="{{ route('stripe.post') }}"
                             method="post"
                             class="require-validation"
-                            data-cc-on-file="false"
+                            data-cc-on-file="true"
                             data-stripe-publishable-key="{{ env('STRIPE_KEY') }}"
                             id="payment-form">
 
@@ -207,14 +228,14 @@
                                 @php
                                     // Keep submitted payable amount aligned with displayed ticket amount
                                     $ticket_price_form = $data->ticket_amount ?? 0;
-                                    $total_amount_form = $ticket_price_form * $ticket_count;
+                                    $total_amount_form = $ticket_price_form * $initial_ticket_count;
                                     // Round to 2 decimal places to preserve cents
                                     $total_amount_form = round($total_amount_form, 2);
                                 @endphp
-                                <input type="hidden" value="{{ $total_amount_form }}" name="payment_amount">
+                                <input type="hidden" value="{{ $total_amount_form }}" name="payment_amount" id="payment-amount-input">
                                 <input type="hidden" value="{{ $data->event_id }}" name="event_id">
                                 <input type="hidden" value="{{ $data->id }}" name="event_ticket_id">
-                                <input type="hidden" value="{{ $ticket_count }}" name="total_number">
+                                <input type="hidden" value="{{ $initial_ticket_count }}" name="total_number" id="total-number-input">
                                 <input type="hidden" value="{{ $data->currency_name }}" name="currency_name">
 
                                 {{-- <input type="hidden" value="{{ round($data->web_price * $ticket_count) }}" name="payment_amount"> --}}
@@ -321,14 +342,10 @@
 
                                     @csrf
 
-                                    <script
-        src="https://checkout.stripe.com/checkout.js"
-        class="stripe-button"
-        data-key="{{ config('services.stripe.key') }}"
-        data-amount="{{ round($total_amount_form * 100) }}"
-        data-locale="auto"
-        data-currency="{{ strtolower($data->currency_name) }}"
-    ></script>
+                                    <script src="https://checkout.stripe.com/checkout.js"></script>
+                                    <button type="button" id="open-stripe-checkout" class="btn btn-primary">
+                                        Pay {{ number_format($total_amount_form, 2) }} {{ $data->currency_name }} ({{ $initial_ticket_count }} ticket(s))
+                                    </button>
                                             {{-- <div class="col-md-6">
                                                 <div class="form-group card-label">
                                                     <label for="card_name">Name on Card</label>
@@ -459,8 +476,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
-
-    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 
   {{-- <script>
         toastr.options = {
@@ -595,8 +610,67 @@
 
 
     $(document).ready(function() {
-        // Form validation before Stripe checkout
-        $('#payment-form').on('submit', function(e) {
+        var unitPrice = parseFloat("{{ (float) ($data->ticket_amount ?? 0) }}");
+        var maxQty = parseInt("{{ (int) $max_calculator_tickets }}", 10);
+        var currencyCode = "{{ $data->short_name }}";
+
+        function formatMoney(amount) {
+            return parseFloat(amount).toFixed(2) + ' ' + currencyCode;
+        }
+
+        function sanitizeQty(value) {
+            var qty = parseInt(value, 10);
+            if (isNaN(qty)) qty = 1;
+            if (qty < 1) qty = 1;
+            if (qty > maxQty) qty = maxQty;
+            return qty;
+        }
+
+        function updateAmountFromQty() {
+            var qty = sanitizeQty($('#ticket-count-input').val());
+            var total = (unitPrice * qty).toFixed(2);
+
+            $('#ticket-count-input').val(qty);
+            $('#selected-qty-display').text(qty);
+            $('#total-number-input').val(qty);
+            $('#payment-amount-input').val(total);
+            $('#total-amount-display').text(formatMoney(total));
+            $('#final-amount-display').text(formatMoney(total));
+            $('#calc-formula-display').text(unitPrice.toFixed(2) + ' x ' + qty + ' = ' + total + ' ' + currencyCode);
+            $('#open-stripe-checkout').text('Pay ' + parseFloat(total).toFixed(2) + ' {{ $data->currency_name }} (' + qty + ' ticket(s))');
+        }
+
+        $('#qty-minus').on('click', function() {
+            var qty = sanitizeQty($('#ticket-count-input').val());
+            $('#ticket-count-input').val(Math.max(1, qty - 1));
+            updateAmountFromQty();
+        });
+
+        $('#qty-plus').on('click', function() {
+            var qty = sanitizeQty($('#ticket-count-input').val());
+            $('#ticket-count-input').val(Math.min(maxQty, qty + 1));
+            updateAmountFromQty();
+        });
+
+        $('#ticket-count-input').on('input change keyup blur', function() {
+            updateAmountFromQty();
+        });
+
+        updateAmountFromQty();
+
+        var stripeHandler = StripeCheckout.configure({
+            key: "{{ config('services.stripe.key') }}",
+            locale: 'auto',
+            token: function(token) {
+                if ($('#stripe-token-input').length === 0) {
+                    $('#payment-form').append('<input type="hidden" id="stripe-token-input" name="stripeToken" />');
+                }
+                $('#stripe-token-input').val(token.id);
+                $('#payment-form')[0].submit();
+            }
+        });
+
+        function validateShippingForm() {
             var isValid = true;
             var errorMessages = [];
             
@@ -646,7 +720,6 @@
             }
             
             if (!isValid) {
-                e.preventDefault();
                 // Show error message
                 if ($('.info-widget .alert-danger').length === 0) {
                     $('.info-widget').prepend('<div class="alert alert-danger"><ul class="mb-0"></ul></div>');
@@ -659,6 +732,41 @@
                 $('html, body').animate({
                     scrollTop: $('.alert-danger').offset().top - 100
                 }, 500);
+                return false;
+            }
+
+            return true;
+        }
+
+        $('#open-stripe-checkout').on('click', function(e) {
+            e.preventDefault();
+
+            if (!validateShippingForm()) {
+                return;
+            }
+
+            var qty = sanitizeQty($('#ticket-count-input').val());
+            var total = parseFloat(unitPrice * qty).toFixed(2);
+            var totalInSmallestUnit = Math.round(parseFloat(total) * 100);
+
+            if (qty < 1 || totalInSmallestUnit < 1) {
+                alert('Invalid ticket quantity or amount.');
+                return;
+            }
+
+            stripeHandler.open({
+                name: 'Ticket Purchase',
+                description: qty + ' ticket(s) - ' + total + ' {{ $data->currency_name }}',
+                amount: totalInSmallestUnit,
+                currency: "{{ strtolower($data->currency_name) }}",
+                email: "{{ Auth::user()->email ?? '' }}"
+            });
+        });
+
+        // Form validation before final submission (token callback submit)
+        $('#payment-form').on('submit', function(e) {
+            if (!validateShippingForm()) {
+                e.preventDefault();
                 return false;
             }
         });

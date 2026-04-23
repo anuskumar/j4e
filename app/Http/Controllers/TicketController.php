@@ -110,6 +110,7 @@ class TicketController extends Controller
             ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
             ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
             ->leftjoin('users','users.id','event_tickets.created_by')
+            ->leftjoin('currency','currency.id','event_tickets.amount_currency')
             ->leftjoin('ticket_status','ticket_status.id','event_tickets.ticket_status')
             ->where('event_tickets.event', $id);
             // info(Auth::user()->user_type);
@@ -127,7 +128,8 @@ class TicketController extends Controller
             'event_tickets.is_admin_approved as is_admin_approved',
             'users.name as reseller_name',
             'users.email as reseller_email',
-            'users.phone as reseller_phone'
+            'users.phone as reseller_phone',
+            'currency.short_name as currency_short_name'
         )->latest('event_tickets.created_at')->get();
 
         $event = Events::find($id);

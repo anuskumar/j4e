@@ -236,53 +236,53 @@
 
                     @if ($ticket_availability > 0)
                         <div class="card p-3 mb-3 ticket-container"
-                             data-availability="{{ $ticket_availability }}"
-                             data-zone="{{ $dat->seating_type_name }}"
-                             data-split-type="{{ $dat->split_type }}"
-                             style="border-radius: 10px; border: 1px solid #ddd; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <!-- Left Section -->
-                                <div>
-                                    <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
-                                    <p>{{ $ticket_availability }} tickets</p>
-                                    {{-- <p>Split Type: {{ $dat->split_type }}</p> --}}
+                         data-availability="{{ $ticket_availability }}"
+                         data-zone="{{ $dat->seating_type_name }}"
+                         data-split-type="{{ $dat->split_type }}"
+                         style="border-radius: 10px; border: 1px solid #ddd; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <!-- Left Section -->
+                            <div>
+                                <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
+                                <p>{{ $ticket_availability }} tickets</p>
+                                {{-- <p>Split Type: {{ $dat->split_type }}</p> --}}
 
-                                    @if ($dat->web_price == $lowestPrice)
-                                        <span class="badge lowest-price" style="background-color: #d4edda; color: #155724; border-radius: 5px; padding: 5px 10px;">
-                                            Lowest price
-                                        </span>
-                                    @endif
-                                    <span class="remaining-tickets" style="font-size: 14px; color: #d63384;">
-                                        {{ $ticket_availability }} tickets remaining in this listing on our site
+                                @if ($dat->web_price == $lowestPrice)
+                                    <span class="badge lowest-price" style="background-color: #d4edda; color: #155724; border-radius: 5px; padding: 5px 10px;">
+                                        Lowest price
                                     </span>
+                                @endif
+                                <span class="remaining-tickets" style="font-size: 14px; color: #d63384;">
+                                    {{ $ticket_availability }} tickets remaining in this listing on our site
+                                </span>
 
-                                </div>
+                            </div>
 
-                                <!-- Right Section -->
-                                <div class="text-end">
-                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->ticket_amount.' '.$dat->short_name }}</h5>
-                                    <h6>each</h6>
-                                    @if($ticket_availability > 0)
-                                        <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            <input type="hidden" value="{{ $dat->id }}" name="event_ticket">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <input type="hidden" style="width: 60px;" class="form-control"
-                                                        max="{{ $ticket_availability }}" min="1" name="buy_count"
-                                                        required />
-                                                </div>
-                                                <button class="apt-btn btn btn-primary" type="submit" style="margin-left:15px;">Book</button>
+                            <!-- Right Section -->
+                            <div class="text-end">
+                                <h5 class="mb-1" style="font-weight: 600;">{{ $dat->ticket_amount.' '.$dat->short_name }}</h5>
+                                <h6>each</h6>
+                                @if($ticket_availability > 0)
+                                    <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">
+                                        @csrf
+                                        <input type="hidden" value="{{ $dat->id }}" name="event_ticket">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="hidden" style="width: 60px;" class="form-control"
+                                                    max="{{ $ticket_availability }}" min="1" name="buy_count"
+                                                    required />
                                             </div>
-                                        </form>
-                                    @else
-                                        <span class="badge" style="background-color: #f8d7da; color: #721c24; border-radius: 5px; padding: 5px 10px;">
-                                            Sold Out
-                                        </span>
-                                    @endif
-                                </div>
+                                            <button class="apt-btn btn btn-primary" type="submit" style="margin-left:15px;">Book</button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <span class="badge" style="background-color: #f8d7da; color: #721c24; border-radius: 5px; padding: 5px 10px;">
+                                        Sold Out
+                                    </span>
+                                @endif
                             </div>
                         </div>
+                    </div>
                     @endif
                 @endforeach
             @endforeach

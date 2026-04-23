@@ -207,10 +207,17 @@ class FrontendController extends Controller
            public function submit_ticket_selected(Request $request){
 
             $event_ticket_id = $request->event_ticket;
-            $buy_count = $request->buy_count;
+            $buy_count = (int) $request->buy_count;
+            $validHoldStart = Carbon::now()->subMinutes(15);
+
+            if ($buy_count < 1) {
+                return back()->withErrors(['Please select at least one ticket.']);
+            }
 
             $check_existing_purchase = TicketsGenerated::where('user_id',Auth::user()->id)->where('is_sold',0)
-            ->where('under_purchase_hold',1)->first();
+            ->where('under_purchase_hold',1)
+            ->where('purchase_hold_time', '>=', $validHoldStart)
+            ->first();
             if($check_existing_purchase){
             if($check_existing_purchase->event_tickets <> $event_ticket_id)
             {
@@ -223,11 +230,18 @@ class FrontendController extends Controller
 
             try {
                 DB::beginTransaction();
-                $check = TicketsGenerated::where('event_tickets',$event_ticket_id)->where('is_sold',0)->where('under_purchase_hold',0)->count();
+                $check = TicketsGenerated::where('event_tickets',$event_ticket_id)
+                    ->where('is_sold',0)
+                    ->where('under_purchase_hold',0)
+                    ->count();
                 if($check>=$buy_count){
 
-                   $data = TicketsGenerated::where('event_tickets', $event_ticket_id)->where('is_sold',0)->where('under_purchase_hold',0)
+                   $data = TicketsGenerated::where('event_tickets', $event_ticket_id)
+                    ->where('is_sold',0)
+                    ->where('under_purchase_hold',0)
+                    ->orderBy('id')
                     ->take($buy_count)
+                    ->lockForUpdate()
                     ->get();
 
                     foreach($data as $val){
@@ -239,6 +253,11 @@ class FrontendController extends Controller
                         $dat->save();
 
                     }
+                } else {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors([
+                        "Only {$check} ticket(s) are available right now. Please reduce quantity and try again."
+                    ]);
                 }
 
                 DB::commit();
@@ -259,7 +278,14 @@ class FrontendController extends Controller
 
            public function customer_ticket_billing_page($id){
 
-            $timer = TicketsGenerated::where('event_tickets', $id)->where('user_id',Auth::user()->id)->where('is_sold',0)->first();
+            $validHoldStart = Carbon::now()->subMinutes(15);
+            $timer = TicketsGenerated::where('event_tickets', $id)
+                ->where('user_id', Auth::user()->id)
+                ->where('is_sold', 0)
+                ->where('under_purchase_hold', 1)
+                ->where('purchase_hold_time', '>=', $validHoldStart)
+                ->orderByDesc('purchase_hold_time')
+                ->first();
 
             if ($timer==null) {
 
@@ -302,14 +328,30 @@ class FrontendController extends Controller
             // dd($data);
 
             $ticket_count = TicketsGenerated::where('event_tickets', $id)
-            ->where('user_id',Auth::user()->id)->where('is_sold',0)->where('under_purchase_hold',1)->count();
+                ->where('user_id', Auth::user()->id)
+                ->where('is_sold', 0)
+                ->where('under_purchase_hold', 1)
+                ->where('purchase_hold_time', '>=', $validHoldStart)
+                ->count();
+
+            $available_ticket_count = TicketsGenerated::where('event_tickets', $id)
+                ->where('is_sold', 0)
+                ->where(function ($query) use ($validHoldStart) {
+                    $query->where('under_purchase_hold', 0)
+                        ->orWhere(function ($holdQuery) use ($validHoldStart) {
+                            $holdQuery->where('under_purchase_hold', 1)
+                                ->where('user_id', Auth::id())
+                                ->where('purchase_hold_time', '>=', $validHoldStart);
+                        });
+                })
+                ->count();
 
             // dd($ticket_count);
             $customer = CustomerModel::where('user_id',Auth::user()->id)->first();
 
             $countries = CountryModel::get();
 
-            return view('customer.ticket_billing',compact('minutesDifference','data','ticket_count','customer','countries','id'));
+            return view('customer.ticket_billing',compact('minutesDifference','data','ticket_count','available_ticket_count','customer','countries','id'));
 
            }
 
