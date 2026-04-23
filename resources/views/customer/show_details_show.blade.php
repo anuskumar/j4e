@@ -244,7 +244,7 @@
                             <!-- Left Section -->
                             <div>
                                 <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
-                                <p>{{ $ticket_availability }} tickets</p>
+                                <!-- <p>{{ $ticket_availability }} tickets</p> -->
                                 {{-- <p>Split Type: {{ $dat->split_type }}</p> --}}
 
                                 @if ($dat->web_price == $lowestPrice)
