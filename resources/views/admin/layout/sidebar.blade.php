@@ -12,7 +12,7 @@
                             @else
                                 <img src="{{ asset('admin_assets/img/brand/logo.png') }}" alt="logo">
                             @endif
-                          <!--<h2>  {{ $system->company_name }} </h2>-->
+                          {{-- <h2>{{ $system?->company_name }}</h2> --}}
                         </a>
 						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/logo-white.png') }}" class="main-logo" alt="logo"></a>
 						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}">

@@ -10,7 +10,7 @@ class CityController extends Controller
 {
     public function index(){
 
-        $country_name = CountryModel::get();
+        $country_name = CountryModel::orderBy('country_name')->get();
         $data = CityModel::leftjoin('countries','countries.id','cities.country_id')->select('cities.id','name','country_name')->orderBy('cities.id', 'desc')->paginate(10);
         return view('admin.city.list',compact('country_name','data'));
 
@@ -18,7 +18,7 @@ class CityController extends Controller
 public function create(Request $request){
 
 
-    $country_name = CountryModel::get();
+    $country_name = CountryModel::orderBy('country_name')->get();
    return view('admin.city.create',compact('country_name'));
 
 
@@ -57,7 +57,7 @@ public function create(Request $request){
     public function edit(string $id)
     {
         $data = CityModel::find($id);
-        $country_name = CountryModel::get();
+        $country_name = CountryModel::orderBy('country_name')->get();
         
         if (!$data) {
             return redirect('city/list')->with('error', 'City not found');

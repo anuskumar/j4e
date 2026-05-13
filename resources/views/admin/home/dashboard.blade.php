@@ -821,7 +821,7 @@
                                     <div class="list-group">
                                         <div class="list-group-item border-top-0">
                                             <div class="event-indicator bg-primary-gradient"></div>
-                                            <label>{{ \Carbon\Carbon::parse($upcoming_event->event_from_date)->format('M d l') }}</span></label>
+                                            <label>{{ $upcoming_event->event_from_date ? \Carbon\Carbon::parse($upcoming_event->event_from_date)->format('M d l') : '—' }}</label>
                                             <!--<div class="event-indicator bg-primary-gradient"></div><label>Nov 20 <span>Tuesday</span></label>-->
                                             <h6>{{ $upcoming_event->event_name }}</h6>
                                             <p>{{ $upcoming_event->venue_name }},{{ $upcoming_event->location_name }},{{ $upcoming_event->city_name }},{{ $upcoming_event->country_name }}

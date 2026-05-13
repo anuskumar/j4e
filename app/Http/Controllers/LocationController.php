@@ -29,7 +29,7 @@ class LocationController extends Controller
     public function create(Request $request){
 
 
-        $country = CountryModel::get();
+        $country = CountryModel::orderBy('country_name')->get();
         return view('admin.location.create',compact('country'));
 
 
@@ -40,9 +40,12 @@ class LocationController extends Controller
 
 
       $search = $request->search;
-      $country = $request->country;
+      $country = $request->input('country_id', $request->input('country'));
 
-      if($search == ''){
+      if ($search == '' || $search === null) {
+          if ($country === null || $country === '') {
+              return response()->json([]);
+          }
          $city = CityModel::orderby('name','asc')->select('id','name')->where('cities.country_id',$country)->limit(100)->get();
       }else{
          $city = CityModel::orderby('name','asc')->select('id','name')->where('name', 'like', '%' .$search . '%')->limit(100)->get();
@@ -96,7 +99,7 @@ class LocationController extends Controller
     //     return view('admin.location.edit',compact('data','location_create'));
 
         $data = LocationModel::find($id);
-        $countries = CountryModel::get();
+        $countries = CountryModel::orderBy('country_name')->get();
         $cities = CityModel::where('country_id', $data->country)->orderBy('name')->get();
 
         return view('admin.location.edit', compact('countries', 'cities', 'data'));

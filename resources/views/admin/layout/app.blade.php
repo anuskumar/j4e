@@ -939,7 +939,7 @@
                 });
         });
 
-        @if (count($errors) > 0)
+        @if (isset($errors) && $errors->any())
 
             @foreach ($errors->all() as $error)
 

@@ -84,7 +84,6 @@ class HomeController extends Controller
                       ->where('event.event_from_date', '>=', $current_date)
                        ->get();
 
-        info($upcoming_events);
         return view('admin.home.dashboard',compact('invoice_complete_count','process_count','reseller_count','user_count','outside_hold_count','outside_sell_count','sold_ticket_sum','upcoming_events'));
     }
 

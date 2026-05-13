@@ -219,7 +219,7 @@ class ResellerController extends Controller
         $bankData   = Bankmodel::where('resellerid', Auth::user()->id)->first();
         $adreesdata = SellerPostalAddress::where('resellerid', Auth::user()->id)->first();
 
-        $country = CountryModel::get();
+        $country = CountryModel::orderBy('country_name')->get();
 
         return view('reseller.profile', compact('authdata', 'bankData', 'adreesdata', 'country'));
     }

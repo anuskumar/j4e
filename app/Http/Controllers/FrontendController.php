@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ArtistModel;
+use App\Models\CityModel;
 use App\Models\CountryModel;
 use App\Models\CustomerModel;
 use App\Models\EventImages;
@@ -17,6 +18,7 @@ use App\Models\TicketsGenerated;
 use App\Models\User;
 use App\Models\VenueSeating;
 use DateTime;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +30,38 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class FrontendController extends Controller
 {
-    //
+    /**
+     * Cities for a country (reseller/customer flows send country_id via GET).
+     */
+    public function getCities(Request $request): JsonResponse
+    {
+        $search = (string) $request->input('search', '');
+        $countryId = $request->input('country_id', $request->input('country'));
+
+        if ($countryId === null || $countryId === '') {
+            return response()->json([]);
+        }
+
+        $query = CityModel::query()
+            ->orderBy('name', 'asc')
+            ->select('id', 'name')
+            ->where('country_id', $countryId)
+            ->limit(200);
+
+        if ($search !== '') {
+            $query->where('name', 'like', '%'.$search.'%');
+        }
+
+        $response = [];
+        foreach ($query->get() as $city) {
+            $response[] = [
+                'id' => $city->id,
+                'text' => $city->name,
+            ];
+        }
+
+        return response()->json($response);
+    }
 
     public function sell_tickets(){
 
@@ -126,7 +159,7 @@ class FrontendController extends Controller
     }
     public function reseller_registration(){
 
-        $countries = CountryModel::get();
+        $countries = CountryModel::orderBy('country_name')->get();
         return view('reseller.register',compact('countries'));
 
            }
@@ -349,7 +382,7 @@ class FrontendController extends Controller
             // dd($ticket_count);
             $customer = CustomerModel::where('user_id',Auth::user()->id)->first();
 
-            $countries = CountryModel::get();
+            $countries = CountryModel::orderBy('country_name')->get();
 
             return view('customer.ticket_billing',compact('minutesDifference','data','ticket_count','available_ticket_count','customer','countries','id'));
 
