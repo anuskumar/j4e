@@ -16,7 +16,7 @@
                 <div class="ps-0">
                     <div class="main-profile-overview">
                         <div class="main-img-user profile-user">
-                            <img src="{{ config('app.storage') ."uploads/images/". $settings->company_logo }}"  alt="img">
+                            <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" alt="img">
 
                             {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo) }}"> --}}
                             <a href="JavaScript:void(0);" class="fas fa-camera profile-edit"></a></div>
@@ -68,14 +68,14 @@
                         <!-- main-profile-work-list -->
                         <label class="main-content-label tx-13 mg-b-20">Company logo small</label><br>
                         <div class="main-img-user profile-user">
-                            <img src="{{ config('app.storage') ."uploads/images/". $settings->company_logo_small }}"  alt="img">
+                            <img src="{{ asset('storage/uploads/images/' . $settings->company_logo_small) }}" alt="img">
 
                             {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_logo_small) }}"> --}}
                             <a href="JavaScript:void(0);" class="fas fa-camera profile-edit"></a></div><br>
 
                             <label class="main-content-label tx-13 mg-b-20">Company Favicon</label><br>
                         <div class="main-img-user profile-user">
-                            <img src="{{ config('app.storage') ."uploads/images/". $settings->company_favicon }}"  alt="img">
+                            <img src="{{ asset('storage/uploads/images/' . $settings->company_favicon) }}" alt="img">
 
                             {{-- <img alt="" src="{{ Storage::disk('image')->url('uploads/images/' . $settings->company_favicon) }}"> --}}
                             <a href="JavaScript:void(0);" class="fas fa-camera profile-edit"></a></div>

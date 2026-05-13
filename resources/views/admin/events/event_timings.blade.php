@@ -35,8 +35,8 @@
                                 <tr>
                                     <td>{{ $no++ }}</td>
                                     <td>{{ date('D d M Y',strtotime($val->event_date)) }}</td>
-                                    <td>{{ date('H:i',strtotime($val->from_time)) }}</td>
-                                    <td>{{ date('H:i',strtotime($val->to_time)) }}</td>
+                                    <td>{{ date('g:i A',strtotime($val->from_time)) }}</td>
+                                    <td>{{ date('g:i A',strtotime($val->to_time)) }}</td>
                                     <td>
 
                                         {{ $val->is_active==1 ? "Active" :"Inactive" }}

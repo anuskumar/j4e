@@ -80,8 +80,13 @@
 												<h5 class="d-block mb-0">{{ $val->event_name }} </h5>
 												<span class="d-block text-sm text-muted">{{ $val->tag_name }}, {{ $val->event_type_name }}</span>
 												<span class="d-block text-sm text-muted">
-                                                    {{ @$val['event_date']->event_date }}
-                                                    {{ @$val['event_date']->from_time }}   </span>
+                                                    @if(!empty(@$val['event_date']->event_date))
+                                                        {{ date('d M Y', strtotime(@$val['event_date']->event_date)) }}
+                                                    @endif
+                                                    @if(!empty(@$val['event_date']->from_time))
+                                                        {{ date('g:i A', strtotime(@$val['event_date']->from_time)) }}
+                                                    @endif
+                                                </span>
 											</div>
 										</div>
 									</li>
@@ -152,12 +157,19 @@
 																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }}</span></a>
 																		</h2>
 																	</td>
-																	<td>{{ @$val['event_date']->event_date }}<span class="d-block text-info">{{ @$val['event_date']->event_time }}</span></td>
-																	<td>{{ @$val->event_from_date }}</td>
-																	<td>{{ @$val->payment_amount }}
-                                                                        {{ @$val->short_name }}
-                                                                        </td>
-																	<td>{{ @$val->created_at }}</td>
+																	<td>
+                                                                        @if(!empty(@$val['event_date']->event_date))
+                                                                            {{ date('d M Y', strtotime(@$val['event_date']->event_date)) }}
+                                                                        @endif
+                                                                        <span class="d-block text-info">
+                                                                            @if(!empty(@$val['event_date']->from_time))
+                                                                                {{ date('g:i A', strtotime(@$val['event_date']->from_time)) }}
+                                                                            @endif
+                                                                        </span>
+                                                                    </td>
+																	<td>{{ !empty($val->event_from_date) ? date('d M Y', strtotime($val->event_from_date)) : '-' }}</td>
+																	<td>{{ number_format((float) @$val->payment_amount, 2) }} {{ @$val->short_name }}</td>
+																	<td>{{ !empty($val->created_at) ? date('d M Y h:i A', strtotime($val->created_at)) : '-' }}</td>
 																	<td>
                                                                        {{ @$val->status_name }}
                                                                     </td>
@@ -216,27 +228,27 @@
 															<tbody>
                                                                 @foreach ($upcomming_booking as $val)
                                                                 <tr>
-																	<td>{{ @$val->event_from_date }}</td>
+																	<td>{{ !empty($val->event_from_date) ? date('d M Y', strtotime($val->event_from_date)) : '-' }}</td>
 
 																	<td>
 																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
+																			<a href="{{ url('show_details_show',$val->event_id) }}" class="avatar avatar-sm mr-2">
 																				@if($val->event_image)
-																					<img class="avatar-img rounded-circle" src="{{ Storage::disk('image')->url('uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
+																					<img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
 																				@else
 																					<img class="avatar-img rounded-circle" src="{{ asset('assets/img/events/event-01.jpg') }}" alt="User Image">
 																				@endif
 																			</a>
-																			<a href="speaker-profile">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }} <span></span></a>
+																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }} <span></span></a>
 																		</h2>
 																	</td>
-                                                                    <td>Songs</td>
+                                                                    <td>{{ number_format((float) @$val->payment_amount, 2) }} {{ @$val->short_name }}</td>
 																	<td class="text-right">
 																		<div class="table-action">
 																			<a href="{{ url('view_invoice',$val->id) }}" class="btn btn-sm bg-success-light">
 																				<i class="far fa-edit"></i> Invoice
 																			</a>
-																			<a href="{{ url('speaker-profile') }}" class="btn btn-sm bg-info-light">
+																			<a href="{{ url('show_booking_details_show',$val->id) }}" class="btn btn-sm bg-info-light">
 																				<i class="far fa-eye"></i> View
 																			</a>
 																		</div>

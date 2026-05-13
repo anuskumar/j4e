@@ -25,7 +25,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="sellDropdown" role="button"
                             data-bs-toggle="dropdown">Sell</a>
                         <ul class="dropdown-menu" aria-labelledby="sellDropdown">
-                            <li><a class="dropdown-item" href="#">Sell Tickets</a></li>
+                            <li><a class="dropdown-item" href="{{ url('reseller/event_listing') }}">Sell Tickets</a></li>
                             <li><a class="dropdown-item" href="{{ route('reseller.mysales') }}">My Sales</a></li>
                         </ul>
                     </li>
@@ -34,15 +34,22 @@
                             data-bs-toggle="dropdown">Profile <i class="bi bi-person"></i>
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                            <li><a class="dropdown-item" href="#">My Hub</a></li>
-                            <li><a class="dropdown-item" href="#">Settings</a></li>
-                            <li><a class="dropdown-item" href="#">Log Out</a></li>
+                            <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">My Profile</a></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                   Log Out
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
 
     <div class="container my-5">
         <div class="row">
@@ -121,10 +128,18 @@
                     <div class="card-body">
                         <h5 class="fw-bold">Event Summary</h5>
                         <p class="mb-1"><strong>Event:</strong> {{ $data->event_name }}</p>
+                        <p class="mb-1"><strong>Event Type:</strong> {{ $data->event_type_name ?? 'N/A' }}</p>
+                        <p class="mb-1"><strong>Tag:</strong> {{ $data->tag_name ?? 'N/A' }}</p>
+                        <p class="mb-1">
+                            <strong>Event Duration:</strong>
+                            {{ !empty($data->event_from_date) ? \Carbon\Carbon::parse($data->event_from_date)->format('d M Y') : 'N/A' }}
+                            -
+                            {{ !empty($data->event_to_date) ? \Carbon\Carbon::parse($data->event_to_date)->format('d M Y') : 'N/A' }}
+                        </p>
                         <p class="mb-1">
                             <strong>Date:</strong>
                             {{ strftime('%A, %d %B %Y', strtotime($data->event_date)) }}
-                            {{ date('H:i', strtotime($data->from_time)) }}
+                            {{ date('h:i A', strtotime($data->from_time)) }} - {{ date('h:i A', strtotime($data->to_time)) }}
                         </p>
 
                         <p class="mb-1"><strong>Venue:</strong> {{ $data->name }}, {{ $data->location_name }},
@@ -160,6 +175,14 @@
                                 <span id="price-per-ticket">0.00</span>
                             </div>
                             <div class="d-flex justify-content-between">
+                                <strong>Seller Fee/Ticket:</strong>
+                                <span id="seller-fee-per-ticket">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <strong>Receive/Ticket:</strong>
+                                <span id="receive-per-ticket">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
                                 <strong>Number of Tickets:</strong>
                                 <span id="num-tickets">{{ $data->no_of_tickets }}</span>
                             </div>
@@ -171,6 +194,14 @@
                             <div class="d-flex justify-content-between text-danger">
                                 <strong>Seller Fees:</strong>
                                 <span id="seller-fee">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <strong>Seller Fee %:</strong>
+                                <span>{{ $data->seller_fee_percent ?? 10 }}%</span>
+                            </div>
+                            <div class="d-flex justify-content-between text-success">
+                                <strong>Total Receive:</strong>
+                                <span id="total-receive-label">0.00</span>
                             </div>
                         </div>
                         <hr>
@@ -269,8 +300,11 @@
 
             let numTickets = parseInt(document.getElementById('num-tickets').textContent) || 0;
             let websitePrice = pricePerTicket * numTickets;
-            let sellerFees = websitePrice * 0.10; // 10% seller fee
+            const sellerFeePercent = parseFloat("{{ $data->seller_fee_percent ?? 10 }}") || 10;
+            let sellerFees = websitePrice * (sellerFeePercent / 100);
             let totalAmount = websitePrice - sellerFees;
+            let sellerFeePerTicket = numTickets > 0 ? (sellerFees / numTickets) : 0;
+            let receivePerTicket = pricePerTicket - sellerFeePerTicket;
 
             // Apply conversion rate (if available)
             let convertedPricePerTicket = currentRate ? (pricePerTicket * currentRate).toFixed(2) : pricePerTicket.toFixed(
@@ -278,14 +312,19 @@
             let convertedWebsitePrice = currentRate ? (websitePrice * currentRate).toFixed(2) : websitePrice.toFixed(2);
             let convertedSellerFee = currentRate ? (sellerFees * currentRate).toFixed(2) : sellerFees.toFixed(2);
             let convertedTotalAmount = currentRate ? (totalAmount * currentRate).toFixed(2) : totalAmount.toFixed(2);
+            let convertedSellerFeePerTicket = currentRate ? (sellerFeePerTicket * currentRate).toFixed(2) : sellerFeePerTicket.toFixed(2);
+            let convertedReceivePerTicket = currentRate ? (receivePerTicket * currentRate).toFixed(2) : receivePerTicket.toFixed(2);
 
             let currencyCode = document.getElementById('currency-code').textContent || '💱';
 
             // Update UI with converted values
             document.getElementById('price-per-ticket').textContent = `${currencyCode} ${convertedPricePerTicket}`;
+            document.getElementById('seller-fee-per-ticket').textContent = `-${currencyCode} ${convertedSellerFeePerTicket}`;
+            document.getElementById('receive-per-ticket').textContent = `${currencyCode} ${convertedReceivePerTicket}`;
             document.getElementById('website-price').textContent = `${currencyCode} ${convertedWebsitePrice}`;
             document.getElementById('seller-fee').textContent = `-${currencyCode} ${convertedSellerFee}`;
             document.getElementById('total-amount').textContent = `${currencyCode} ${convertedTotalAmount}`;
+            document.getElementById('total-receive-label').textContent = `${currencyCode} ${convertedTotalAmount}`;
 
             // Update hidden input fields for form submission
             document.getElementById('converted_price_per_ticket').value = convertedPricePerTicket;

@@ -13,6 +13,8 @@
                             @if(isset($eventTicket))
                                 <p class="text-muted mb-0 mt-1">
                                     <strong>Ticket Name:</strong> {{ $eventTicket->ticket_name ?? 'N/A' }}
+                                    <span class="ms-3"><strong>Ticket Amount:</strong> {{ number_format((float) ($eventTicket->ticket_amount ?? 0), 2) }}</span>
+                                    <span class="ms-3"><strong>Face Value:</strong> {{ number_format((float) ($eventTicket->face_value ?? 0), 2) }}</span>
                                 </p>
                             @endif
                         </div>
@@ -51,7 +53,8 @@
                                     <th class="border-bottom-0">Under Purchase Hold </th>
                                     {{-- <th class="border-bottom-0">Outside Sell </th> --}}
 
-                                    <th class="border-bottom-0">Amount</th>
+                                    <th class="border-bottom-0">Ticket Amount</th>
+                                    <th class="border-bottom-0">Face Value</th>
                                     <th class="border-bottom-0">Action</th>
                                 </tr>
                             </thead>
@@ -95,7 +98,8 @@
 
                                     </td>
 
-                                    <td class="ticket-amount-cell" data-ticket-id="{{ $val->id }}">{{ $val->ticket_amount }}</td>
+                                    <td class="ticket-amount-cell" data-ticket-id="{{ $val->id }}">{{ number_format((float) $val->ticket_amount, 2) }}</td>
+                                    <td>{{ number_format((float) ($eventTicket->face_value ?? 0), 2) }}</td>
 
                                     <td>
                                         <form action="{{ url('generated_tickets/destroy',$val->id) }}" method="POST">

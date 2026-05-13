@@ -567,15 +567,22 @@ class ResellerController extends Controller
         // dd($request->request);
 
         $validated = $request->validate([
-            'artist_name' => 'required',
+            'artist_name' => 'required|string|max:255',
+            'field' => 'required|exists:artist_field,id',
+            'contact_number' => 'required|string|max:20',
 
+        ], [
+            'artist_name.required' => 'Artist name is required.',
+            'field.required' => 'Artist field is required.',
+            'field.exists' => 'Please select a valid artist field.',
+            'contact_number.required' => 'Contact number is required.',
         ]);
 
         $artistuser                 = new ArtistModel();
         $artistuser->artist_name    = $request->artist_name;
         $artistuser->field          = $request->field;
         $artistuser->contact_number = $request->contact_number;
-        $artistuser->about          = $request->about;
+        $artistuser->about          = $request->about ?? '';
         $artistuser->save();
         return redirect('reseller/manage_artist');
     }
@@ -613,7 +620,7 @@ class ResellerController extends Controller
         $data->artist_name    = $request->artist_name;
         $data->field          = $request->field;
         $data->contact_number = $request->contact_number;
-        $data->about          = $request->about;
+        $data->about          = $request->about ?? '';
 
         //   $data->status=$request->status;
 
@@ -1200,6 +1207,8 @@ class ResellerController extends Controller
         //fetching event name
         $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
             ->leftjoin('event_timings', 'event_timings.event', 'event.id')
+            ->leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
             ->leftjoin('venue', 'venue.id', 'event.venue')
             ->leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
@@ -1213,6 +1222,10 @@ class ResellerController extends Controller
             ->where('event_tickets.id', $eventid)
             ->select(
                 'event.event_name',
+                'event.event_from_date',
+                'event.event_to_date',
+                'event_type.event_type_name',
+                'event_tags.tag_name',
                 'event_timings.event_date',
                 'event_timings.from_time',
                 'event_timings.to_time',
@@ -1230,6 +1243,7 @@ class ResellerController extends Controller
                 'event_tickets.face_value',
                 'event_tickets.amount_currency',
                 'event_tickets.ticket_amount',
+                'event.seller_fee_percent',
                 'split_types.split_name',
                 'currency.short_name as currency_name',
                 'venue_seating.seating_type_name as venue_seating_name',
@@ -1286,14 +1300,25 @@ class ResellerController extends Controller
 
         $ticket = EventTickets::findOrFail($id);
 
+        $sellerFeePercent = (float) optional(Events::find($ticket->event))->seller_fee_percent;
+        if ($sellerFeePercent <= 0) {
+            $sellerFeePercent = 10.00;
+        }
+
+        $websitePrice = (float) $request->converted_website_price;
+        $pricePerTicket = (float) $request->converted_price_per_ticket;
+        $sellerFee = round(($websitePrice * $sellerFeePercent) / 100, 2);
+        $receivePerTicket = round(($pricePerTicket * (100 - $sellerFeePercent)) / 100, 2);
+        $totalReceive = round($websitePrice - $sellerFee, 2);
+
         // Update fields
         $ticket->update([
             'amount_currency'  => $request->currency,
             'ticket_amount'    => $request->converted_price_per_ticket,
-            'web_price'        => $request->converted_website_price,
-            'seller_fee'       => $request->converted_seller_fee,
-            'recive_perticket' => $request->converted_price_per_ticket,
-            'total_recive'     => $request->converted_total_receive,
+            'web_price'        => $websitePrice,
+            'seller_fee'       => $sellerFee,
+            'recive_perticket' => $receivePerTicket,
+            'total_recive'     => $totalReceive,
         ]);
 
         if ($request->hasFile('proof_of_id')) {
@@ -1817,18 +1842,18 @@ public function upload_ticket_seating(Request $request){
 
         $ticket_id = $request->ticket_id;
         $original_price = $request->original_price;
-        $face_value = $request->face_value;
+        $sale_price = $request->sale_price;
 
         $data = EventTickets::find($ticket_id);
 
         if($original_price > 0){
 
-            $data->ticket_amount = $original_price;
+            $data->face_value = $original_price;
         }
 
-        if($face_value > 0){
+        if($sale_price > 0){
 
-            $data->face_value = $face_value;
+            $data->ticket_amount = $sale_price;
         }
 
         $data->save();

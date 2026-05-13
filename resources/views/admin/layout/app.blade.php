@@ -92,11 +92,7 @@
 
 <body class="main-body app sidebar-mini ltr">
 
-    <!-- Loader -->
-    <div id="global-loader">
-        <img src="{{ asset('admin_assets/img/loaders/loader-4.svg') }}" class="loader-img" alt="Loader">
-    </div>
-    <!-- /Loader -->
+    
 
     <!-- page -->
     <div class="page custom-index">
@@ -424,8 +420,8 @@
                                                 class="far fa-user"></i> My Profile</a>
                                         {{-- <a class="dropdown-item" href="profile.html"><i class="far fa-edit"></i> Edit Profile</a> --}}
                                         {{-- <a class="dropdown-item" href="profile.html"><i class="far fa-clock"></i> Activity Logs</a> --}}
-                                        <a class="dropdown-item" href="profile.html"><i class="fas fa-sliders-h"></i>
-                                            Account Settings</a>
+                                        <!-- <a class="dropdown-item" href="profile.html"><i class="fas fa-sliders-h"></i>
+                                            Account Settings</a> -->
                                         @if (Auth::user()->user_type == 'superadmin')
                                             <a class="dropdown-item" href="{{ url('admin/company_settings') }}"><i
                                                     class="fas fa-sliders-h"></i> Company Settings</a>
@@ -670,7 +666,7 @@
         <!-- Footer closed -->
     </div>
 
-    <div class="loader" id="loader">
+    <!-- <div class="loader" id="loader"> -->
     </div>
     <!-- page closed -->
 

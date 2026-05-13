@@ -77,10 +77,15 @@
                     <div class="col-md-3">
                         @php
                             $eventImagePath = @$event_datas->event_image ? 'uploads/events/' . $event_datas->event_image : null;
-                            $hasEventImage = $eventImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($eventImagePath);
+                            $eventImageUrl = null;
+                            if ($eventImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($eventImagePath)) {
+                                $eventImageUrl = asset('storage/' . $eventImagePath);
+                            } elseif (@$event_datas->event_image && file_exists(storage_path('uploads/events/' . $event_datas->event_image))) {
+                                $eventImageUrl = config('app.storage') . 'uploads/events/' . $event_datas->event_image;
+                            }
                         @endphp
-                        @if($hasEventImage)
-                            <img src="{{ asset('storage/' . $eventImagePath) }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}'">
+                        @if($eventImageUrl)
+                            <img src="{{ $eventImageUrl }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}'">
                         @else
                             <img src="{{ asset('assets/img/events/event-01.jpg') }}" alt="Event Image" class="img-fluid rounded" style="width: 100%; height: auto;">
                         @endif
@@ -159,10 +164,15 @@
                 <div class="image-container">
                     @php
                         $venueImagePath = @$event_datas->venue_image ? 'uploads/venue/' . $event_datas->venue_image : null;
-                        $hasVenueImage = $venueImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($venueImagePath);
+                        $venueImageUrl = null;
+                        if ($venueImagePath && \Illuminate\Support\Facades\Storage::disk('public')->exists($venueImagePath)) {
+                            $venueImageUrl = asset('storage/' . $venueImagePath);
+                        } elseif (@$event_datas->venue_image && file_exists(storage_path('uploads/venue/' . $event_datas->venue_image))) {
+                            $venueImageUrl = config('app.storage') . 'uploads/venue/' . $event_datas->venue_image;
+                        }
                     @endphp
-                    @if($hasVenueImage)
-                        <img src="{{ asset('storage/' . $venueImagePath) }}" alt="Venue Image" class="zoomable-image" onerror="this.onerror=null;this.src='{{ asset('assets/img/img-01.jpg') }}'">
+                    @if($venueImageUrl)
+                        <img src="{{ $venueImageUrl }}" alt="Venue Image" class="zoomable-image" onerror="this.onerror=null;this.src='{{ asset('assets/img/img-01.jpg') }}'">
                     @else
                         <img src="{{ asset('assets/img/img-01.jpg') }}" alt="Venue Image" class="zoomable-image">
                     @endif
@@ -196,7 +206,7 @@
             $event_timing = App\Models\EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
             if ($event_timing) {
                 foreach ($event_timing as $event_time) {
-                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $event_time->id);
                     foreach ($event_ticket_list as $dat) {
                         if ($dat->web_price < $lowestPrice) {
                             $lowestPrice = $dat->web_price;
@@ -215,7 +225,7 @@
         @if ($event_timing)
             @foreach ($event_timing as $event_time)
                 @php
-                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $timing_date->id);
+                    $event_ticket_list = App\Models\EventTiming::get_ticket_list($timing_date->event, $event_time->id);
                 @endphp
 
                 @foreach ($event_ticket_list as $dat)
@@ -226,53 +236,62 @@
 
                     @if ($ticket_availability > 0)
                         <div class="card p-3 mb-3 ticket-container"
-                             data-availability="{{ $ticket_availability }}"
-                             data-zone="{{ $dat->seating_type_name }}"
-                             data-split-type="{{ $dat->split_type }}"
-                             style="border-radius: 10px; border: 1px solid #ddd; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <!-- Left Section -->
-                                <div>
-                                    <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
-                                    <p>{{ $ticket_availability }} tickets</p>
-                                    {{-- <p>Split Type: {{ $dat->split_type }}</p> --}}
+                         data-availability="{{ $ticket_availability }}"
+                         data-zone="{{ $dat->seating_type_name }}"
+                         data-split-type="{{ $dat->split_type }}"
+                         style="border-radius: 10px; border: 1px solid #ddd; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <!-- Left Section -->
+                            <div>
+                                <h5 style="font-weight: 500;">{{ $dat->seating_type_name }}</h5>
+                                <div style="font-size: 13px; color: #555;">
+                                    <div><strong>Ticket:</strong> {{ $dat->ticket_name ?? 'N/A' }}</div>
+                                    <div><strong>Type:</strong> {{ $dat->ticket_type_name ?? 'N/A' }}</div>
+                                    <div><strong>Date:</strong> {{ isset($event_time->event_date) ? date('d M Y', strtotime($event_time->event_date)) : '-' }}</div>
+                                    <div><strong>Time:</strong>
+                                        {{ isset($event_time->from_time) ? date('g:i A', strtotime($event_time->from_time)) : '-' }}
+                                        -
+                                        {{ isset($event_time->to_time) ? date('g:i A', strtotime($event_time->to_time)) : '-' }}
+                                    </div>
+                                   
+                                </div>
 
-                                    @if ($dat->web_price == $lowestPrice)
-                                        <span class="badge lowest-price" style="background-color: #d4edda; color: #155724; border-radius: 5px; padding: 5px 10px;">
-                                            Lowest price
-                                        </span>
-                                    @endif
-                                    <span class="remaining-tickets" style="font-size: 14px; color: #d63384;">
-                                        {{ $ticket_availability }} tickets remaining in this listing on our site
+                                @if ($dat->web_price == $lowestPrice)
+                                    <span class="badge lowest-price" style="background-color: #d4edda; color: #155724; border-radius: 5px; padding: 5px 10px;">
+                                        Lowest price
                                     </span>
+                                @endif
+                                <span class="remaining-tickets" style="font-size: 14px; color: #d63384;">
+                                    {{ $ticket_availability }} tickets remaining in this listing on our site
+                                </span>
 
-                                </div>
+                            </div>
 
-                                <!-- Right Section -->
-                                <div class="text-end">
-                                    <h5 class="mb-1" style="font-weight: 600;">{{ $dat->face_value.' '.$dat->short_name }}</h5>
-                                    <h6>each</h6>
-                                    @if($ticket_availability > 0)
-                                        <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            <input type="hidden" value="{{ $dat->id }}" name="event_ticket">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <input type="hidden" style="width: 60px;" class="form-control"
-                                                        max="{{ $ticket_availability }}" min="1" name="buy_count"
-                                                        required />
-                                                </div>
-                                                <button class="apt-btn btn btn-primary" type="submit" style="margin-left:15px;">Book</button>
+                            <!-- Right Section -->
+                            <div class="text-end">
+                                <h5 class="mb-1" style="font-weight: 600;">{{ $dat->ticket_amount.' '.$dat->short_name }}</h5>
+                                <h6>each</h6>
+                                @if($ticket_availability > 0)
+                                    <form action="{{ url('submit_ticket_selected') }}" method="POST" enctype="multipart/form-data">
+                                        @csrf
+                                        <input type="hidden" value="{{ $dat->id }}" name="event_ticket">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="hidden" style="width: 60px;" class="form-control"
+                                                    max="{{ $ticket_availability }}" min="1" name="buy_count"
+                                                    required />
                                             </div>
-                                        </form>
-                                    @else
-                                        <span class="badge" style="background-color: #f8d7da; color: #721c24; border-radius: 5px; padding: 5px 10px;">
-                                            Sold Out
-                                        </span>
-                                    @endif
-                                </div>
+                                            <button class="apt-btn btn btn-primary" type="submit" style="margin-left:15px;">Book</button>
+                                        </div>
+                                    </form>
+                                @else
+                                    <span class="badge" style="background-color: #f8d7da; color: #721c24; border-radius: 5px; padding: 5px 10px;">
+                                        Sold Out
+                                    </span>
+                                @endif
                             </div>
                         </div>
+                    </div>
                     @endif
                 @endforeach
             @endforeach
@@ -479,14 +498,7 @@ document.addEventListener('DOMContentLoaded', function () {
  * 
  * Filter Logic:
  * 1. Zone Filter: Shows tickets matching selected zone (or "all" for all zones)
- * 2. Quantity Filter: Shows tickets that can fulfill the selected quantity based on:
- *    - Availability must be >= selected quantity
- *    - Split Type Rules:
- *      - Type 1 (Any): Allow any quantity if available
- *      - Type 2 (None): Must match exactly (availability === quantity)
- *      - Type 3: Cannot leave exactly 1 ticket remaining
- *      - Type 4: Cannot leave 1 or 3 tickets remaining
- *      - Type 5: Must leave even number of tickets (avoid odd numbers)
+ * 2. Quantity Filter: Shows tickets where availability >= selected quantity
  * 
  * Both filters work together - a ticket must pass BOTH zone AND quantity filters to be shown
  */
@@ -508,36 +520,7 @@ function applyCombinedFilters() {
 
         // Step 2: Check quantity filter (only if zone filter passed)
         if (shouldShow) {
-            // Availability must always be >= quantity
-            if (availability < currentQuantity) {
-                shouldShow = false;
-            } else {
-                // Additional split type rules
-                switch (splitType) {
-                    case 1: // Any - allow any quantity
-                        shouldShow = true;
-                        break;
-
-                    case 2: // None - must match exactly
-                        shouldShow = availability === currentQuantity;
-                        break;
-
-                    case 3: // Avoid leaving one ticket
-                        shouldShow = (availability - currentQuantity) !== 1;
-                        break;
-
-                    case 4: // Avoid leaving one or three tickets
-                        shouldShow = (availability - currentQuantity) !== 1 && (availability - currentQuantity) !== 3;
-                        break;
-
-                    case 5: // Avoid odd numbers
-                        shouldShow = (availability - currentQuantity) % 2 === 0;
-                        break;
-
-                    default:
-                        shouldShow = true; // Default behavior for unknown split type
-                }
-            }
+            shouldShow = availability >= currentQuantity;
         }
 
         // Apply display
@@ -565,16 +548,13 @@ function updateSingleTicketDisplay(ticket, quantity, totalAvailability) {
     const availabilityElement = ticket.querySelector('p');
     const remainingElement = ticket.querySelector('.remaining-tickets');
     
-    if (totalAvailability >= quantity) {
-        const ticketLabel = quantity === 1 ? 'ticket' : 'tickets';
-        if (availabilityElement) {
-            availabilityElement.textContent = `${quantity} ${ticketLabel}`;
-        }
-        
-        const remainingTickets = totalAvailability - quantity;
-        if (remainingElement) {
-            remainingElement.textContent = `${remainingTickets} tickets remaining in this listing on our site`;
-        }
+    if (availabilityElement) {
+        const ticketLabel = totalAvailability === 1 ? 'ticket' : 'tickets';
+        availabilityElement.textContent = `${totalAvailability} ${ticketLabel}`;
+    }
+
+    if (remainingElement) {
+        remainingElement.textContent = `${totalAvailability} tickets remaining in this listing on our site`;
     }
 }
 

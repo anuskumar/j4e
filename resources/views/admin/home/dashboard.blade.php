@@ -825,9 +825,28 @@
                                             <!--<div class="event-indicator bg-primary-gradient"></div><label>Nov 20 <span>Tuesday</span></label>-->
                                             <h6>{{ $upcoming_event->event_name }}</h6>
                                             <p>{{ $upcoming_event->venue_name }},{{ $upcoming_event->location_name }},{{ $upcoming_event->city_name }},{{ $upcoming_event->country_name }}
-                                            </p><small><span class="tx-danger">Sold Out</span>
-                                                ({{ $upcoming_event->sold_ticket_count }} tickets sold)
+                                            </p>
+                                            <small>
+                                                @php
+                                                    $total = (int) ($upcoming_event->total_ticket_count ?? 0);
+                                                    $sold = (int) ($upcoming_event->sold_ticket_count ?? 0);
+                                                    $isSoldOut = $total > 0 && $sold >= $total;
+                                                @endphp
+
+                                                @if ($isSoldOut)
+                                                    <span class="tx-danger">Sold Out</span>
+                                                @elseif ($sold > 0)
+                                                    <span class="tx-success">Selling</span>
+                                                @else
+                                                    <span class="tx-warning">No Sales Yet</span>
+                                                @endif
+                                                ({{ $sold }} tickets sold{{ $total > 0 ? ' / ' . $total : '' }})
                                             </small>
+                                            <div class="mt-2">
+                                                <a href="{{ url('tickets/manage_tickets', $upcoming_event->id) }}" class="btn btn-sm btn-info">
+                                                    Manage Tickets
+                                                </a>
+                                            </div>
                                         </div>
                                         <!-- Add more list items as needed -->
                                     </div>

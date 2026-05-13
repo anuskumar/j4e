@@ -15,10 +15,6 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Tickets</h3>
-                    <div class="card-body" style="float:right;">
-
-                        <a class="btn ripple btn-info" data-bs-target="#modaldemo3" data-bs-toggle="modal" href="#">Create Ticket</a>
-                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -28,9 +24,11 @@
                                 <tr>
                                     <th>Sl</th>
                                     <th class="border-bottom-0">Ticket Name</th>
+                                    <th class="border-bottom-0">Reseller Details</th>
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Event Timing</th>
                                     <th class="border-bottom-0">Total Tickets</th>
+                                    <th class="border-bottom-0">Price / Ticket</th>
                                     <th class="border-bottom-0">Final Price</th>
                                     <th class="border-bottom-0">Seating</th>
                                     <th class="border-bottom-0">Expiry Date</th>
@@ -51,13 +49,11 @@
 
                                         <td>
                                             {{ $val->ticket_name }}<br>
-                                            <?php
-                                            $user = DB::table('users')->where('id', $val->created_by)->first();
-                                            ?>
-                                           @if(Auth::user()->user_type == 'superadmin')
-
-                                            <span class="tx-success">{{ $user->name}}</span>
-                                            @endif
+                                        </td>
+                                        <td>
+                                            <b>{{ $val->reseller_name ?? 'N/A' }}</b><br>
+                                            <small>{{ $val->reseller_email ?? 'N/A' }}</small><br>
+                                            <small>{{ $val->reseller_phone ?? 'N/A' }}</small>
                                         </td>
                                         <td>{{ $val->ticket_type_name }}</td>
 
@@ -66,6 +62,7 @@
                                         </td>
                                         {{-- <td>{{ $val->location_name.' '.$val->city_name.' ,'.$val->country_name }}</td> --}}
                                         <td>{{ $val->no_of_tickets }}</td>
+                                        <td>{{ number_format((float) $val->ticket_amount, 2) }} {{ $val->currency_short_name ?? '' }}</td>
                                         <td>{{ $val->total_recive }}</td>
                                         <td>{{ $val->seating_type_name }}</td>
                                         <td>{{ $val->booking_expiry_date_time ? date('D d-m-Y H:i A',strtotime($val->booking_expiry_date_time)):'' }}</td>
@@ -105,10 +102,7 @@
                                                 @method('DELETE')
                                             <a href="{{ url('tickets/ticket_view',$val->id) }}"><button type="button" class="btn btn-primary" title="View"><i class="fas fa-eye"></i></button></a>
                                             {{-- <a href="{{url('customer/delete',$val->id)}}"><button type="button" class="btn btn-danger">Delete</button></a> --}}
-                                            @if($val->is_admin_approved==0)
-                                            <a href="{{ url('tickets/ticket_edit',$val->id) }}"><button type="button" class="btn btn-info" title="Edit"><i class="fas fa-pencil-alt"></i></button></a>
-                                            <button type="submit" class="btn btn-danger show_confirm" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                            @endif
+                                            
                                             </form>
 
                                         </td>

@@ -92,28 +92,20 @@ class CustomerController extends Controller
         $customer->user_id = $user->id;
         $customer->save();
 
+        if (! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+        }
+
         $auth = Auth::user();
         if($auth){
 
-            return redirect('admin/customer/list')->with('success', 'Customer created successfully!');
+            return redirect('admin/customer/list')->with('success', 'Customer created successfully! Verification email sent.');
 
         }else{
-
-        $login = User::find($user->id);
-        Auth::login($login);
-        $user = User::find(Auth::user()->id);
-        $user->last_login = new DateTime();
-        $user->save();
-
-        $userType = Auth::user()->user_type;
-        if ($userType === 'superadmin') {
-            return redirect()->route('admin.home');
-        } elseif ($userType === 'customer') {
-            return redirect()->route('customer.home');
-        } elseif ($userType === 'reseller') {
-            return redirect()->route('reseller.home');
-        }
-        return redirect()->route('home');
+        return redirect()
+            ->route('verification.notice')
+            ->with('unverified_email', $user->email)
+            ->with('success', 'Verification email sent. Please verify your email address.');
         }
 
 

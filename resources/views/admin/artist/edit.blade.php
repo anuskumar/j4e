@@ -31,14 +31,14 @@
 									<div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">artist Field</label>
+												<label class="form-label">Artist Field</label>
 											</div>
 											<div class="col-md-6">
 												{{-- <input type="text" class="form-control"  name="venue_type"  value="{{ $data->venue_type }}"> --}}
                                                 <select name="field" class="form-control">
                                                     <option>Select</option>
                                                     @foreach($artist_create as $type)
-                                                    <option value="{{ $type->id }}" {{ ($data->artist_create ==  $type->id) ? "selected" :"" }}>{{ $type->field_name }}</option>
+                                                    <option value="{{ $type->id }}" {{ ($data->field == $type->id) ? "selected" : "" }}>{{ $type->field_name }}</option>
                                                     @endforeach
                                                 </select>
 											</div>
@@ -52,7 +52,7 @@
 												<label class="form-label">Contact Number</label>
                                             </div>
                                                 <div class="col-md-6">
-                                                    <input type="text" class="form-control" value="{{ $data->contact_number }}"  required name="contact_number">
+                                                    <input type="text" class="form-control" value="{{ $data->contact_number }}" name="contact_number">
                                         </div>
 										</div>
 									</div>
@@ -64,7 +64,7 @@
 												<label class="form-label">About</label>
 											</div>
 											<div class="col-md-6">
-                                                <input type="text" class="form-control" value="{{ $data->about }}"  required name="about">
+                                                <input type="text" class="form-control" value="{{ $data->about }}"   name="about">
 											</div>
 										</div>
 									</div>

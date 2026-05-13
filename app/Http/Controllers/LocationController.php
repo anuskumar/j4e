@@ -95,14 +95,11 @@ class LocationController extends Controller
 
     //     return view('admin.location.edit',compact('data','location_create'));
 
-    $data=LocationModel::find($id);
-        $location_create=CountryModel::get();
-        $location_creat = LocationModel::
-        leftjoin('countries','countries.id','location.country')
-       ->leftjoin('cities','cities.id','location.city')
-       ->select('location.id as id','location_name','country_name','cities.name as city_name','location_name')
-       ->get();
-        return view('admin.location.edit',compact('location_create','location_creat','data'));
+        $data = LocationModel::find($id);
+        $countries = CountryModel::get();
+        $cities = CityModel::where('country_id', $data->country)->orderBy('name')->get();
+
+        return view('admin.location.edit', compact('countries', 'cities', 'data'));
 
 
     }
@@ -113,6 +110,8 @@ class LocationController extends Controller
             // return view('admin.location.edit',compact('data'));
             $validated = $request->validate([
                 'location_name' => 'required',
+                'country' => 'required',
+                'city' => 'required',
             ]);
 
             $data = LocationModel::find($request->id);

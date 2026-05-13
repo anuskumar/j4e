@@ -62,12 +62,11 @@
                                     <td>{{ $val->event_is_active == 1 ? "Active" :"Inactive" }}</td>
 
                                      <td>
-                                        <form action="{{ url('events/destroy',$val->id) }}" method="POST">
+                                        <a href="{{ url('events/view',$val->id) }}" class="btn btn-primary">View</a>
+                                        <a href="{{ url('events/edit',$val->id) }}" class="btn btn-info">Edit</a>
+                                        <form action="{{ url('events/destroy',$val->id) }}" method="POST" style="display:inline-block;">
                                             @csrf
                                             @method('DELETE')
-                                        <a href="{{url('events/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a>
-                                        <a href="{{url('events/edit',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-                                            {{-- <a href=""><button type="button" class="btn btn-danger" class="btn btn-danger show_confirm">Delete</button></a> --}}
                                             <button type="submit" class="btn btn-danger show_confirm">Delete</button>
                                         </form>
                                     </td>

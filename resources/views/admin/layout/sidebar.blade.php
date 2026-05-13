@@ -133,20 +133,7 @@
 							    </ul>
 
                             </li>
-                            <li class="slide">
-								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">Request</span><i class="angle fe fe-chevron-down"></i></a>
-								<ul class="slide-menu">
-
-
-                                    <ul class="slide-menu">
-                                        <li><a class="sub-side-menu__item" href="{{ url('slide/create') }}">Create</a></li>
-                                        <li><a class="sub-side-menu__item" href="{{ url('slide/list') }}">List</a></li>
-                                    </ul>
-
-
-							    </ul>
-
-                            </li>
+                            
 
                             <li class="slide">
 								<a class="side-menu__item" data-bs-toggle="slide"   href="javascript:void(0);"><i class="side-menu__icon fe fe-grid"></i><span class="side-menu__label">Artist Field</span><i class="angle fe fe-chevron-down"></i></a>

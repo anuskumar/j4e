@@ -60,10 +60,10 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label">Contact Number <span class="text-danger">*</span></label>
+												<label class="form-label">Contact Number</label>
 											</div>
 											<div class="col-md-6">
-												<input type="tel" class="form-control @error('contact_number') is-invalid @enderror" name="contact_number" placeholder="Contact Number" value="{{ old('contact_number') }}" pattern="[0-9\-\s()]+" required>
+												<input type="tel" class="form-control @error('contact_number') is-invalid @enderror" name="contact_number" placeholder="Contact Number" value="{{ old('contact_number') }}" pattern="[0-9\-\s()]+">
 												@error('contact_number')
 													<div class="invalid-feedback">{{ $message }}</div>
 												@enderror
@@ -136,14 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
             
-            // Validate contact number
-            const contactNumber = document.querySelector('input[name="contact_number"]');
-            if (!contactNumber.value.trim()) {
-                e.preventDefault();
-                contactNumber.classList.add('is-invalid');
-                contactNumber.focus();
-                return false;
-            }
         });
         
         // Remove invalid class on change for select

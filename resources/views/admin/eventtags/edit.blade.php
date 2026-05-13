@@ -31,7 +31,7 @@
 											</div>
 											<div class="col-md-6">
                                                 @if($tagdata->tag_image)
-                                                    <img alt="" src="{{ asset('storage/uploads/event_tag_images/' . $tagdata->tag_image) }}" width="200" onerror="this.src='{{ asset('assets/img/default-tag.jpg') }}'">
+                                                    <img alt="" src="{{ asset('storage/uploads/event_tag_images/' . $tagdata->tag_image) }}" width="200" >
                                                 @else
                                                     <img alt="" src="{{ asset('assets/img/default-tag.jpg') }}" width="200">
                                                 @endif

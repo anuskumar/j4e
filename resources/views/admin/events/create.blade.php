@@ -188,6 +188,16 @@
                                     <small class="form-text text-muted">You can select multiple</small>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label class="event-form-label required">Seller Fee (%)</label>
+                                    <input type="number" step="0.01" min="0" max="100" class="form-control" name="seller_fee_percent"
+                                           value="{{ old('seller_fee_percent', '10') }}" required>
+                                    @error('seller_fee_percent')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
 

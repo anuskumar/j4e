@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterController extends Controller
 {
@@ -69,6 +71,20 @@ class RegisterController extends Controller
             'email' => $data['email'],
             'email_added_at' => now(),
             'password' => Hash::make($data['password']),
+            'user_type' => 'customer',
         ]);
+    }
+
+    protected function registered(Request $request, $user)
+    {
+        if ($user->user_type === 'customer' && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+            Auth::logout();
+
+            return redirect()
+                ->route('verification.notice')
+                ->with('unverified_email', $user->email)
+                ->with('success', 'Verification email sent. Please verify your email address.');
+        }
     }
 }

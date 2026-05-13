@@ -48,17 +48,17 @@
                                 <div class="form-group ">
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <label class="form-label">Artist Name</label>
+                                            <label class="form-label">Artist Name <span class="text-danger">*</span></label>
                                         </div>
                                         <div class="col-md-6">
-                                            <input type="text" class="form-control" name="artist_name"   value="{{ old('artist_name') }}">
+                                            <input type="text" class="form-control" name="artist_name" value="{{ old('artist_name') }}" required>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="form-group ">
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <label class="form-label">Artist Field</label>
+                                            <label class="form-label">Artist Field <span class="text-danger">*</span></label>
                                         </div>
                                         <div class="col-md-6">
                                             <select name="field" class="form-control" required>
@@ -73,10 +73,10 @@
                                 <div class="form-group ">
                                     <div class="row">
                                         <div class="col-md-3">
-                                            <label class="form-label">Contact Number</label>
+                                            <label class="form-label">Contact Number <span class="text-danger">*</span></label>
                                         </div>
                                         <div class="col-md-6">
-                                            <input type="text" class="form-control" name="contact_number"   value="{{ old('contact_number') }}">
+                                            <input type="text" class="form-control" name="contact_number" value="{{ old('contact_number') }}" required>
                                         </div>
                                     </div>
                                 </div>

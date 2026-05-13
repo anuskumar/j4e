@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 
 use App\Mail\TicketApprovedMail;
+use App\Mail\TicketRejectedMail;
 use App\Models\Events;
 use App\Models\EventTickets;
 use App\Models\EventTiming;
@@ -108,6 +109,8 @@ class TicketController extends Controller
             ->leftjoin('venue','venue.id','event.venue')
             ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
             ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
+            ->leftjoin('users','users.id','event_tickets.created_by')
+            ->leftjoin('currency','currency.id','event_tickets.amount_currency')
             ->leftjoin('ticket_status','ticket_status.id','event_tickets.ticket_status')
             ->where('event_tickets.event', $id);
             // info(Auth::user()->user_type);
@@ -119,7 +122,15 @@ class TicketController extends Controller
         // Filter tickets based on the authenticated user's ID (created_by)
 
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.is_admin_approved as is_admin_approved')->latest('event_tickets.created_at')->get();
+        $data = $data_all->select(
+            '*',
+            'event_tickets.id as id',
+            'event_tickets.is_admin_approved as is_admin_approved',
+            'users.name as reseller_name',
+            'users.email as reseller_email',
+            'users.phone as reseller_phone',
+            'currency.short_name as currency_short_name'
+        )->latest('event_tickets.created_at')->get();
 
         $event = Events::find($id);
         $ticket_type = TicketType::get();
@@ -177,8 +188,32 @@ class TicketController extends Controller
           $data =[];
           $id = $request->ticket_id;
           $new = EventTickets::find($id);
+          if (!$new) {
+                return Response::json([
+                    'status' => false,
+                    'message' => 'Ticket not found.'
+                ]);
+          }
                 $new->is_admin_approved = 2;
                 $new->save();
+
+                try {
+                    $user = User::find($new->created_by);
+                    $event = Events::find($new->event);
+                    if ($user && $event) {
+                        Mail::to($user->email)->send(new TicketRejectedMail(
+                            $user->name,
+                            $event->event_name,
+                            $event->event_from_date,
+                            $new->ticket_name
+                        ));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send rejection email: ' . $e->getMessage(), [
+                        'ticket_id' => $id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
                 $data['status'] = true;
                 $data['message'] = "Rejected";
           return Response::json($data);
@@ -192,7 +227,6 @@ class TicketController extends Controller
             ]);
             
             $id = $request->ticket_id;
-            $user_id = $request->created_by;
             
             // Start database transaction
             DB::beginTransaction();
@@ -206,7 +240,7 @@ class TicketController extends Controller
                 ]);
             }
             
-            $user = User::where('id', $user_id)->first();
+            $user = User::where('id', $ticket->created_by)->first();
             if (!$user) {
                 DB::rollBack();
                 return Response::json([
@@ -240,6 +274,27 @@ class TicketController extends Controller
                 $ticket->is_admin_approved = 1;
                 $ticket->save();
                 DB::commit();
+
+                // Send approval email
+                try {
+                    $count = TicketsGenerated::where('event_tickets', $id)->count();
+                    $maildata = [
+                        'email' => $user->email,
+                        'resellername' => $user->name,
+                        'eventname' => $event->event_name,
+                        'eventdate' => $event->event_from_date,
+                        'numberoftickets' => $count,
+                        'totalamount' => $ticket->ticket_amount
+                    ];
+                    $emailController = new Emailj4eController();
+                    $emailController->ticketapprovedmail($maildata);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send approval email: ' . $e->getMessage(), [
+                        'ticket_id' => $id,
+                        'user_email' => $user->email ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                }
                 
                 return Response::json([
                     'status' => true,
