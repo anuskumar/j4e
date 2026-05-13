@@ -25,16 +25,18 @@ class EventTiming extends Model
         where('event',$event)->where('event_timing',$timing_id)->where('event_tickets.is_admin_approved', 1)->select('*','event_tickets.id as id')->orderBy('event_tickets.web_price', 'asc')->get();
     }
 
+    /**
+     * Count of tickets still available for purchase on the public event page.
+     * Requires on_sale, not sold, and not on checkout hold (under_purchase_hold = 0),
+     * so held tickets do not appear in the remaining count for other customers.
+     */
     public static function get_available_tickets($ticket_id){
 
         $data =  TicketsGenerated::leftjoin('event_tickets','event_tickets.id','=','event_ticket_tickets.event_tickets')
         ->where('event_ticket_tickets.event_tickets',$ticket_id)
-        ->where(function ($query) {
-            $query->where(function ($saleQuery) {
-                $saleQuery->where('event_ticket_tickets.on_sale', 1)
-                    ->where('event_ticket_tickets.is_sold', 0);
-            })->orWhere('event_ticket_tickets.under_purchase_hold', 0);
-        })
+        ->where('event_ticket_tickets.on_sale', 1)
+        ->where('event_ticket_tickets.is_sold', 0)
+        ->where('event_ticket_tickets.under_purchase_hold', 0)
         ->where('event_tickets.is_admin_approved',1)
         ->count();
 

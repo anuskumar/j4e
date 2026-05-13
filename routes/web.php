@@ -465,6 +465,7 @@ Route::controller(StripePaymentController::class)->group(function () {
 
 Route::controller(FrontendController::class)->group(function () {
     Route::post('submit_ticket_selected', 'submit_ticket_selected')->middleware('auth');
+    Route::post('sync_ticket_hold_count', 'syncTicketHoldCount')->middleware('auth')->name('sync_ticket_hold_count');
     Route::get('customer_ticket_billing_page/{id}', 'customer_ticket_billing_page')->middleware('auth')->name('customer_ticket_billing_page');
     Route::get('ticket_purchase_expired', 'ticket_purchase_expired')->middleware('auth');
     Route::get('release_my_tickets', 'release_my_tickets')->middleware('auth');

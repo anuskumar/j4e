@@ -126,8 +126,8 @@
                                             <input type="number" id="ticket-count-input" class="form-control text-center" min="1" max="{{ $max_calculator_tickets }}" value="{{ $initial_ticket_count }}">
                                             <button type="button" class="btn btn-outline-secondary" id="qty-plus">+</button>
                                         </div>
-                                        <small class="text-muted d-block mt-1">Available tickets: {{ $available_ticket_count ?? $max_calculator_tickets }}</small>
-                                        <small class="text-muted d-block mt-1">Maximum reserved tickets: {{ $max_calculator_tickets }}</small>
+                                        <small class="text-muted d-block mt-1" id="available-tickets-line">Available tickets: {{ $available_ticket_count ?? $max_calculator_tickets }}</small>
+                                        <small class="text-muted d-block mt-1" id="max-reserved-line">Maximum reserved tickets: {{ $max_calculator_tickets }}</small>
                                         <small class="text-muted d-block mt-1">
                                             <span id="calc-formula-display">{{ number_format($ticket_price, 2) }} x {{ $initial_ticket_count }} = {{ number_format($total_amount, 2) }} {{ $data->short_name }}</span>
                                         </small>
@@ -610,9 +610,59 @@
 
 
     $(document).ready(function() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
         var unitPrice = parseFloat("{{ (float) ($data->ticket_amount ?? 0) }}");
         var maxQty = parseInt("{{ (int) $max_calculator_tickets }}", 10);
         var currencyCode = "{{ $data->short_name }}";
+        var holdSyncTimer = null;
+        var suppressHoldSync = true;
+
+        function scheduleHoldSync() {
+            clearTimeout(holdSyncTimer);
+            holdSyncTimer = setTimeout(function() {
+                var qty = sanitizeQty($('#ticket-count-input').val());
+                $.ajax({
+                    url: "{{ route('sync_ticket_hold_count') }}",
+                    method: 'POST',
+                    data: {
+                        event_ticket_id: {{ (int) $id }},
+                        ticket_count: qty
+                    },
+                    success: function(data) {
+                        if (!data || !data.ok) {
+                            return;
+                        }
+                        if (typeof data.max_qty === 'number' || (data.max_qty && !isNaN(parseInt(data.max_qty, 10)))) {
+                            maxQty = parseInt(data.max_qty, 10);
+                            $('#ticket-count-input').attr('max', maxQty);
+                        }
+                        if (data.available_ticket_count !== undefined) {
+                            $('#available-tickets-line').text('Available tickets: ' + data.available_ticket_count);
+                        }
+                        $('#max-reserved-line').text('Maximum reserved tickets: ' + maxQty);
+                        if (parseInt(data.ticket_count, 10) !== qty) {
+                            $('#ticket-count-input').val(data.ticket_count);
+                        }
+                        updateAmountFromQty(true);
+                    },
+                    error: function(xhr) {
+                        var j = xhr.responseJSON;
+                        if (xhr.status === 422 && j && j.code === 'hold_expired' && j.redirect) {
+                            window.location.href = j.redirect;
+                            return;
+                        }
+                        if (j && j.message) {
+                            alert(j.message);
+                        }
+                    }
+                });
+            }, 400);
+        }
 
         function formatMoney(amount) {
             return parseFloat(amount).toFixed(2) + ' ' + currencyCode;
@@ -626,7 +676,7 @@
             return qty;
         }
 
-        function updateAmountFromQty() {
+        function updateAmountFromQty(skipHoldSync) {
             var qty = sanitizeQty($('#ticket-count-input').val());
             var total = (unitPrice * qty).toFixed(2);
 
@@ -638,6 +688,9 @@
             $('#final-amount-display').text(formatMoney(total));
             $('#calc-formula-display').text(unitPrice.toFixed(2) + ' x ' + qty + ' = ' + total + ' ' + currencyCode);
             $('#open-stripe-checkout').text('Pay ' + parseFloat(total).toFixed(2) + ' {{ $data->currency_name }} (' + qty + ' ticket(s))');
+            if (!suppressHoldSync && !skipHoldSync) {
+                scheduleHoldSync();
+            }
         }
 
         $('#qty-minus').on('click', function() {
@@ -657,6 +710,7 @@
         });
 
         updateAmountFromQty();
+        suppressHoldSync = false;
 
         var stripeHandler = StripeCheckout.configure({
             key: "{{ config('services.stripe.key') }}",

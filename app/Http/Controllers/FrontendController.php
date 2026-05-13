@@ -276,6 +276,128 @@ class FrontendController extends Controller
 
            }
 
+           /**
+            * Adjust purchase holds for the billing page when the customer changes ticket quantity
+            * in the calculator (adds or releases holds to match the requested count).
+            */
+           public function syncTicketHoldCount(Request $request)
+           {
+               $validated = $request->validate([
+                   'event_ticket_id' => 'required|integer|exists:event_tickets,id',
+                   'ticket_count' => 'required|integer|min:1|max:5000',
+               ]);
+
+               $eventTicketId = (int) $validated['event_ticket_id'];
+               $validHoldStart = Carbon::now()->subMinutes(15);
+               $userId = Auth::id();
+
+               try {
+                   DB::transaction(function () use ($eventTicketId, $userId, $validHoldStart, $validated) {
+                       $myHeld = TicketsGenerated::where('event_tickets', $eventTicketId)
+                           ->where('user_id', $userId)
+                           ->where('is_sold', 0)
+                           ->where('under_purchase_hold', 1)
+                           ->where('purchase_hold_time', '>=', $validHoldStart)
+                           ->orderBy('id')
+                           ->lockForUpdate()
+                           ->get();
+
+                       $currentHeld = $myHeld->count();
+
+                       if ($currentHeld < 1) {
+                           throw new \RuntimeException('hold_expired');
+                       }
+
+                       $freePoolCount = (int) TicketsGenerated::where('event_tickets', $eventTicketId)
+                           ->where('is_sold', 0)
+                           ->where('under_purchase_hold', 0)
+                           ->count();
+
+                       $maxAllowed = $currentHeld + $freePoolCount;
+                       $desired = min(max(1, (int) $validated['ticket_count']), $maxAllowed);
+
+                       if ($desired > $currentHeld) {
+                           $need = $desired - $currentHeld;
+                           $toAdd = TicketsGenerated::where('event_tickets', $eventTicketId)
+                               ->where('is_sold', 0)
+                               ->where('under_purchase_hold', 0)
+                               ->orderBy('id')
+                               ->take($need)
+                               ->lockForUpdate()
+                               ->get();
+
+                           foreach ($toAdd as $row) {
+                               $row->user_id = $userId;
+                               $row->under_purchase_hold = 1;
+                               $row->purchase_hold_time = now();
+                               $row->save();
+                           }
+                       } elseif ($desired < $currentHeld) {
+                           $releaseCount = $currentHeld - $desired;
+                           $toRelease = TicketsGenerated::where('event_tickets', $eventTicketId)
+                               ->where('user_id', $userId)
+                               ->where('is_sold', 0)
+                               ->where('under_purchase_hold', 1)
+                               ->where('purchase_hold_time', '>=', $validHoldStart)
+                               ->orderByDesc('id')
+                               ->take($releaseCount)
+                               ->lockForUpdate()
+                               ->get();
+
+                           foreach ($toRelease as $row) {
+                               $row->user_id = null;
+                               $row->under_purchase_hold = 0;
+                               $row->purchase_hold_time = null;
+                               $row->save();
+                           }
+                       }
+                   });
+               } catch (\RuntimeException $e) {
+                   if ($e->getMessage() === 'hold_expired') {
+                       return response()->json([
+                           'ok' => false,
+                           'code' => 'hold_expired',
+                           'message' => 'Your ticket hold has expired. Please select tickets again.',
+                           'redirect' => url('ticket_purchase_expired'),
+                       ], 422);
+                   }
+                   throw $e;
+               } catch (\Exception $e) {
+                   return response()->json([
+                       'ok' => false,
+                       'message' => 'Unable to update ticket hold. Please try again.',
+                   ], 500);
+               }
+
+               $heldCount = (int) TicketsGenerated::where('event_tickets', $eventTicketId)
+                   ->where('user_id', $userId)
+                   ->where('is_sold', 0)
+                   ->where('under_purchase_hold', 1)
+                   ->where('purchase_hold_time', '>=', $validHoldStart)
+                   ->count();
+
+               $availableTicketCount = (int) TicketsGenerated::where('event_tickets', $eventTicketId)
+                   ->where('is_sold', 0)
+                   ->where(function ($query) use ($validHoldStart, $userId) {
+                       $query->where('under_purchase_hold', 0)
+                           ->orWhere(function ($holdQuery) use ($validHoldStart, $userId) {
+                               $holdQuery->where('under_purchase_hold', 1)
+                                   ->where('user_id', $userId)
+                                   ->where('purchase_hold_time', '>=', $validHoldStart);
+                           });
+                   })
+                   ->count();
+
+               $maxQty = max(1, $availableTicketCount);
+
+               return response()->json([
+                   'ok' => true,
+                   'ticket_count' => $heldCount,
+                   'max_qty' => $maxQty,
+                   'available_ticket_count' => $availableTicketCount,
+               ]);
+           }
+
            public function customer_ticket_billing_page($id){
 
             $validHoldStart = Carbon::now()->subMinutes(15);
