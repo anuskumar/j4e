@@ -79,7 +79,39 @@
         border-radius: 6px;
         border: 1px solid #e8ebf3;
     }
+
+    .ticket-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
 </style>
+
+@php
+    $ticketExportTitle = 'Tickets (' . now()->format('d M Y') . ')';
+    $ticketExportColumns = $isReseller ? [0, 1, 2, 3, 4, 5, 7] : [0, 1, 2, 3, 4, 5, 7, 8];
+    $exportButtons = [
+        [
+            'extend' => 'excel',
+            'exportOptions' => [
+                'columns' => $ticketExportColumns,
+                'stripHtml' => true,
+            ],
+            'title' => $ticketExportTitle,
+        ],
+        [
+            'extend' => 'pdf',
+            'exportOptions' => [
+                'columns' => $ticketExportColumns,
+                'stripHtml' => true,
+            ],
+            'title' => $ticketExportTitle,
+            'orientation' => 'landscape',
+            'pageSize' => 'A4',
+        ],
+    ];
+@endphp
 
 <div class="row row-sm">
     <div class="col-lg-12">
@@ -96,7 +128,15 @@
                             @endif
                         </p>
                     </div>
-                    <span class="badge bg-primary-transparent tx-13">{{ count($data) }} {{ Str::plural('event', count($data)) }}</span>
+                    <div class="ticket-header-actions">
+                        <span class="badge bg-primary-transparent tx-13 mb-0">{{ count($data) }} {{ Str::plural('event', count($data)) }}</span>
+                        <button type="button" class="btn btn-sm btn-success" id="export-excel">
+                            <i class="fe fe-download me-1"></i> Excel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="export-pdf">
+                            <i class="fe fe-file-text me-1"></i> PDF
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -303,4 +343,5 @@
     ];
 @endphp
 @include('datatable.datatable_js')
+@include('admin.partials.datatable_export_scripts')
 @endpush

@@ -79,7 +79,53 @@
     .order-filters .filter-actions .btn {
         white-space: nowrap;
     }
+
+    .order-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
 </style>
+
+@php
+    $orderExportTitle = ($pageTitle ?? 'Orders') . ' (' . now()->format('d M Y') . ')';
+    $orderExportButtons = [
+        [
+            'extend' => 'excel',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                'stripHtml' => true,
+            ],
+            'title' => $orderExportTitle,
+        ],
+        [
+            'extend' => 'pdf',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                'stripHtml' => true,
+            ],
+            'title' => $orderExportTitle,
+            'orientation' => 'landscape',
+            'pageSize' => 'A4',
+        ],
+    ];
+    $orderDatatableOptions = [
+        'language' => [
+            'search' => 'Search orders:',
+            'searchPlaceholder' => 'Search orders...',
+            'lengthMenu' => 'Show _MENU_ orders per page',
+            'info' => 'Showing _START_ to _END_ of _TOTAL_ orders',
+            'infoEmpty' => 'No orders found',
+            'infoFiltered' => '(filtered from _MAX_ total orders)',
+            'zeroRecords' => 'No matching orders found',
+        ],
+        'columnDefs' => [
+            ['orderable' => false, 'targets' => [9]],
+            ['searchable' => false, 'targets' => [0, 9]],
+        ],
+    ];
+@endphp
 
 <div class="row row-sm">
     <div class="col-lg-12">
@@ -90,7 +136,15 @@
                         <h4 class="card-title mg-b-10">{{ $pageTitle ?? 'Orders' }}</h4>
                         <p class="text-muted tx-12 mb-0">{{ $pageDescription ?? 'Manage customer ticket orders.' }}</p>
                     </div>
-                    <span class="badge bg-primary-transparent tx-13">{{ count($data) }} {{ Str::plural('order', count($data)) }}</span>
+                    <div class="order-header-actions">
+                        <span class="badge bg-primary-transparent tx-13 mb-0">{{ count($data) }} {{ Str::plural('order', count($data)) }}</span>
+                        <button type="button" class="btn btn-sm btn-success" id="order-export-excel">
+                            <i class="fe fe-download me-1"></i> Excel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="order-export-pdf">
+                            <i class="fe fe-file-text me-1"></i> PDF
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
@@ -228,23 +282,10 @@
 @if (Auth::user()->user_type == 'reseller')
     @php
         $datatableJqueryLoaded = true;
-        $datatableOptions = [
-            'language' => [
-                'search' => 'Search orders:',
-                'searchPlaceholder' => 'Search orders...',
-                'lengthMenu' => 'Show _MENU_ orders per page',
-                'info' => 'Showing _START_ to _END_ of _TOTAL_ orders',
-                'infoEmpty' => 'No orders found',
-                'infoFiltered' => '(filtered from _MAX_ total orders)',
-                'zeroRecords' => 'No matching orders found',
-            ],
-            'columnDefs' => [
-                ['orderable' => false, 'targets' => [9]],
-                ['searchable' => false, 'targets' => [0, 9]],
-            ],
-        ];
+        $datatableOptions = $orderDatatableOptions;
     @endphp
     @include('datatable.datatable_js')
+    @include('admin.order.partials.export_scripts')
 @endif
 
 @endsection
@@ -253,22 +294,9 @@
 @push('scripts')
 @php
     $datatableJqueryLoaded = true;
-    $datatableOptions = [
-        'language' => [
-            'search' => 'Search orders:',
-            'searchPlaceholder' => 'Search orders...',
-            'lengthMenu' => 'Show _MENU_ orders per page',
-            'info' => 'Showing _START_ to _END_ of _TOTAL_ orders',
-            'infoEmpty' => 'No orders found',
-            'infoFiltered' => '(filtered from _MAX_ total orders)',
-            'zeroRecords' => 'No matching orders found',
-        ],
-        'columnDefs' => [
-            ['orderable' => false, 'targets' => [9]],
-            ['searchable' => false, 'targets' => [0, 9]],
-        ],
-    ];
+    $datatableOptions = $orderDatatableOptions;
 @endphp
 @include('datatable.datatable_js')
+@include('admin.order.partials.export_scripts')
 @endpush
 @endif

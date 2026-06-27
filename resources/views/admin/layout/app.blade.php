@@ -318,9 +318,7 @@
 									</div> --}}
                                 @include('admin.layout.partials.notifications')
                                 @php
-                                    $authProfileImage = Auth::user()->profile
-                                        ? asset('storage/uploads/images/' . Auth::user()->profile)
-                                        : asset('admin_assets/img/faces/6.jpg');
+                                    $authProfileImage = Auth::user()->profileImageUrl();
                                 @endphp
                                 <div class="dropdown main-profile-menu nav nav-item nav-link">
                                     <a class="profile-user d-flex" href=""><img

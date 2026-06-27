@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ArtistModel;
+use App\Models\CustomerReview;
 use App\Models\Events;
 use App\Models\EventTags;
 use App\Models\EventTickets;
@@ -28,6 +29,10 @@ class WelcomeController extends Controller
         }
 
         $slider = SliderModel::get();
+        $customer_reviews = CustomerReview::active()
+            ->orderBy('sort_order')
+            ->orderBy('id', 'desc')
+            ->get();
         if(empty($type))
         {
              $event_tags = Events::leftjoin('event_tags','event_tags.id','event.event_tag')->groupBy('event.event_tag')
@@ -40,9 +45,19 @@ class WelcomeController extends Controller
         }
 
 
-        return view('index',compact('event_tags','slider'));
+        return view('index',compact('event_tags','slider','customer_reviews'));
 
 
+    }
+
+    public function reviews()
+    {
+        $customer_reviews = CustomerReview::active()
+            ->orderBy('sort_order')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('reviews', compact('customer_reviews'));
     }
 
 

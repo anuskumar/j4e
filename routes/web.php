@@ -6,6 +6,7 @@ use App\Http\Controllers\ArtistfiedController;
 use App\Http\Controllers\BankTransferController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\CustomerReviewController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmailController;
@@ -48,6 +49,7 @@ use Illuminate\Support\Facades\Route;
 // OUR Routes Starts Here
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
+Route::get('/reviews', [WelcomeController::class, 'reviews'])->name('reviews');
 // Route::get('/event_list_frontend', [WelcomeController::class, 'event_list_frontend']);
 Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend'])->name('new_eventlistfrontend');
 Route::get('/event_ticket_listing', [WelcomeController::class, 'event_ticket_listing']);
@@ -395,6 +397,16 @@ Route::group(['prefix' => 'slide'], function () {
     Route::get('edit/{id}', [SliderController::class, 'edit']);
     Route::post('update', [SliderController::class, 'update'])->name('slide.update');
     Route::delete('destroy/{id}', [SliderController::class, 'delete']);
+});
+
+Route::group(['prefix' => 'customer_review'], function () {
+    Route::get('create', [CustomerReviewController::class, 'create']);
+    Route::post('store', [CustomerReviewController::class, 'store']);
+    Route::get('list', [CustomerReviewController::class, 'index']);
+    Route::get('view/{id}', [CustomerReviewController::class, 'show']);
+    Route::get('edit/{id}', [CustomerReviewController::class, 'edit']);
+    Route::post('update', [CustomerReviewController::class, 'update']);
+    Route::delete('destroy/{id}', [CustomerReviewController::class, 'delete']);
 });
 
 Route::group(['prefix' => 'customer_order'], function () {

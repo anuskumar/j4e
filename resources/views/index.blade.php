@@ -890,7 +890,7 @@ img {
 							<h2>REVIEWS FROM OUR CUSTOMERS.</h2>
 						</div>
 						<div class="col-md-4 col-lg-6 text-right">
-							<a href="reviews" class="view-all">View all</a>
+							<a href="{{ route('reviews') }}" class="view-all">View all</a>
 						</div>
 					</div>
 <style>
@@ -917,144 +917,34 @@ img {
 </style>
 
 					<div id="testimonial-slider" class="owl-carousel owl-theme testimonial-slider ">
+						@forelse ($customer_reviews as $review)
 						<div class="single-testimonial">
 							<div class="client-info">
 								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-01.jpg') }}" alt="">
+									<img src="{{ $review->photoUrl() }}" alt="{{ $review->customer_name }}"
+										onerror="this.src='{{ asset('assets/img/testimonial/avatar-01.jpg') }}'">
 								</div>
 								<div class="client-details">
-									<h4 class="name">Shonda Williams</h4>
-									<div class="sub-title">Engineering</div>
+									<h4 class="name">{{ $review->customer_name }}</h4>
+									@if ($review->subtitle)
+									<div class="sub-title">{{ $review->subtitle }}</div>
+									@endif
 									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<span class="average-rating">3.2</span>
+										@include('partials.star_rating', ['rating' => $review->rating, 'showAverage' => true])
 									</div>
 								</div>
 							</div>
 							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
+								<p>{{ $review->review_content }}</p>
 							</div>
 						</div>
-
+						@empty
 						<div class="single-testimonial">
-							<div class="client-info">
-								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-02.jpg') }}" alt="">
-								</div>
-								<div class="client-details">
-									<h4 class="name">Grant Mason</h4>
-									<div class="sub-title">Cultural</div>
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<span class="average-rating">4.1</span>
-									</div>
-								</div>
-							</div>
 							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
+								<p class="text-center mb-0">No customer reviews available yet.</p>
 							</div>
 						</div>
-
-						<div class="single-testimonial">
-							<div class="client-info">
-								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-03.jpg') }}" alt="">
-								</div>
-								<div class="client-details">
-									<h4 class="name">Marion Scott</h4>
-									<div class="sub-title">Computer</div>
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<span class="average-rating">5</span>
-									</div>
-								</div>
-							</div>
-							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
-							</div>
-						</div>
-
-						<div class="single-testimonial">
-							<div class="client-info">
-								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-04.jpg') }}" alt="">
-								</div>
-								<div class="client-details">
-									<h4 class="name">Leonard Bender</h4>
-									<div class="sub-title">Business</div>
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<i class="fas fa-star"></i>
-										<i class="fas fa-star"></i>
-										<span class="average-rating">2</span>
-									</div>
-								</div>
-							</div>
-							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
-							</div>
-						</div>
-
-						<div class="single-testimonial">
-							<div class="client-info">
-								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-05.jpg') }}" alt="">
-								</div>
-								<div class="client-details">
-									<h4 class="name">Cheryl Bostick</h4>
-									<div class="sub-title">Cultural</div>
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<span class="average-rating">4</span>
-									</div>
-								</div>
-							</div>
-							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
-							</div>
-						</div>
-
-						<div class="single-testimonial">
-							<div class="client-info">
-								<div class="client-photo">
-									<img src="{{ asset('assets/img/testimonial/avatar-06.jpg') }}" alt="">
-								</div>
-								<div class="client-details">
-									<h4 class="name">Martin Belvin</h4>
-									<div class="sub-title">Conference</div>
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<span class="average-rating">4</span>
-									</div>
-								</div>
-							</div>
-							<div class="desc">
-								<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Volutpat orci enim, mattis nibh aliquam dui, nibh faucibus aenean.</p>
-							</div>
-						</div>
-
+						@endforelse
 					</div>
 				</div>
 			</section>
