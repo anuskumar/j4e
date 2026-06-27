@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             ResellerSeeder::class,
             CustomerSeeder::class,
             CompanySettingsSeeder::class,
+            VenueTypeSeeder::class,
+            VenueSeeder::class,
         ]);
     }
 }

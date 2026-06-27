@@ -15,8 +15,10 @@ use App\Models\TicketType;
 use App\Models\VenueModel;
 use App\Models\VenueType;
 use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class EventsController extends Controller
@@ -164,15 +166,39 @@ class EventsController extends Controller
     public function store(Request $request)
     {
         // dd($request->artists);
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'event_name' => 'required',
             'event_is_active' => 'required',
             'event_tag' => 'required',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
+            'priority' => 'required|integer|min:0|max:9999',
+            'event_from_date' => 'required|date',
+            'event_to_date' => 'required|date|after_or_equal:event_from_date',
             'event_start_time' => 'required|date_format:H:i',
-            'event_end_time' => 'required|date_format:H:i|after:event_start_time',
+            'event_end_time' => 'required|date_format:H:i',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $fields = ['event_from_date', 'event_to_date', 'event_start_time', 'event_end_time'];
+            foreach ($fields as $field) {
+                if ($validator->errors()->has($field)) {
+                    return;
+                }
+            }
+
+            $start = Carbon::parse($request->event_from_date . ' ' . $request->event_start_time);
+            $end = Carbon::parse($request->event_to_date . ' ' . $request->event_end_time);
+
+            if (!$end->gt($start)) {
+                $validator->errors()->add(
+                    'event_end_time',
+                    'The event end date and time must be after the event start date and time.'
+                );
+            }
+        });
+
+        $validated = $validator->validate();
 
         $event = new Events();
         $event->event_name = $request->event_name;
@@ -193,6 +219,7 @@ class EventsController extends Controller
         $event->event_tag = $request->event_tag;
         $event->seller_fee_percent = $request->seller_fee_percent;
         $event->customer_fee_percent = $request->customer_fee_percent;
+        $event->priority = $request->priority ?? 0;
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
@@ -248,6 +275,7 @@ class EventsController extends Controller
             'event_tag' => 'required',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
+            'priority' => 'required|integer|min:0|max:9999',
 
             // 'event_is_active' => 'required'
         ]);
@@ -277,6 +305,7 @@ class EventsController extends Controller
         $data->event_tag = $request->event_tag;
         $data->seller_fee_percent = $request->seller_fee_percent;
         $data->customer_fee_percent = $request->customer_fee_percent;
+        $data->priority = $request->priority ?? 0;
         // $data->event_added_by =Auth::user()->id;
         $data->event_is_active = $request->event_is_active;
 
@@ -306,41 +335,99 @@ class EventsController extends Controller
 
     public function multi_images($id){
 
-        $data = EventImages::where('event',$id)->get();
-        return view('admin.events.event_images',compact('data','id'));
+        $event = Events::findOrFail($id);
+        $data = EventImages::where('event', $id)->orderBy('id', 'desc')->get();
+        return view('admin.events.event_images', compact('data', 'id', 'event'));
 
     }
 
-    public function upload_event_images(Request $request){
+    public function upload_event_images(Request $request)
+    {
+        $uploadErrors = $this->collectUploadErrors($request);
+        if ($uploadErrors !== []) {
+            return redirect()->back()->withErrors(['image' => implode(' ', $uploadErrors)]);
+        }
 
-    //    dd($request->request);
+        $request->validate([
+            'event' => 'required|integer|exists:event,id',
+            'image' => 'required|array|min:1',
+            'image.*' => 'required|file|image|mimes:jpeg,png,jpg,webp,gif|max:2048',
+        ], [
+            'image.required' => 'Please select at least one image to upload.',
+            'image.*.max' => 'Each image must not be larger than 2MB.',
+            'image.*.image' => 'Only valid image files are allowed.',
+        ]);
 
-        // if($request->hasFile('image')){
-        //     foreach ($request->File('image') as $key) {
-        //         $val = new EventImages();
-        //         $val->event = $request->event;
-        //         $imageName = time().'.'.Str::random(9).$key->extension();
-        //         $key->move(storage_path('uploads/events'), $imageName);
-        //         $val->image =  $imageName;
-        //         $val->save();
-        // }
+        $uploadDir = storage_path('uploads/events');
+        if (! is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
 
-        $images = [];
+        if (! is_writable($uploadDir)) {
+            return redirect()->back()->withErrors([
+                'image' => 'Upload folder is not writable. Please contact the administrator.',
+            ]);
+        }
 
-        if ($request->hasFile('image')) {
-            foreach ($request->file('image') as $file) {
+        $uploadedCount = 0;
+
+        foreach ($request->file('image') as $file) {
+            if (! $file || ! $file->isValid()) {
+                continue;
+            }
+
+            try {
+                $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+
                 $val = new EventImages();
                 $val->event = $request->event;
-                $filename = rand() . '.' . $file->getClientOriginalExtension();
-                $file->move(storage_path('uploads/events'), $filename);
-                $images[] = $filename;
-                $val->image =  $filename;
+                $val->image = $filename;
                 $val->save();
+                $uploadedCount++;
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return redirect()->back()->withErrors([
+                    'image' => 'Upload failed while saving the image. Please try again.',
+                ]);
             }
         }
 
-        return redirect()->back();
-       }
+        if ($uploadedCount === 0) {
+            return redirect()->back()->withErrors([
+                'image' => 'No valid images were uploaded. Use JPG, PNG, WEBP or GIF under 2MB.',
+            ]);
+        }
+
+        return redirect()->back()->with('success', $uploadedCount . ' image(s) uploaded successfully.');
+    }
+
+    private function collectUploadErrors(Request $request): array
+    {
+        $messages = [];
+
+        if (! empty($_FILES['image']['error'])) {
+            $errors = (array) $_FILES['image']['error'];
+
+            foreach ($errors as $error) {
+                if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+                    $messages[] = 'One or more images exceed the 2MB upload limit.';
+                } elseif ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
+                    $messages[] = 'One or more images could not be uploaded.';
+                }
+            }
+        }
+
+        if ($messages === [] && ! $request->hasFile('image')) {
+            $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+            if ($contentLength > 0 && empty($request->all()) && empty($_FILES)) {
+                $messages[] = 'Upload failed. The selected files may exceed the server upload limit.';
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
 
     public function event_timings($id){
 

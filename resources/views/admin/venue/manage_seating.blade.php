@@ -1,217 +1,169 @@
-<?php $page="venue/list";?>
+<?php $page = 'venue/manage_seating'; ?>
 @extends('admin.layout.app')
+
+@section('page_title', 'Manage Seating')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ url('venue/list') }}">Venues</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Manage Seating</li>
+@endsection
+
 @section('admin_content')
 
-	<!-- Row -->
-    <div class="row row-sm">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Manage Seatings</h3>
-                    <div class="card-body" style="float:right;">
+<link href="{{ asset('admin_assets/plugins/datatable/datatables.min.css') }}" rel="stylesheet">
+<link href="{{ asset('admin_assets/plugins/datatable/responsive.dataTables.min.css') }}" rel="stylesheet">
 
-                        <a class="btn ripple btn-info" data-bs-target="#modaldemo3" data-bs-toggle="modal" href="#">Create Seating</a>
+<style>
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin-left: 8px;
+    }
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin: 0 8px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(--primary-bg-color, #6259ca) !important;
+        color: #fff !important;
+        border: none !important;
+    }
+    .seating-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #e8ebf3;
+    }
+</style>
+
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mg-b-10">Venue Seating</h4>
+                        <p class="text-muted tx-12 mb-0">
+                            Manage seating types for <span class="font-weight-semibold">{{ $venue->name }}</span>
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-transparent tx-13">{{ count($data) }} {{ Str::plural('seating', count($data)) }}</span>
+                        <a href="{{ url('venue/create_seating', $venue->id) }}" class="btn btn-primary btn-sm">
+                            <i class="fe fe-plus me-1"></i> Create Seating
+                        </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="file-datatable"  class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom">
-                            <thead>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap mb-0 dataTables" id="file-datatable">
+                        <thead>
+                            <tr>
+                                <th>SL</th>
+                                <th>Seating Type</th>
+                                <th>Image</th>
+                                <th>Total Seats</th>
+                                <th>Serial Prefix</th>
+                                <th>Serial Start</th>
+                                <th>Serial End</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $index => $val)
                                 <tr>
-                                    <th>Sl</th>
-                                    <th class="border-bottom-0">Seating Type</th>
-                                    <th class="border-bottom-0">image</th>
-                                    <th class="border-bottom-0">Total Seats</th>
-                                    <th class="border-bottom-0">Serial Prefix</th>
-                                    <th class="border-bottom-0">Seat Serial Starts</th>
-                                    <th class="border-bottom-0">Seat Serial Ends</th>
-                                    <th class="border-bottom-0">Desc</th>
-                                    <th class="border-bottom-0">Status</th>
-                                    <th class="border-bottom-0">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $no = 1;
-                                @endphp
-                                @foreach ($data as $val)
-                                <tr>
-                                    <td>{{ $no++ }}</td>
-
-                                    <td>{{ $val->seating_type_name }}</td>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td><span class="font-weight-semibold">{{ $val->seating_type_name }}</span></td>
                                     <td>
-                                        {{-- {{ $val->image }} --}}
-                                        @if($val->seating_image)
-                                            <img alt="" src="{{ asset('storage/uploads/venue_seating/' . $val->seating_image) }}" onerror="this.src='{{ asset('assets/img/default-seating.jpg') }}'">
+                                        @if ($val->seating_image)
+                                            <img alt="{{ $val->seating_type_name }}" class="seating-thumb"
+                                                src="{{ asset('storage/uploads/venue_seating/' . $val->seating_image) }}"
+                                                onerror="this.src='{{ asset('assets/img/default-seating.jpg') }}'">
                                         @else
-                                            <img alt="" src="{{ asset('assets/img/default-seating.jpg') }}">
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                     <td>{{ $val->number_of_seats }}</td>
                                     <td>{{ $val->seat_serial_prefix }}</td>
                                     <td>{{ $val->seat_serial_start }}</td>
                                     <td>{{ $val->seat_serial_end }}</td>
-                                    <td>{{ $val->seating_type_desc }}</td>
+                                    <td>{{ $val->seating_type_desc ? Str::limit($val->seating_type_desc, 40) : '-' }}</td>
                                     <td>
-
-                                        {{ $val->is_active==1 ? "Active" :"Inactive" }}
+                                        @if ($val->is_active == 1)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-warning">Inactive</span>
+                                        @endif
                                     </td>
-                                    <td>
-                                        <form action="{{ url('venue/delete_venue_seating',$val->id) }}" method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        {{-- <a href="{{url('venue/view',$val->id)}}"><button type="button" class="btn btn-primary">view</button></a> --}}
-                                        <a href="{{url('venue/edit_seating',$val->id)}}"><button type="button" class="btn btn-info">Edit</button></a>
-
-                                            {{-- <a href=""><button type="button" class="btn btn-danger" class="btn btn-danger show_confirm">Delete</button></a> --}}
-                                            <button type="submit" class="btn btn-danger show_confirm">Delete</button>
-                                        </form>
+                                    <td class="text-end">
+                                        <div class="table-action d-flex justify-content-end gap-1">
+                                            <a href="{{ url('venue/view_seating', $val->id) }}" class="btn btn-sm btn-info-light" title="View">
+                                                <i class="far fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url('venue/edit_seating', $val->id) }}" class="btn btn-sm btn-success-light" title="Edit">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <form action="{{ url('venue/delete_venue_seating', $val->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this seating type?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger-light" title="Delete">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div class="d-flex justify-content-center">
-                        {{-- {!! $data->links() !!} --}}
-                        </div>
-                    </div>
+                            @empty
+                                <tr>
+                                    <td class="text-center text-muted py-4">No seating types found</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-
+            </div>
+            <div class="card-footer">
+                <a href="{{ url('venue/list') }}" class="btn btn-outline-secondary">
+                    <i class="fe fe-arrow-left me-1"></i> Back to Venues
+                </a>
             </div>
         </div>
-        <div class="modal" id="modaldemo3">
-			<div class="modal-dialog modal-lg" role="document">
-				<div class="modal-content modal-content-demo">
-					<div class="modal-header">
-						<h6 class="modal-title">Create Seating</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"><span aria-hidden="true">&times;</span></button>
-					</div>
-					<div class="modal-body">
-                         <div class="card-body">
-                            <div class="mb-4 main-content-label"></div>
-                            <form class="form-horizontal"  action="{{ url('venue/store_seating') }}" method="POST" enctype="multipart/form-data">
-                                @csrf
-                                {{-- <div class="mb-4 main-content-label">Name</div> --}}
-
-                               <input type="hidden" name="venue" value="{{ $id }}">
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Name</label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="text" class="form-control" name="seating_type_name" required   value="{{ old('seating_type_name') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            {{-- {{ print_r($venue_type) }} --}}
-                                            <label class="form-label">Total Number</label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="number" class="form-control" name="number_of_seats" required  value="{{ old('number_of_seats') }}">
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label"> Seat Number Prefix</label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="text" class="form-control" name="seat_serial_prefix" required   value="{{ old('seat_serial_prefix') }}">
-
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Seat Serial Starting Number</label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="number" required class="form-control" name="seat_serial_start"  value="{{ old('seat_serial_start') }}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Seat Serial Ending Number</label>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input type="number" required class="form-control" name="seat_serial_end"  value="{{ old('seat_serial_start') }}">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Description</label>
-                                        </div>
-                                        <div class="col-md-6">
-
-                                             <textarea class="form-control" name="seating_type_desc">
-                                                {{ old('seating_type_desc') }}
-                                             </textarea>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group ">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Status</label>
-                                        </div>
-                                        <div class="col-md-6">
-
-                                            {!! Form::radio('is_active',true,1) !!} Active
-                                            {!! Form::radio('is_active',false,0) !!} Inactive
-
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group mb-0">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <label class="form-label">Image</label>
-
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="custom-controls-stacked">
-                                                <input type="file" name="seating_image" class="form-control" >
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer">
-                                    <button class="btn ripple btn-secondary" style="float: right; margin-left:10px;" data-bs-dismiss="modal" type="button">Close</button>
-                                    <button type="submit" class="btn btn-primary waves-effect waves-light" style="float:right;">Create Seatings</button>
-                                </div>
-                                <br>
-                            </form>
-                        </div>
-
-                        </div>
-					<div class="modal-footer">
-
-					</div>
-				</div>
-			</div>
-		</div>
-
-
-
-
     </div>
-    <script src="admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="admin_assets/js/main.js"></script>
-    <!-- End Row -->
+</div>
 
-
-@include('datatable.datatable_js')
 @endsection
+
+@push('scripts')
+@php
+    $datatableJqueryLoaded = true;
+    $datatableOptions = [
+        'language' => [
+            'search' => 'Search:',
+            'searchPlaceholder' => 'Search seating...',
+            'zeroRecords' => 'No matching seating found',
+        ],
+        'columnDefs' => [
+            ['orderable' => false, 'targets' => [2, 9]],
+            ['searchable' => false, 'targets' => [0, 2, 9]],
+        ],
+    ];
+@endphp
+@include('datatable.datatable_js')
+@endpush

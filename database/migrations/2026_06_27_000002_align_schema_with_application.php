@@ -129,6 +129,7 @@ return new class extends Migration
     {
         $this->addColumnIfMissing('event', 'seller_fee_percent', fn (Blueprint $table) => $table->decimal('seller_fee_percent', 5, 2)->nullable());
         $this->addColumnIfMissing('event', 'customer_fee_percent', fn (Blueprint $table) => $table->decimal('customer_fee_percent', 5, 2)->nullable());
+        $this->addColumnIfMissing('event', 'priority', fn (Blueprint $table) => $table->unsignedInteger('priority')->default(0));
     }
 
     private function alignEventImagesTable(): void

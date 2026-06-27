@@ -52,12 +52,19 @@ class WelcomeController extends Controller
 
     public function reviews()
     {
-        $customer_reviews = CustomerReview::active()
+        $customer_reviews = CustomerReview::where('is_active', 1)
             ->orderBy('sort_order')
             ->orderBy('id', 'desc')
             ->get();
 
         return view('reviews', compact('customer_reviews'));
+    }
+
+    public function reviewShow($id)
+    {
+        $review = CustomerReview::where('is_active', 1)->findOrFail($id);
+
+        return view('review-detail', compact('review'));
     }
 
 
@@ -107,7 +114,8 @@ class WelcomeController extends Controller
         }
 
         $data = $query->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
+            ->customerDisplayOrder()
+            ->get();
 
         // Get first event for display (or null if no results)
         $data1 = $data->isNotEmpty() ? $data->first() : null;

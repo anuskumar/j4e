@@ -1,18 +1,13 @@
-<?php
-$page = 'venue/edit_seating';
-$seatingImage = $data->seating_image
-    ? asset('storage/uploads/venue_seating/' . $data->seating_image)
-    : asset('assets/img/default-seating.jpg');
-?>
+<?php $page = 'venue/create_seating'; ?>
 @extends('admin.layout.app')
 
-@section('page_title', 'Edit Seating')
+@section('page_title', 'Create Seating')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
     <li class="breadcrumb-item"><a href="{{ url('venue/list') }}">Venues</a></li>
     <li class="breadcrumb-item"><a href="{{ url('venue/manage_Seating', $venue->id) }}">Manage Seating</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Edit Seating</li>
+    <li class="breadcrumb-item active" aria-current="page">Create Seating</li>
 @endsection
 
 @section('admin_content')
@@ -27,18 +22,14 @@ $seatingImage = $data->seating_image
                     <img alt="Seating preview"
                         id="seating-image-preview"
                         class="event-preview-img"
-                        src="{{ $seatingImage }}"
+                        src="{{ asset('assets/img/default-seating.jpg') }}"
                         onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
                     <label for="seating_image" class="fas fa-camera event-image-edit mb-0" title="Upload seating image"></label>
                 </div>
-                <h5 class="main-profile-name mb-1" id="preview-seating-name">{{ $data->seating_type_name }}</h5>
+                <h5 class="main-profile-name mb-1" id="preview-seating-name">New Seating</h5>
                 <p class="main-profile-name-text text-muted mb-2">{{ $venue->name }}</p>
-                <span class="badge {{ $data->is_active == 1 ? 'bg-success-transparent' : 'bg-warning-transparent' }}" id="preview-status-badge">
-                    {{ $data->is_active == 1 ? 'Active' : 'Inactive' }}
-                </span>
-                <p class="form-field-hint mb-0 mt-2" id="seating-image-file-name">
-                    {{ $data->seating_image ? basename($data->seating_image) : 'JPG, PNG or WEBP — max 2MB' }}
-                </p>
+                <span class="badge bg-success-transparent" id="preview-status-badge">Active</span>
+                <p class="form-field-hint mb-0 mt-2" id="seating-image-file-name">JPG, PNG or WEBP — max 2MB</p>
             </div>
         </div>
 
@@ -52,7 +43,7 @@ $seatingImage = $data->seating_image
                         </div>
                         <div class="media-body">
                             <span>Seating Type</span>
-                            <div id="preview-name">{{ $data->seating_type_name }}</div>
+                            <div id="preview-name">Not set yet</div>
                         </div>
                     </div>
                     <div class="media">
@@ -61,7 +52,7 @@ $seatingImage = $data->seating_image
                         </div>
                         <div class="media-body">
                             <span>Total Seats</span>
-                            <div id="preview-seats">{{ $data->number_of_seats }}</div>
+                            <div id="preview-seats">Not set yet</div>
                         </div>
                     </div>
                     <div class="media mb-0">
@@ -70,7 +61,7 @@ $seatingImage = $data->seating_image
                         </div>
                         <div class="media-body">
                             <span>Serial Range</span>
-                            <div id="preview-serial">{{ $data->seat_serial_prefix }}{{ $data->seat_serial_start }} - {{ $data->seat_serial_prefix }}{{ $data->seat_serial_end }}</div>
+                            <div id="preview-serial">Not set yet</div>
                         </div>
                     </div>
                 </div>
@@ -91,9 +82,9 @@ $seatingImage = $data->seating_image
                     </div>
                 @endif
 
-                <form class="form-horizontal" action="{{ url('venue/update_Seating') }}" method="POST" id="seating-edit-form" enctype="multipart/form-data">
+                <form class="form-horizontal" action="{{ url('venue/store_seating') }}" method="POST" id="seating-create-form" enctype="multipart/form-data">
                     @csrf
-                    <input type="hidden" name="id" value="{{ $data->id }}">
+                    <input type="hidden" name="venue" value="{{ $venue->id }}">
                     <input type="file" name="seating_image" id="seating_image" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp">
 
                     <div class="mb-4 main-content-label">Basic Information</div>
@@ -106,7 +97,8 @@ $seatingImage = $data->seating_image
                                 class="form-control @error('seating_type_name') is-invalid @enderror"
                                 name="seating_type_name"
                                 id="seating_type_name"
-                                value="{{ old('seating_type_name', $data->seating_type_name) }}"
+                                placeholder="e.g. VIP, General Admission"
+                                value="{{ old('seating_type_name') }}"
                                 maxlength="255"
                                 required>
                         </div>
@@ -125,7 +117,8 @@ $seatingImage = $data->seating_image
                                     class="form-control @error('number_of_seats') is-invalid @enderror"
                                     name="number_of_seats"
                                     id="number_of_seats"
-                                    value="{{ old('number_of_seats', $data->number_of_seats) }}"
+                                    placeholder="Enter total seats"
+                                    value="{{ old('number_of_seats') }}"
                                     required>
                             </div>
                             @error('number_of_seats')
@@ -140,7 +133,8 @@ $seatingImage = $data->seating_image
                                     class="form-control @error('seat_serial_prefix') is-invalid @enderror"
                                     name="seat_serial_prefix"
                                     id="seat_serial_prefix"
-                                    value="{{ old('seat_serial_prefix', $data->seat_serial_prefix) }}"
+                                    placeholder="e.g. A, VIP"
+                                    value="{{ old('seat_serial_prefix') }}"
                                     required>
                             </div>
                             @error('seat_serial_prefix')
@@ -157,7 +151,8 @@ $seatingImage = $data->seating_image
                                 class="form-control @error('seat_serial_start') is-invalid @enderror"
                                 name="seat_serial_start"
                                 id="seat_serial_start"
-                                value="{{ old('seat_serial_start', $data->seat_serial_start) }}"
+                                placeholder="Starting number"
+                                value="{{ old('seat_serial_start', 1) }}"
                                 required>
                             @error('seat_serial_start')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -170,7 +165,8 @@ $seatingImage = $data->seating_image
                                 class="form-control @error('seat_serial_end') is-invalid @enderror"
                                 name="seat_serial_end"
                                 id="seat_serial_end"
-                                value="{{ old('seat_serial_end', $data->seat_serial_end) }}"
+                                placeholder="Ending number"
+                                value="{{ old('seat_serial_end') }}"
                                 required>
                             @error('seat_serial_end')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -183,7 +179,8 @@ $seatingImage = $data->seating_image
                         <textarea class="form-control @error('seating_type_desc') is-invalid @enderror"
                             name="seating_type_desc"
                             id="seating_type_desc"
-                            rows="3">{{ old('seating_type_desc', $data->seating_type_desc) }}</textarea>
+                            rows="3"
+                            placeholder="Optional description">{{ old('seating_type_desc') }}</textarea>
                         @error('seating_type_desc')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -195,8 +192,8 @@ $seatingImage = $data->seating_image
                             <span class="tx-13 fw-semibold">Active</span>
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch" id="is_active_switch"
-                                    {{ old('is_active', $data->is_active) == '1' ? 'checked' : '' }}>
-                                <input type="hidden" name="is_active" id="is_active" value="{{ old('is_active', $data->is_active) }}">
+                                    {{ old('is_active', '1') == '1' ? 'checked' : '' }}>
+                                <input type="hidden" name="is_active" id="is_active" value="{{ old('is_active', '1') }}">
                             </div>
                         </div>
                     </div>
@@ -204,8 +201,8 @@ $seatingImage = $data->seating_image
             </div>
             <div class="card-footer d-flex justify-content-between">
                 <a href="{{ url('venue/manage_Seating', $venue->id) }}" class="btn btn-outline-secondary">Cancel</a>
-                <button type="submit" form="seating-edit-form" class="btn btn-primary waves-effect waves-light">
-                    <i class="fe fe-save me-1"></i> Update Seating
+                <button type="submit" form="seating-create-form" class="btn btn-primary waves-effect waves-light">
+                    <i class="fe fe-save me-1"></i> Create Seating
                 </button>
             </div>
         </div>
@@ -227,7 +224,7 @@ jQuery(document).ready(function ($) {
         const end = $('#seat_serial_end').val();
         const isActive = $('#is_active_switch').is(':checked');
 
-        $('#preview-seating-name').text(name || 'Seating');
+        $('#preview-seating-name').text(name || 'New Seating');
         $('#preview-name').text(name || 'Not set yet');
         $('#preview-seats').text(seats || 'Not set yet');
         $('#preview-serial').text(prefix && start && end ? prefix + start + ' - ' + prefix + end : 'Not set yet');
@@ -235,6 +232,15 @@ jQuery(document).ready(function ($) {
             .text(isActive ? 'Active' : 'Inactive')
             .toggleClass('bg-success-transparent', isActive)
             .toggleClass('bg-warning-transparent', !isActive);
+    }
+
+    function autoCalculateEnd() {
+        const start = parseInt($('#seat_serial_start').val(), 10);
+        const total = parseInt($('#number_of_seats').val(), 10);
+
+        if (start > 0 && total > 0) {
+            $('#seat_serial_end').val(start + total - 1);
+        }
     }
 
     function handleImageFile(file) {
@@ -245,6 +251,8 @@ jQuery(document).ready(function ($) {
         if (file.size > 2 * 1024 * 1024) {
             alert('Seating image must not exceed 2MB.');
             $('#seating_image').val('');
+            $('#seating-image-preview').attr('src', defaultImage);
+            $('#seating-image-file-name').text('JPG, PNG or WEBP — max 2MB');
             return;
         }
 
@@ -265,7 +273,14 @@ jQuery(document).ready(function ($) {
         handleImageFile(this.files[0]);
     });
 
-    $('#seating_type_name, #number_of_seats, #seat_serial_prefix, #seat_serial_start, #seat_serial_end').on('input change', updatePreview);
+    $('#number_of_seats, #seat_serial_start').on('input', function () {
+        autoCalculateEnd();
+        updatePreview();
+    });
+
+    $('#seating_type_name, #seat_serial_prefix, #seat_serial_end').on('input', updatePreview);
+    autoCalculateEnd();
+    updatePreview();
 });
 </script>
 @endpush

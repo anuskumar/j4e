@@ -45,6 +45,10 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-body">
+                @if (session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
+
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul class="mb-0">
@@ -111,7 +115,7 @@
                         <label class="form-field-label" for="customer_photo">Customer Photo</label>
                         <input type="file" class="form-control @error('customer_photo') is-invalid @enderror"
                             name="customer_photo" id="customer_photo" accept="image/jpeg,image/png,image/jpg,image/webp">
-                        <p class="form-field-hint mb-0">Leave empty to keep the current photo.</p>
+                        <p class="form-field-hint mb-0">JPG, PNG or WEBP — max 2MB. Leave empty to keep the current photo.</p>
                         @error('customer_photo')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -154,6 +158,13 @@ jQuery(document).ready(function ($) {
         if (!file || !file.type.startsWith('image/')) {
             return;
         }
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Customer photo must be 2MB or smaller.');
+            $(this).val('');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function (event) {
             $('#review-photo-preview').attr('src', event.target.result);

@@ -18,6 +18,7 @@ use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ResellerController;
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
 Route::get('/reviews', [WelcomeController::class, 'reviews'])->name('reviews');
+Route::get('/reviews/{id}', [WelcomeController::class, 'reviewShow'])->name('reviews.show');
 // Route::get('/event_list_frontend', [WelcomeController::class, 'event_list_frontend']);
 Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend'])->name('new_eventlistfrontend');
 Route::get('/event_ticket_listing', [WelcomeController::class, 'event_ticket_listing']);
@@ -276,6 +278,8 @@ Route::group(['prefix' => 'venue'], function () {
     Route::post('update', [VenueController::class, 'update']);
     Route::delete('destroy/{id}', [VenueController::class, 'delete']);
     Route::get('manage_Seating/{id}', [VenueController::class, 'manage_Seating']);
+    Route::get('create_seating/{id}', [VenueController::class, 'create_seating']);
+    Route::get('view_seating/{id}', [VenueController::class, 'view_seating']);
     Route::get('edit_seating/{id}', [VenueController::class, 'edit_seating']);
     Route::post('store_seating', [VenueController::class, 'store_seating']);
     Route::post('update_Seating', [VenueController::class, 'update_Seating']);

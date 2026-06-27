@@ -36,12 +36,27 @@ class VenueController extends Controller
 
     }
 
-    public function manage_Seating($id){
+    public function manage_Seating($id)
+    {
+        $venue = VenueModel::findOrFail($id);
+        $data = VenueSeating::where('venue', $id)->orderBy('id', 'desc')->get();
 
-        $data = VenueSeating::where('venue',$id)->get();
+        return view('admin.venue.manage_seating', compact('data', 'venue'));
+    }
 
-        return view('admin.venue.manage_seating',compact('data','id'));
+    public function create_seating($venueId)
+    {
+        $venue = VenueModel::findOrFail($venueId);
 
+        return view('admin.venue.create_seating', compact('venue'));
+    }
+
+    public function view_seating($id)
+    {
+        $data = VenueSeating::findOrFail($id);
+        $venue = VenueModel::findOrFail($data->venue);
+
+        return view('admin.venue.view_seating', compact('data', 'venue'));
     }
 
     /**
@@ -178,20 +193,15 @@ class VenueController extends Controller
 
         $data->save();
 
-        return back();
-
+        return redirect('venue/manage_Seating/' . $request->venue)->with('success', 'Seating created successfully.');
     }
 
-    public function edit_seating( string $id){
+    public function edit_seating(string $id)
+    {
+        $data = VenueSeating::findOrFail($id);
+        $venue = VenueModel::findOrFail($data->venue);
 
-        $data = VenueSeating::find($id);
-
-        return view('admin.venue.edit_seating',compact('data','id'));
-        // $data = VenueSeating::where('venue',$id)->get();
-
-        // return view('admin.venue.edit_seating',compact('data','id'));
-
-
+        return view('admin.venue.edit_seating', compact('data', 'venue'));
     }
 
 public function update_Seating(Request $request){
@@ -222,9 +232,8 @@ public function update_Seating(Request $request){
         }
    $data->save();
 
-return redirect('venue/manage_Seating'.'/'.$data->venue);
-
- }
+   return redirect('venue/manage_Seating/' . $data->venue)->with('success', 'Seating updated successfully.');
+}
 
  public function delete_seating( $id)
     {

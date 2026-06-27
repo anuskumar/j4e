@@ -34,40 +34,7 @@
 						<div class="col-md-8 col-lg-8 col-xl-9">
 							<div class="doc-review review-listing">
 
-								<!-- Review Listing -->
-								<ul class="comments-list">
-									@forelse ($customer_reviews as $review)
-									<li>
-										<div class="comment">
-											<img class="avatar rounded-circle" alt="{{ $review->customer_name }}"
-												src="{{ $review->photoUrl() }}"
-												onerror="this.src='{{ asset('assets/img/testimonial/avatar-01.jpg') }}'">
-											<div class="comment-body">
-												<div class="meta-data">
-													<span class="comment-author">{{ $review->customer_name }}</span>
-													@if ($review->subtitle)
-													<span class="comment-date">{{ $review->subtitle }}</span>
-													@endif
-													<div class="review-count rating">
-														@include('partials.star_rating', ['rating' => $review->rating, 'showAverage' => true])
-													</div>
-												</div>
-												<p class="comment-content">
-													{{ $review->review_content }}
-												</p>
-											</div>
-										</div>
-									</li>
-									@empty
-									<li>
-										<div class="comment">
-											<div class="comment-body">
-												<p class="comment-content mb-0">No customer reviews available yet.</p>
-											</div>
-										</div>
-									</li>
-									@endforelse
-								</ul>
+								@include('partials.reviews_list')
 								<!-- /Comment List -->
 
 							</div>

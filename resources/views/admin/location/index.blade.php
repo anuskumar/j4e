@@ -1,5 +1,13 @@
-<?php $page="location/list";?>
+<?php $page = 'location/list'; ?>
 @extends('admin.layout.app')
+
+@section('page_title', 'Locations')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Locations</li>
+@endsection
+
 @section('admin_content')
 
 	<!-- Row -->

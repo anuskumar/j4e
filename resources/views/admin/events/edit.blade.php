@@ -19,10 +19,23 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
-												<label class="form-label"> Event Name</label>
+												<label class="form-label">Event Name</label>
 											</div>
-											<div class="col-md-6">
-												<input type="text" class="form-control" name="event_name"  value="{{ $data->event_name }}">
+											<div class="col-md-9">
+                                                <div class="row g-2">
+                                                    <div class="col-md-8">
+                                                        <input type="text" class="form-control" name="event_name" value="{{ $data->event_name }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label tx-12 mb-1">Display Priority</label>
+                                                        <input type="number" min="0" max="9999" class="form-control @error('priority') is-invalid @enderror"
+                                                               name="priority" value="{{ old('priority', $data->priority ?? 0) }}" required>
+                                                        @error('priority')
+                                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                        @enderror
+                                                    </div>
+                                                </div>
+                                                <small class="form-text text-muted">Higher priority number appears first on the customer site.</small>
 											</div>
 										</div>
 									</div>

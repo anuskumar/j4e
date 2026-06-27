@@ -16,6 +16,12 @@ class Events extends Model
     {
         return $this->hasMany(EventTickets::class, 'event');
     }
+
+    public function scopeCustomerDisplayOrder($query)
+    {
+        return $query->orderByDesc('event.priority')->orderBy('event.event_from_date');
+    }
+
     public function venue()
     {
         return $this->belongsTo(VenueModel::class, 'venue');

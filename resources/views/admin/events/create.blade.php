@@ -120,7 +120,7 @@
                     <label for="event_image" class="fas fa-camera event-image-edit mb-0" title="Upload event image"></label>
                 </div>
                 <h5 class="main-profile-name mb-1" id="preview-event-name">New Event</h5>
-                <p class="main-profile-name-text text-muted mb-2">Event Details</p>
+                <p class="main-profile-name-text text-muted mb-2">Priority: <span id="preview-priority">0</span></p>
                 <p class="form-field-hint mb-0" id="event-image-file-name">JPG, PNG or WEBP — recommended 1500×700px</p>
             </div>
         </div>
@@ -198,22 +198,42 @@
 
                     <div class="mb-4 main-content-label">Basic Information</div>
 
-                    <div class="form-group form-section-spacer">
-                        <label class="form-field-label" for="event_name">Event Name <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fe fe-calendar"></i></span>
-                            <input type="text"
-                                class="form-control @error('event_name') is-invalid @enderror"
-                                name="event_name"
-                                id="event_name"
-                                placeholder="Enter event name"
-                                value="{{ old('event_name') }}"
-                                maxlength="255"
-                                required>
+                    <div class="row g-3 form-section-spacer">
+                        <div class="col-md-8">
+                            <label class="form-field-label" for="event_name">Event Name <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                <input type="text"
+                                    class="form-control @error('event_name') is-invalid @enderror"
+                                    name="event_name"
+                                    id="event_name"
+                                    placeholder="Enter event name"
+                                    value="{{ old('event_name') }}"
+                                    maxlength="255"
+                                    required>
+                            </div>
+                            @error('event_name')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('event_name')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
+                        <div class="col-md-4">
+                            <label class="form-field-label" for="priority">Display Priority <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fe fe-layers"></i></span>
+                                <input type="number"
+                                    min="0"
+                                    max="9999"
+                                    class="form-control @error('priority') is-invalid @enderror"
+                                    name="priority"
+                                    id="priority"
+                                    value="{{ old('priority', '0') }}"
+                                    required>
+                            </div>
+                            <small class="form-field-hint">Higher number appears first on customer site.</small>
+                            @error('priority')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
 
                     <div class="row g-3 form-section-spacer">
@@ -408,7 +428,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 main-content-label">Additional Details</div>
+                    <!-- <div class="mb-4 main-content-label">Additional Details</div> -->
 
                     <div class="form-group mb-0">
                         <label class="form-field-label" for="event_desc">Event Description</label>
@@ -696,6 +716,7 @@ jQuery(document).ready(function ($) {
         const endTime = $('#event_end_time').val();
         const fee = $('#seller_fee_percent').val();
         const customerFee = $('#customer_fee_percent').val();
+        const priority = $('#priority').val();
 
         $('#preview-event-name').text(name || 'New Event');
         $('#preview-event-type').text(eventType && eventType !== 'Select event type' && eventType.indexOf('Create new') !== 0 ? eventType : 'Not selected');
@@ -716,6 +737,7 @@ jQuery(document).ready(function ($) {
 
         $('#preview-fee').text(fee ? fee + '%' : '10%');
         $('#preview-customer-fee').text(customerFee !== '' ? customerFee + '%' : '0%');
+        $('#preview-priority').text(priority !== '' ? priority : '0');
     }
 
     function handleImageFile(file) {
@@ -764,7 +786,7 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $('#event_name, #event_from_date, #event_to_date, #event_start_time, #event_end_time, #seller_fee_percent, #customer_fee_percent').on('input change', updatePreview);
+    $('#event_name, #event_from_date, #event_to_date, #event_start_time, #event_end_time, #seller_fee_percent, #customer_fee_percent, #priority').on('input change', updatePreview);
     $('#event_type, #venue').on('change', updatePreview);
     updatePreview();
 });
