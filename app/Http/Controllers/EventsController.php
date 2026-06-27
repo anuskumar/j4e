@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ArtistField;
 use App\Models\ArtistModel;
 use App\Models\EventImages;
 use App\Models\Events;
 use App\Models\EventTags;
 use App\Models\EventTiming;
 use App\Models\EventType;
+use App\Models\LocationModel;
 use App\Models\RequestEventModel;
 use App\Models\TicketType;
 use App\Models\VenueModel;
+use App\Models\VenueType;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -21,24 +25,84 @@ class EventsController extends Controller
     {
         $this->middleware('auth');
     }
-    public function index()
+    public function index(Request $request)
     {
+        $query = Events::query()
+            ->leftJoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftJoin('users', 'users.id', 'event.event_added_by')
+            ->leftJoin('venue', 'venue.id', 'event.venue')
+            ->leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event_type.event_type_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'location.id as location_id',
+                'venue.id as venue_id',
+                'venue.name as venue_name'
+            )
+            ->orderByDesc('event.id');
 
+        if ($request->filled('event_type')) {
+            $query->where('event.event_type', $request->event_type);
+        }
 
+        if ($request->filled('location_id')) {
+            $query->where('location.id', $request->location_id);
+        }
 
-        $data = Events::
-        leftjoin('event_type','event_type.id','event.event_type')
-        ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
-        ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city')
-      ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-      ->orderByDesc('event.id')
-      ->get();
-    //    dd($data);
-      return view('admin.events.list',compact('data'));
+        if ($request->filled('venue_id')) {
+            $query->where('venue.id', $request->venue_id);
+        }
 
+        if ($request->filled('event_date_from')) {
+            $query->whereDate('event.event_from_date', '>=', $request->event_date_from);
+        }
+
+        if ($request->filled('event_date_to')) {
+            $query->where(function ($dateQuery) use ($request) {
+                $dateQuery->whereDate('event.event_to_date', '<=', $request->event_date_to)
+                    ->orWhere(function ($fallback) use ($request) {
+                        $fallback->whereNull('event.event_to_date')
+                            ->whereDate('event.event_from_date', '<=', $request->event_date_to);
+                    });
+            });
+        }
+
+        $data = $query->get();
+
+        $eventTypes = EventType::orderBy('event_type_name')->get();
+
+        $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+            ->orderBy('location_name')
+            ->get();
+
+        $venuesQuery = VenueModel::leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id', 'venue.name as venue_name', 'location_name', 'cities.name as city_name', 'country_name', 'venue.location as location_id');
+
+        if ($request->filled('location_id')) {
+            $venuesQuery->where('venue.location', $request->location_id);
+        }
+
+        $venues = $venuesQuery->orderBy('venue.name')->get();
+
+        $filters = [
+            'event_type' => $request->event_type,
+            'location_id' => $request->location_id,
+            'venue_id' => $request->venue_id,
+            'event_date_from' => $request->event_date_from,
+            'event_date_to' => $request->event_date_to,
+        ];
+
+        return view('admin.events.list', compact('data', 'eventTypes', 'locations', 'venues', 'filters'));
     }
 
     /**
@@ -57,8 +121,24 @@ class EventsController extends Controller
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
     $ticketTypes = TicketType::where('is_active', 1)->get();
-    // dd($event_type);
-    return view('admin.events.create',compact('event_type','venue','artists','eventTags','ticketTypes'));
+    $venueTypes = VenueType::orderBy('venue_type_name')->get();
+    $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+        ->leftJoin('cities', 'cities.id', 'location.city')
+        ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+        ->orderBy('location_name')
+        ->get();
+    $artistFields = ArtistField::orderBy('field_name')->get();
+
+    return view('admin.events.create', compact(
+        'event_type',
+        'venue',
+        'artists',
+        'eventTags',
+        'ticketTypes',
+        'venueTypes',
+        'locations',
+        'artistFields'
+    ));
 
      }
      public function show($id)
@@ -89,7 +169,9 @@ class EventsController extends Controller
             'event_is_active' => 'required',
             'event_tag' => 'required',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
-
+            'customer_fee_percent' => 'required|numeric|min:0|max:100',
+            'event_start_time' => 'required|date_format:H:i',
+            'event_end_time' => 'required|date_format:H:i|after:event_start_time',
         ]);
 
         $event = new Events();
@@ -110,6 +192,7 @@ class EventsController extends Controller
         $event->event_from_date = $request->event_from_date;
         $event->event_tag = $request->event_tag;
         $event->seller_fee_percent = $request->seller_fee_percent;
+        $event->customer_fee_percent = $request->customer_fee_percent;
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
@@ -123,6 +206,15 @@ class EventsController extends Controller
 
         $event->save();
 
+        $timing = new EventTiming();
+        $timing->event = $event->id;
+        $timing->event_date = $request->event_from_date;
+        $timing->from_time = $request->event_start_time;
+        $timing->to_time = $request->event_end_time;
+        $timing->is_active = 1;
+        $timing->save();
+
+        app(NotificationService::class)->notifyEventCreated($event);
 
         return redirect('events/list');
      }
@@ -154,7 +246,8 @@ class EventsController extends Controller
         $validated = $request->validate([
             'event_name' => 'required',
             'event_tag' => 'required',
-            'seller_fee_percent' => 'required|numeric|min:0|max:100'
+            'seller_fee_percent' => 'required|numeric|min:0|max:100',
+            'customer_fee_percent' => 'required|numeric|min:0|max:100',
 
             // 'event_is_active' => 'required'
         ]);
@@ -183,6 +276,7 @@ class EventsController extends Controller
         $data->event_to_date = $request->event_to_date;
         $data->event_tag = $request->event_tag;
         $data->seller_fee_percent = $request->seller_fee_percent;
+        $data->customer_fee_percent = $request->customer_fee_percent;
         // $data->event_added_by =Auth::user()->id;
         $data->event_is_active = $request->event_is_active;
 

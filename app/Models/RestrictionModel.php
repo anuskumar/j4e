@@ -8,5 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class RestrictionModel extends Model
 {
     use HasFactory;
+
     protected $table = 'tickets_restrictions';
+
+    protected $fillable = [
+        'restrictions',
+        'is_active',
+    ];
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RequestEventModel;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class EventrequestController extends Controller
@@ -20,6 +21,9 @@ class EventrequestController extends Controller
         $data->event_details = $request->event_details;
         $data->phone = $request->phone;
         $data->save();
+
+        app(NotificationService::class)->notifyEventRequest($data);
+
         return redirect()->back()->with('success','Sent Request Successfully');
 
     }

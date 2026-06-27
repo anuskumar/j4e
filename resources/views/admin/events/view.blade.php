@@ -86,6 +86,17 @@
 										</div>
 									</div>
 
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
+												<label class="form-label">Customer Fee (%)</label>
+											</div>
+											<div class="col-md-6">
+                                                <input type="text" class="form-control" value="{{ $data->customer_fee_percent ?? 0 }}%" readonly>
+											</div>
+										</div>
+									</div>
+
 
                                     <div class="form-group ">
 										<div class="row">

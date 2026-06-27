@@ -52,35 +52,40 @@ class EventTypeController extends Controller
 
     public function store(Request $request)
     {
-        $eventtypeuser = new EventType();
-        $eventtypeuser->event_type_name = $request->name;
-        $eventtypeuser->is_active = $request->is_active;
-        $eventtypeuser->save();
-        return redirect('eventtype/list');
-     }
-     public function update(Request $request){
-
-        $validated = $request->validate([
-            'id' => 'required',
-
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'is_active' => 'nullable|in:0,1',
         ]);
 
-       $data=EventType::find($request->id);
-       $data->event_type_name=$request->event_type_name;
-       $data->is_active = $request->is_active;
+        $eventtypeuser = new EventType();
+        $eventtypeuser->event_type_name = $request->name;
+        $eventtypeuser->is_active = $request->input('is_active', 1);
+        $eventtypeuser->save();
 
+        return redirect('eventtype/list')->with('success', 'Event type created successfully.');
+    }
 
-    //   $data->status=$request->status;
-
-       $data->save();
-       return redirect('eventtype/list');
-
-     }
-     public function delete( $id)
+    public function update(Request $request)
     {
-        $data=EventType::find($id);
-        $data->delete();
-        return redirect('/eventtype/list');
+        $request->validate([
+            'id' => 'required|exists:event_type,id',
+            'event_type_name' => 'required|string|max:255',
+            'is_active' => 'nullable|in:0,1',
+        ]);
 
+        $data = EventType::findOrFail($request->id);
+        $data->event_type_name = $request->event_type_name;
+        $data->is_active = $request->input('is_active', 0);
+        $data->save();
+
+        return redirect('eventtype/list')->with('success', 'Event type updated successfully.');
+    }
+
+    public function delete($id)
+    {
+        $data = EventType::findOrFail($id);
+        $data->delete();
+
+        return redirect('eventtype/list')->with('success', 'Event type deleted successfully.');
     }
 }

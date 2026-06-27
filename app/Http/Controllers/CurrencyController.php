@@ -27,10 +27,7 @@ class CurrencyController extends Controller
 
     public function create()
     {
-        //
-        $data = Currency::get();
-        //  dd($customer_create);
-        return view('admin.currency.create', compact('data'));
+        return view('admin.currency.create');
     }
     public function edit(string $id)
     {
@@ -56,7 +53,8 @@ class CurrencyController extends Controller
         $data->currency_rate = $request->currency_rate;
         $data->is_active = $request->is_active;
         $data->save();
-        return redirect('currency/list');
+
+        return redirect('currency/list')->with('success', 'Currency created successfully.');
     }
     public function update(Request $request)
     {

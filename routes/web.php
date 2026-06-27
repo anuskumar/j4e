@@ -12,11 +12,12 @@ use App\Http\Controllers\EmailController;
 use App\Http\Controllers\Emailj4eController;
 use App\Http\Controllers\EventrequestController;
 use App\Http\Controllers\EventsController;
+use App\Http\Controllers\EventsMasterDataController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\LocationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ResellerController;
 use App\Http\Controllers\RestrictionController;
@@ -78,6 +79,10 @@ Route::get('/home', [HomeController::class, 'redirectToRoleHome'])->name('home')
 // Role-based home routes
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmin']], function () {
     Route::get('/home', [HomeController::class, 'adminHome'])->name('admin.home');
+    Route::get('notifications/{id}/open', [NotificationController::class, 'open'])->name('admin.notifications.open');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.read-all');
+    Route::get('notifications/count', [NotificationController::class, 'count'])->name('admin.notifications.count');
 });
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
@@ -314,6 +319,11 @@ Route::group(['prefix' => 'events'], function () {
     Route::get('create', [EventsController::class, 'create']);
     Route::get('list', [EventsController::class, 'index']);
     Route::post('store', [EventsController::class, 'store']);
+    Route::post('quick-create/event-tag', [EventsMasterDataController::class, 'storeEventTag']);
+    Route::post('quick-create/event-type', [EventsMasterDataController::class, 'storeEventType']);
+    Route::post('quick-create/venue', [EventsMasterDataController::class, 'storeVenue']);
+    Route::post('quick-create/ticket-type', [EventsMasterDataController::class, 'storeTicketType']);
+    Route::post('quick-create/artist', [EventsMasterDataController::class, 'storeArtist']);
     Route::get('view/{id}', [EventsController::class, 'show']);
     Route::get('edit/{id}', [EventsController::class, 'edit']);
     Route::post('update', [EventsController::class, 'update']);
@@ -433,11 +443,15 @@ Route::group(['prefix' => 'currency', 'middleware' => 'auth'], function () {
 });
 Route::get('/get-currency-rate/{id}', [CurrencyController::class, 'getRate']);
 
-Route::group(['prefix' => 'ticket_restrictions'], function () {
+Route::group(['prefix' => 'ticket_restrictions', 'middleware' => 'auth'], function () {
 
+    Route::get('/', [RestrictionController::class, 'index']);
     Route::get('create', [RestrictionController::class, 'create']);
     Route::post('store', [RestrictionController::class, 'store']);
-    Route::get('list', [RestrictionController::class, 'index']);
+    Route::get('list', [RestrictionController::class, 'index'])->name('ticket_restrictions.list');
+    Route::get('view/{id}', [RestrictionController::class, 'show']);
+    Route::get('edit/{id}', [RestrictionController::class, 'edit']);
+    Route::post('update', [RestrictionController::class, 'update']);
     Route::delete('destroy/{id}', [RestrictionController::class, 'delete']);
 });
 

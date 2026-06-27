@@ -13,7 +13,7 @@
 		<title> Login Admin</title>
 
 		<!--- Favicon --->
-		<link rel="icon" href="admin_assets/img/brand/favicon.png" type="image/x-icon"/>
+		<link rel="icon" href="{{ \App\Models\CompanySettings::appLogoUrl() }}" type="image/jpeg"/>
 
 		<!-- Bootstrap css -->
 		<link href="admin_assets/plugins/bootstrap/css/bootstrap.css" rel="stylesheet" id="style"/>
@@ -47,7 +47,7 @@
 				<div class="wd-md-50p login d-none d-md-block page-signin-style p-5 text-white" >
 					<div class="my-auto authentication-pages">
 						<div>
-							<img src="admin_assets/img/brand/logo-white.png" class=" m-0 mb-4" alt="logo">
+							<img src="{{ \App\Models\CompanySettings::appLogoUrl() }}" class=" m-0 mb-4" alt="logo">
 							<h5 class="mb-4">Responsive Modern Dashboard &amp; Admin Template</h5>
 							<p class="mb-5">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
 							<a href="index.html" class="btn btn-success">Learn More</a>

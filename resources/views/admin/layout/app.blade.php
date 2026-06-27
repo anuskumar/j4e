@@ -16,7 +16,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!--- Favicon --->
-    <link rel="icon" href="{{ asset('admin_assets/img/brand/favicon.png') }}" type="image/x-icon" />
+    <link rel="icon" href="{{ $appLogoUrl }}" type="image/jpeg" />
 
     <!-- Bootstrap css -->
     <link href="{{ asset('admin_assets/plugins/bootstrap/css/bootstrap.css') }}" rel="stylesheet" id="style" />
@@ -57,6 +57,22 @@
         .hide-loader {
             display: none;
         }
+
+        .notification-count-badge {
+            position: absolute;
+            top: 8px;
+            right: 4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 10px;
+            background: #ff473d;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 18px;
+            text-align: center;
+        }
         
         /* Ensure Feather icons are visible */
         .side-menu__icon,
@@ -92,7 +108,11 @@
 
 <body class="main-body app sidebar-mini ltr">
 
-    
+    <!-- Loader -->
+    <div id="global-loader">
+        <img src="{{ asset('admin_assets/img/loaders/loader-4.svg') }}" class="loader-img" alt="Loader">
+    </div>
+    <!-- /Loader -->
 
     <!-- page -->
     <div class="page custom-index">
@@ -108,14 +128,10 @@
                                 data-eva="close-outline"></i></a>
                     </div>
                     <div class="responsive-logo">
-                        <a href="index.html" class="header-logo"><img
-                                src="{{ asset('admin_assets/img/brand/logo.png') }}" class="logo-11"></a>
-                        <a href="index.html" class="header-logo">
-                            @if($system && $system->company_logo)
-                                <img src="{{ asset('storage/uploads/images/' . $system->company_logo) }}" alt="logo" onerror="this.src='{{ asset('admin_assets/img/brand/logo.png') }}'">
-                            @else
-                                <img src="{{ asset('admin_assets/img/brand/logo.png') }}" alt="logo">
-                            @endif
+                        <a href="{{ route('admin.home') }}" class="header-logo"><img
+                                src="{{ $appLogoUrl }}" class="logo-11" alt="logo"></a>
+                        <a href="{{ route('admin.home') }}" class="header-logo">
+                            <img src="{{ $appLogoUrl }}" class="logo-1" alt="logo">
                         </a>
 
                     </div>
@@ -300,120 +316,24 @@
 											</div>
 										</div>
 									</div> --}}
+                                @include('admin.layout.partials.notifications')
                                 @php
-                                    use App\Models\RequestEventModel;
-                                    $data = RequestEventModel::where('markas_read', 0)->get();
-                                    $data_count = RequestEventModel::where('markas_read', 0)->count();
+                                    $authProfileImage = Auth::user()->profile
+                                        ? asset('storage/uploads/images/' . Auth::user()->profile)
+                                        : asset('admin_assets/img/faces/6.jpg');
                                 @endphp
-                                <div class="dropdown nav-item main-header-notification">
-                                    <a class="new nav-link" href="javascript:void(0);"><i
-                                            class="fe fe-bell"></i><span class=" pulse"></span></a>
-                                    <div class="dropdown-menu">
-                                        <div class="menu-header-content bg-primary-gradient text-start d-flex">
-                                            <div class="">
-                                                <h6 class="menu-header-title text-white mb-0">{{ $data_count }} new
-                                                    Notifications</h6>
-                                            </div>
-                                            {{-- <div class="my-auto ms-auto">
-													<a class="badge bg-pill bg-warning float-end"   href="javascript:void(0);">Mark All Read</a>
-												</div> --}}
-                                        </div>
-                                        <div class="main-notification-list Notification-scroll">
-                                            @foreach ($data as $val)
-                                                <a class="d-flex p-3 border-bottom"
-                                                    href="{{ route('events.requestlist') }}">
-                                                    <div class="notifyimg bg-success-transparent">
-                                                        <i class="la la-shopping-basket text-success"></i>
-                                                    </div>
-                                                    <div class="ms-3">
-                                                        <h5 class="notification-label mb-1">{{ $val->name }} added
-                                                            new event</h5>
-                                                        <div class="notification-subtext">
-                                                            {{ \Carbon\Carbon::parse($val->created_at)->diffForHumans() }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="ms-auto">
-                                                        <i class="las la-angle-right text-end text-muted"></i>
-                                                    </div>
-                                                </a>
-                                            @endforeach
-
-                                            {{-- <a class="d-flex p-3 border-bottom"   href="javascript:void(0);">
-													<div class="notifyimg bg-danger-transparent">
-														<i class="la la-user-check text-danger"></i>
-													</div>
-													<div class="ms-3">
-														<h5 class="notification-label mb-1">22 verified registrations</h5>
-														<div class="notification-subtext">2 hour ago</div>
-													</div>
-													<div class="ms-auto" >
-														<i class="las la-angle-right text-end text-muted"></i>
-													</div>
-												</a>
-												<a class="d-flex p-3 border-bottom"   href="javascript:void(0);">
-													<div class="notifyimg bg-primary-transparent">
-														<i class="la la-check-circle text-primary"></i>
-													</div>
-													<div class="ms-3">
-														<h5 class="notification-label mb-1">Project has been approved</h5>
-														<div class="notification-subtext">4 hour ago</div>
-													</div>
-													<div class="ms-auto" >
-														<i class="las la-angle-right text-end text-muted"></i>
-													</div>
-												</a>
-												<a class="d-flex p-3 border-bottom"   href="javascript:void(0);">
-													<div class="notifyimg bg-pink-transparent">
-														<i class="la la-file-alt text-pink"></i>
-													</div>
-													<div class="ms-3">
-														<h5 class="notification-label mb-1">New files available</h5>
-														<div class="notification-subtext">10 hour ago</div>
-													</div>
-													<div class="ms-auto" >
-														<i class="las la-angle-right text-end text-muted"></i>
-													</div>
-												</a>
-												<a class="d-flex p-3 border-bottom"   href="javascript:void(0);">
-													<div class="notifyimg bg-warning-transparent">
-														<i class="la la-envelope-open text-warning"></i>
-													</div>
-													<div class="ms-3">
-														<h5 class="notification-label mb-1">New review received</h5>
-														<div class="notification-subtext">1 day ago</div>
-													</div>
-													<div class="ms-auto" >
-														<i class="las la-angle-right text-end text-muted"></i>
-													</div>
-												</a>
-												<a class="d-flex p-3"   href="javascript:void(0);">
-													<div class="notifyimg bg-purple-transparent">
-														<i class="la la-gem text-purple"></i>
-													</div>
-													<div class="ms-3">
-														<h5 class="notification-label mb-1">Updates Available</h5>
-														<div class="notification-subtext">2 days ago</div>
-													</div>
-													<div class="ms-auto" >
-														<i class="las la-angle-right text-end text-muted"></i>
-													</div>
-												</a> --}}
-                                        </div>
-                                        <div class="dropdown-footer">
-                                            <a href="{{ route('events.requestlist') }}">VIEW ALL</a>
-                                        </div>
-                                    </div>
-                                </div>
                                 <div class="dropdown main-profile-menu nav nav-item nav-link">
                                     <a class="profile-user d-flex" href=""><img
-                                            src="{{ asset('admin_assets/img/faces/6.jpg') }}" alt="user-img"
-                                            class="rounded-circle mCS_img_loaded"><span></span></a>
+                                            src="{{ $authProfileImage }}" alt="user-img"
+                                            class="rounded-circle mCS_img_loaded"
+                                            onerror="this.src='{{ asset('admin_assets/img/faces/6.jpg') }}'"><span></span></a>
 
                                     <div class="dropdown-menu">
                                         <div class="main-header-profile header-img">
                                             <div class="main-img-user"><img alt=""
-                                                    src="{{ asset('admin_assets/img/faces/6.jpg') }}"></div>
-                                            <h6>{{ ucfirst(Auth::user()->name) }} {{ Auth::user()->id }}</h6>
+                                                    src="{{ $authProfileImage }}"
+                                                    onerror="this.src='{{ asset('admin_assets/img/faces/6.jpg') }}'"></div>
+                                            <h6>{{ ucfirst(Auth::user()->name) }}</h6>
                                             <span>{{ ucfirst(Auth::user()->user_type) }}</span>
                                         </div>
                                         <a class="dropdown-item" href="{{ route('reseller.profile') }}"><i
@@ -466,42 +386,23 @@
                 <!-- breadcrumb -->
                 <div class="breadcrumb-header justify-content-between">
                     <div>
-                        <h4 class="content-title mb-2">Hi, welcome back!</h4>
+                        <h4 class="content-title mb-2">@yield('page_title', 'Hi, welcome back!')</h4>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="{{ url('home') }}">Dashboard</a></li>
-                                {{-- <li class="breadcrumb-item active" aria-current="page">Project</li> --}}
+                                @hasSection('breadcrumbs')
+                                    @yield('breadcrumbs')
+                                @else
+                                    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Home</li>
+                                @endif
                             </ol>
                         </nav>
                     </div>
                     <div class="d-flex my-auto">
-                        <div class=" d-flex right-page">
-                            {{-- <div class="d-flex justify-content-center me-5">
-									<div class="">
-										<span class="d-block">
-											<span class="label ">EXPENSES</span>
-										</span>
-										<span class="value">
-											$53,000
-										</span>
-									</div>
-									<div class="ms-3 mt-2">
-										<span class="sparkline_bar"></span>
-									</div>
-								</div> --}}
-                            {{-- <div class="d-flex justify-content-center">
-									<div class="">
-										<span class="d-block">
-											<span class="label">PROFIT</span>
-										</span>
-										<span class="value">
-											$34,000
-										</span>
-									</div>
-									<div class="ms-3 mt-2">
-										<span class="sparkline_bar31"></span>
-									</div>
-								</div> --}}
+                        <div class="d-flex right-page">
+                            @hasSection('breadcrumb_stats')
+                                @yield('breadcrumb_stats')
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -666,7 +567,6 @@
         <!-- Footer closed -->
     </div>
 
-    <!-- <div class="loader" id="loader"> -->
     </div>
     <!-- page closed -->
 
@@ -676,7 +576,7 @@
     <script src="{{ asset('admin_assets/js/summernote.min.js') }}"></script>
     <script src="{{ asset('admin_assets/plugins/jquery/jquery.min.js') }}"></script>
 
-
+    @stack('scripts')
 
     <!--- Datepicker js --->
     <script src="{{ asset('admin_assets/plugins/jquery-ui/ui/widgets/datepicker.js') }}"></script>
@@ -742,6 +642,148 @@
 
     <!--- Sidebar js --->
     <script src="{{ asset('admin_assets/plugins/side-menu/sidemenu.js') }}"></script>
+    <script>
+        (function () {
+            function normalizePath(path) {
+                var normalized = (path || '').replace(/\/$/, '');
+                return normalized || '/';
+            }
+
+            function pathBelongsToMenuItem(currentPath, linkPath) {
+                currentPath = normalizePath(currentPath);
+                linkPath = normalizePath(linkPath);
+
+                if (currentPath === linkPath) {
+                    return { matched: true, score: 10000 + linkPath.length };
+                }
+
+                var linkParts = linkPath.split('/').filter(Boolean);
+                var currentParts = currentPath.split('/').filter(Boolean);
+
+                if (!linkParts.length || linkParts[0] !== currentParts[0]) {
+                    return { matched: false, score: 0 };
+                }
+
+                var moduleRoots = [
+                    'eventtype', 'eventtags', 'currency', 'venue', 'slide',
+                    'artistfield', 'venuetype', 'location', 'city',
+                    'ticket_restrictions', 'artist'
+                ];
+
+                if (moduleRoots.indexOf(linkParts[0]) !== -1) {
+                    return { matched: true, score: linkPath.length };
+                }
+
+                if (linkParts[0] === 'events') {
+                    if (linkParts[1] === 'requestlist') {
+                        return { matched: currentParts[1] === 'requestlist', score: linkPath.length };
+                    }
+                    if (linkParts[1] === 'list') {
+                        return { matched: currentParts[1] !== 'requestlist', score: linkPath.length };
+                    }
+                }
+
+                if (linkParts[0] === 'admin' && currentParts[0] === 'admin' && linkParts[linkParts.length - 1] === 'list') {
+                    var prefixLength = linkParts.length - 1;
+                    if (currentParts.length >= prefixLength) {
+                        var prefixMatches = true;
+                        for (var i = 0; i < prefixLength; i++) {
+                            if (linkParts[i] !== currentParts[i]) {
+                                prefixMatches = false;
+                                break;
+                            }
+                        }
+                        if (prefixMatches) {
+                            return { matched: true, score: linkPath.length };
+                        }
+                    }
+                }
+
+                if (linkParts[0] === 'customer_order' && currentParts[0] === 'customer_order' && linkParts[1]) {
+                    return { matched: linkParts[1] === currentParts[1], score: linkPath.length };
+                }
+
+                if (linkPath === '/tickets' && currentPath.indexOf('/tickets') === 0) {
+                    return { matched: true, score: linkPath.length };
+                }
+
+                return { matched: false, score: 0 };
+            }
+
+            function applyActiveSidebarLink($link) {
+                $link.addClass('active');
+
+                if ($link.hasClass('slide-item')) {
+                    $link.closest('.slide-menu').addClass('open').show();
+                    $link.closest('.slide').addClass('is-expanded');
+                    $link.closest('.slide').children('a.side-menu__item[data-bs-toggle="slide"]').addClass('active');
+                } else if ($link.hasClass('sub-side-menu__item')) {
+                    $link.closest('.sub-slide-menu').addClass('open').show();
+                    $link.closest('.sub-slide').addClass('is-expanded');
+                    $link.closest('.slide-menu').addClass('open').show();
+                    $link.closest('.slide').addClass('is-expanded');
+                    $link.closest('.slide').children('a.side-menu__item[data-bs-toggle="slide"]').addClass('active');
+                    $link.closest('.sub-slide').children('a.slide-item[data-bs-toggle="sub-slide"]').addClass('active');
+                } else if ($link.hasClass('side-menu__item') && !$link.attr('data-bs-toggle')) {
+                    $link.closest('.slide').addClass('is-expanded');
+                }
+
+                if ($link.hasClass('slide-item') || $link.hasClass('sub-side-menu__item')) {
+                    var $sidebar = jQuery('.app-sidebar');
+                    if ($sidebar.length && $link.offset()) {
+                        $sidebar.animate({
+                            scrollTop: $link.offset().top - 600
+                        }, 300);
+                    }
+                }
+            }
+
+            function activateSidebarMenu() {
+                if (typeof jQuery === 'undefined') {
+                    return;
+                }
+
+                var currentPath = normalizePath(window.location.pathname);
+                var $bestLink = null;
+                var bestScore = 0;
+
+                jQuery('.side-menu .slide').removeClass('is-expanded');
+                jQuery('.side-menu .sub-slide').removeClass('is-expanded');
+                jQuery('.side-menu .slide-menu, .side-menu .sub-slide-menu').removeClass('open').css('display', '');
+                jQuery('.side-menu a').removeClass('active');
+
+                jQuery('.side-menu a[href]').each(function () {
+                    var href = jQuery(this).attr('href');
+                    if (!href || href.indexOf('javascript') === 0) {
+                        return;
+                    }
+
+                    var linkPath;
+                    try {
+                        linkPath = normalizePath(new URL(href, window.location.origin).pathname);
+                    } catch (e) {
+                        return;
+                    }
+
+                    var result = pathBelongsToMenuItem(currentPath, linkPath);
+                    if (result.matched && result.score > bestScore) {
+                        bestScore = result.score;
+                        $bestLink = jQuery(this);
+                    }
+                });
+
+                if ($bestLink && $bestLink.length) {
+                    applyActiveSidebarLink($bestLink);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', activateSidebarMenu);
+            } else {
+                activateSidebarMenu();
+            }
+        })();
+    </script>
 
     <!--- sticky js --->
     <script src="{{ asset('admin_assets/js/sticky.js') }}"></script>

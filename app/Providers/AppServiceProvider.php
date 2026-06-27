@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\CompanySettings;
+use App\Services\NotificationService;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(NotificationService::class);
     }
 
     /**
@@ -25,5 +29,20 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         Paginator::useBootstrap();
+
+        View::share('appLogoUrl', CompanySettings::appLogoUrl());
+
+        View::composer('admin.layout.app', function ($view) {
+            if (!Auth::check()) {
+                return;
+            }
+
+            $notificationService = app(NotificationService::class);
+
+            $view->with([
+                'adminNotifications' => $notificationService->getUnreadForUser(Auth::user()),
+                'adminNotificationCount' => $notificationService->getUnreadCount(Auth::user()),
+            ]);
+        });
     }
 }

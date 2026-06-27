@@ -153,6 +153,18 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
+												<label class="form-label">Customer Fee (%)</label>
+											</div>
+											<div class="col-md-6">
+                                                <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                                       name="customer_fee_percent" value="{{ old('customer_fee_percent', $data->customer_fee_percent ?? 0) }}" required>
+											</div>
+										</div>
+									</div>
+
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
 												<label class="form-label">Description</label>
 											</div>
 											<div class="col-md-6">

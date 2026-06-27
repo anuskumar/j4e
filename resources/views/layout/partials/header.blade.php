@@ -92,11 +92,7 @@ error_reporting(0);
     <nav class="navbar navbar-expand-lg navbar-dark" style="min-height: 82px; background: rgb(34,30,105); background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
-                @if($settings && $settings->company_logo)
-                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" style="max-width: 300px; height: 70px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
-                @else
-                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="" style="max-width: 300px; height: 70px;" alt="Logo">
-                @endif
+                <img src="{{ $appLogoUrl }}" class="" style="max-width: 300px; height: 70px;" alt="Logo">
             </a>
             
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -283,11 +279,7 @@ error_reporting(0);
                 </span>
             </a>
             <a id="mobile_btn" class="navbar-brand" href="{{ url('/') }}" style="margin-left:40px;">
-                @if($settings && $settings->company_logo)
-                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="300px;" height="60px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
-                @else
-                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="300px;" height="60px;" alt="Logo">
-                @endif
+                <img src="{{ $appLogoUrl }}" class="" width="300px;" height="60px;" alt="Logo">
             </a>
 
 
@@ -295,18 +287,14 @@ error_reporting(0);
             $settings = \App\Models\CompanySettings::first();
             @endphp
             <a href="index" class="navbar-brand logo">
-                @if($settings && $settings->company_logo)
-                    <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="326" height="76" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
-                @else
-                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="326" height="76" alt="Logo">
-                @endif
+                <img src="{{ $appLogoUrl }}" class="" width="326" height="76" alt="Logo">
             </a>
         </div>
 
         <div class="main-menu-wrapper col-12">
             <div class="menu-header">
                 <a href="index">
-                    <img src="{{ asset('assets/img/logoscroll.png') }}" class="img-fluid" alt="Logo">
+                    <img src="{{ $appLogoUrl }}" class="img-fluid" alt="Logo">
                 </a>
                 <a id="menu_close" class="menu-close" href="javascript:void(0);">
                     <i class="fas fa-times"></i>
@@ -328,7 +316,7 @@ error_reporting(0);
 
                 <div class="menu-header">
                     <a href="index">
-                        <img src="{{ asset('assets/img/logoscroll.png') }}" class="img-fluid" alt="Logo">
+                        <img src="{{ $appLogoUrl }}" class="img-fluid" alt="Logo">
                     </a>
                     <a id="menu_close" class="menu-close" href="javascript:void(0);">
                         <i class="fas fa-times"></i>

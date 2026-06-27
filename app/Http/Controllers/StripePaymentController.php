@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session as FacadesSession;
-use App\Http\Controllers\Emailj4eController;
+use App\Services\NotificationService;
 use Session;
 // use Stripe;
 use Stripe\Stripe;
@@ -300,6 +300,15 @@ class StripePaymentController extends Controller
             $ticketName = (string) ($event_tickets->ticket_name ?? '');
             $purchaseId = (int) ($ticket->id ?? 0);
             $soldCount = (int) $ticket_count_data;
+
+            if ($user_data) {
+                app(NotificationService::class)->notifyNewOrder(
+                    $ticket,
+                    $eventName,
+                    (string) ($customerUser->name ?? 'Customer'),
+                    (int) $user_data->id
+                );
+            }
 
             if ($customerUser && !empty($customerUser->email)) {
                 try {

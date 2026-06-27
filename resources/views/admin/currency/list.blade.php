@@ -1,67 +1,95 @@
-<?php $page="currency/list";?>
+<?php $page = 'currency/list'; ?>
 @extends('admin.layout.app')
+
+@section('page_title', 'Currency')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Currency</li>
+@endsection
+
 @section('admin_content')
 
-	<!-- Row -->
-    <div class="row row-sm">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">Currency</h3>
-                        <a href="{{ url('currency/create') }}" class="btn btn-primary">
-                            <i class="fa fa-plus me-2"></i>Create Currency
+<link href="{{ asset('admin_assets/plugins/datatable/datatables.min.css') }}" rel="stylesheet">
+<link href="{{ asset('admin_assets/plugins/datatable/responsive.dataTables.min.css') }}" rel="stylesheet">
+
+<style>
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin-left: 8px;
+    }
+    .dataTables_wrapper .dataTables_length select {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 6px 12px;
+        margin: 0 8px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: var(--primary-bg-color, #6259ca) !important;
+        color: #fff !important;
+        border: none !important;
+    }
+</style>
+
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mg-b-10">Currency</h4>
+                        <p class="text-muted tx-12 mb-0">Manage currencies and exchange rates.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-transparent tx-13">{{ count($data) }} {{ Str::plural('currency', count($data)) }}</span>
+                        <a href="{{ url('currency/create') }}" class="btn btn-primary btn-sm">
+                            <i class="fe fe-plus me-1"></i> Create Currency
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="file-datatable"  class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom">
-                            <thead>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-nowrap mb-0 dataTables" id="file-datatable">
+                        <thead>
+                            <tr>
+                                <th>SL</th>
+                                <th>Name</th>
+                                <th>Short Name</th>
+                                <th>Symbol</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $index => $val)
                                 <tr>
-                                    <th>Sl</th>
-                                    <th class="border-bottom-0"> Name</th>
-                                    <th class="border-bottom-0">Short Name</th>
-                                    <th class="border-bottom-0">Symbol</th>
-                                    <th class="border-bottom-0">Status</th>
-                                    <th class="border-bottom-0">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $no = 1;
-                                @endphp
-                                @foreach ($data as $val)
-                                <tr>
-                                    <td>{{ $no++ }}</td>
-                                    <td>{{ $val->name }}</td>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td><span class="font-weight-semibold">{{ $val->name }}</span></td>
                                     <td>{{ $val->short_name }}</td>
-                                    <td>{{ $val->symbol }}</td>
+                                    <td>{{ $val->symbol ?: '-' }}</td>
                                     <td>
-                                        @if($val->is_active == 1)
+                                        @if ($val->is_active == 1)
                                             <span class="badge bg-success">Active</span>
                                         @else
-                                            <span class="badge bg-danger">Inactive</span>
+                                            <span class="badge bg-warning">Inactive</span>
                                         @endif
                                     </td>
-
-
-                                    {{-- <td>{{$val->last_login ?  date('d/m/Y h:i a',strtotime($val->last_login)) :"" }}</td> --}}
-
-
-                                    <td>
-                                        <div class="table-action">
-                                            <a href="{{url('currency/view',$val->id)}}" class="btn btn-sm bg-primary-light" title="View">
+                                    <td class="text-end">
+                                        <div class="table-action d-flex justify-content-end gap-1">
+                                            <a href="{{ url('currency/view', $val->id) }}" class="btn btn-sm btn-info-light" title="View">
                                                 <i class="far fa-eye"></i>
                                             </a>
-                                            @if($val->is_protected == 0)
-                                                <a href="{{url('currency/edit',$val->id)}}" class="btn btn-sm bg-info-light" title="Edit">
+                                            @if ($val->is_protected == 0)
+                                                <a href="{{ url('currency/edit', $val->id) }}" class="btn btn-sm btn-success-light" title="Edit">
                                                     <i class="far fa-edit"></i>
                                                 </a>
-                                                <form action="{{ url('currency/destroy',$val->id) }}" method="POST" style="display: inline-block;">
+                                                <form action="{{ url('currency/destroy', $val->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this currency?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm bg-danger-light show_confirm" title="Delete">
+                                                    <button type="submit" class="btn btn-sm btn-danger-light" title="Delete">
                                                         <i class="far fa-trash-alt"></i>
                                                     </button>
                                                 </form>
@@ -69,47 +97,40 @@
                                         </div>
                                     </td>
                                 </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div class="d-flex justify-content-center">
-                        {{-- {!! $data->links() !!} --}}
-                        </div>
-                    </div>
+                            @empty
+                                <tr>
+                                    <td class="text-center text-muted py-4">No currencies found</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-
-                {{-- <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="exampleModalCenterTitle">Modal title</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          ...
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                          <button type="button" class="btn btn-primary">Save changes</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div> --}}
-
-
-
-
-
-
             </div>
         </div>
     </div>
-    <script src="admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="admin_assets/js/main.js"></script>
-    <!-- End Row -->
+</div>
 
-
-@include('datatable.datatable_js')
 @endsection
+
+@push('scripts')
+@php
+    $datatableJqueryLoaded = true;
+    $datatableOptions = [
+        'language' => [
+            'search' => 'Search:',
+            'searchPlaceholder' => 'Search currencies...',
+            'zeroRecords' => 'No matching currencies found',
+        ],
+        'columnDefs' => [
+            ['orderable' => false, 'targets' => [5]],
+            ['searchable' => false, 'targets' => [0, 5]],
+        ],
+    ];
+@endphp
+@include('datatable.datatable_js')
+@endpush

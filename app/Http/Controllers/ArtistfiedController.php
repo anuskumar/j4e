@@ -11,10 +11,9 @@ class ArtistfiedController extends Controller
     {
 
 
-        $data = ArtistField::get();
-        // dd($data);
-        return view('admin.artistfield.list',compact('data'));
+        $data = ArtistField::orderBy('field_name')->get();
 
+        return view('admin.artistfield.list', compact('data'));
     }
 
     public function show(string $id)
@@ -29,11 +28,7 @@ class ArtistfiedController extends Controller
 
     public function create()
     {
-        //
-        $artistfield_create=ArtistField::get();
-        //  dd($customer_create);
-            return view('admin.artistfield.create',compact('artistfield_create'));
-
+        return view('admin.artistfield.create');
     }
     public function edit(string $id)
     {
@@ -48,16 +43,15 @@ class ArtistfiedController extends Controller
     {
         // dd($request->request);
 
-        // $validated = $request->validate([
-        //     'field_name' => 'required',
-
-        // ]);
+        $validated = $request->validate([
+            'field_name' => 'required|string|max:255',
+        ]);
 
         $artistfielduser = new ArtistField();
-        $artistfielduser->field_name = $request->field_name;
-
+        $artistfielduser->field_name = $validated['field_name'];
         $artistfielduser->save();
-        return redirect('artistfield/list');
+
+        return redirect('artistfield/list')->with('success', 'Artist field created successfully.');
      }
      public function update(Request $request){
 

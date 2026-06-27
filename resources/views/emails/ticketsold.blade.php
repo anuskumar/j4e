@@ -41,7 +41,7 @@
 <body>
 
   <div class="container">
-    <img src="{{ config('app.storage') }}/uploads/images/572552721.png" alt="Trulli" width="200" height="100">
+    <img src="{{ \App\Models\CompanySettings::appLogoUrl() }}" alt="Logo" width="200" height="100">
     <h1>Confirmation of Ticket Sold</h1>
     <p>Dear {{$resellername}},</p>
     <p>Congratulations! Your {{$ticket_name}} tickets for the {{$eventname}} on {{$eventdate}}  have been sold.

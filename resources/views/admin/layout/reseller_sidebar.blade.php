@@ -7,12 +7,11 @@
 				<aside class="app-sidebar sidebar-scroll">
 					<div class="main-sidebar-header active">
 						<a class="desktop-logo logo-light active" href="{{url('/home')}}">
-                            <img src="{{ asset('admin_assets/img/brand/572552721.png') }}" class="main-logo" alt="logo">
-                          
+                            <img src="{{ $appLogoUrl }}" class="main-logo" alt="logo">
                         </a>
-						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/572552721.png') }}" class="main-logo" alt="logo"></a>
-						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/favicon.png') }}" alt="logo"></a>
-						<a class="logo-icon mobile-logo icon-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/favicon-white.png') }}" alt="logo"></a>
+						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" class="main-logo" alt="logo"></a>
+						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" alt="logo"></a>
+						<a class="logo-icon mobile-logo icon-dark active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" alt="logo"></a>
 					</div>
 					<div class="main-sidemenu">
 						<div class="main-sidebar-loggedin">

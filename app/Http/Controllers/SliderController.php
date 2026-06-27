@@ -24,12 +24,10 @@ class SliderController extends Controller
 
     public function create()
     {
-        $data = SliderModel::get();
-        $events=Events::get();
-        // dd($data);
-        return view('admin.slide.create',compact('events'));
+        $events = Events::orderBy('event_name')->get();
 
-     }
+        return view('admin.slide.create', compact('events'));
+    }
      public function show(Request $request)
      {
          $data = SliderModel::where('id',$request->id)->first();
@@ -54,10 +52,9 @@ class SliderController extends Controller
         }
 
         $slider->save();
-        return redirect('slide/list');
 
-
-      }
+        return redirect('slide/list')->with('success', 'Slide created successfully.');
+     }
       public function edit(Request $request,$id){
         $data=SliderModel::find($id);
         return view('admin.slide.edit',compact('data'));
