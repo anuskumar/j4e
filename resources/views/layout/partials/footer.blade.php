@@ -69,9 +69,13 @@
 </footer>
 
 <style>
-.site-footer.footer {
-    background: #7e0982 !important;
-    background-image: none !important;
+.site-footer.footer,
+.site-footer .footer-top,
+.site-footer .footer-bottom {
+    background: rgb(34, 30, 105) !important;
+    background-image: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%) !important;
+    background-size: cover !important;
+    background-position: center !important;
 }
 
 .site-footer .footer-top {

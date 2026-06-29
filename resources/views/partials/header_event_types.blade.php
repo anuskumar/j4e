@@ -22,6 +22,7 @@
                     class="header-event-types__more-btn dropdown-toggle"
                     id="headerEventTypeMoreBtn"
                     data-toggle="dropdown"
+                    data-display="static"
                     aria-haspopup="true"
                     aria-expanded="false">
                     More <i class="fas fa-chevron-down"></i>
@@ -55,8 +56,11 @@
             li.classList.remove('d-none');
         });
         moreLi.classList.add('d-none');
+        moreLi.classList.remove('show', 'is-open');
+        nav.classList.remove('header-event-types__list--has-more');
         moreBtn.classList.remove('active');
         dropdownMenu.innerHTML = '';
+        dropdownMenu.classList.remove('show');
 
         function fits() {
             return nav.scrollWidth <= inner.clientWidth;
@@ -67,6 +71,7 @@
         }
 
         moreLi.classList.remove('d-none');
+        nav.classList.add('header-event-types__list--has-more');
 
         var hiddenItems = [];
         var i;
@@ -108,6 +113,29 @@
 
         if (hiddenItems.length === 0) {
             moreLi.classList.add('d-none');
+            nav.classList.remove('header-event-types__list--has-more');
+        }
+    }
+
+    function adjustDropdownPosition() {
+        var dropdownMenu = document.getElementById('headerEventTypeMoreList');
+        var moreLi = document.getElementById('headerEventTypeMore');
+
+        if (!dropdownMenu || !moreLi || !dropdownMenu.classList.contains('show')) {
+            return;
+        }
+
+        dropdownMenu.style.left = 'auto';
+        dropdownMenu.style.right = '0';
+
+        var rect = dropdownMenu.getBoundingClientRect();
+        if (rect.left < 12) {
+            dropdownMenu.style.right = 'auto';
+            dropdownMenu.style.left = '0';
+        }
+        if (rect.right > window.innerWidth - 12) {
+            dropdownMenu.style.left = 'auto';
+            dropdownMenu.style.right = '0';
         }
     }
 
@@ -123,9 +151,18 @@
         if (typeof jQuery !== 'undefined') {
             jQuery('#headerEventTypeMore')
                 .on('shown.bs.dropdown', function () {
+                    var moreItem = document.getElementById('headerEventTypeMore');
+                    if (moreItem) {
+                        moreItem.classList.add('show', 'is-open');
+                    }
                     document.getElementById('headerEventTypeMoreBtn').classList.add('is-open');
+                    adjustDropdownPosition();
                 })
                 .on('hidden.bs.dropdown', function () {
+                    var moreItem = document.getElementById('headerEventTypeMore');
+                    if (moreItem) {
+                        moreItem.classList.remove('show', 'is-open');
+                    }
                     document.getElementById('headerEventTypeMoreBtn').classList.remove('is-open');
                 });
         }

@@ -43,24 +43,12 @@
 
                                     <td>{{ $val->venue_type_name }}</td>
                                     <td>
-                                        @php
-                                            $venueImage = $val->image ?? null;
-                                            $venueImageUrl = null;
-                                            if ($venueImage) {
-                                                $publicPath = 'uploads/venue/' . $venueImage;
-                                                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($publicPath)) {
-                                                    $venueImageUrl = asset('storage/' . $publicPath);
-                                                } elseif (file_exists(storage_path('uploads/venue/' . $venueImage))) {
-                                                    $venueImageUrl = config('app.storage') . 'uploads/venue/' . $venueImage;
-                                                }
-                                            }
-                                        @endphp
-                                        @if($venueImageUrl)
-                                            <a href="{{ $venueImageUrl }}" target="_blank" title="View Image">
-                                                <img src="{{ $venueImageUrl }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" onerror="this.onerror=null;this.src='{{ asset('assets/img/default-venue.jpg') }}'">
+                                        @if(!empty($val->image))
+                                            <a href="{{ asset('storage/uploads/venue/' . $val->image) }}" target="_blank" title="View Image">
+                                                <img src="{{ asset('storage/uploads/venue/' . $val->image) }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
                                             </a>
                                         @else
-                                            <img src="{{ asset('assets/img/default-venue.jpg') }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">
+                                            <img src="{{ asset('assets/img/default-event.jpg') }}" alt="Venue Image" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">
                                         @endif
                                     </td>
                                     <td>{{ $val->venue_name }}</td>

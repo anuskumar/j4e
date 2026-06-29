@@ -7,7 +7,8 @@
     }
 
     .site-navbar {
-        background: #7e0982;
+        background: rgb(34, 30, 105);
+        background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
         padding: 8px 0;
     }
 
@@ -174,7 +175,7 @@
         .site-navbar .navbar-collapse {
             order: 3;
             flex: 1 1 100%;
-            background: #6d0875;
+            background: rgba(34, 30, 105, 0.95);
             padding: 14px;
             margin-top: 0;
             border-radius: 10px;

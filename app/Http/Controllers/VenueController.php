@@ -145,7 +145,8 @@ class VenueController extends Controller
        $data->name=$request->name;
        $data->location=$request->location;
        $data->google_map_link=$request->google_map_link;
-       $data->image = $request->image;
+       $data->latitude = $request->latitude;
+       $data->longitude = $request->longitude;
         if($request->hasFile('image')){
             $imageName = time().'.'.$request->image->extension();
             $request->image->move(storage_path('uploads/venue'), $imageName);

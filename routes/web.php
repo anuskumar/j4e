@@ -201,6 +201,7 @@ Route::group(['prefix' => 'reseller'], function () {
 
     Route::get('request-event', [EventrequestController::class, 'requestevent'])->name('reseller.requestevent');
     Route::post('request-eventstore', [EventrequestController::class, 'requesteventstore'])->name('reseller.requesteventstore');
+    Route::get('request-event/thank-you', [EventrequestController::class, 'requesteventThankYou'])->name('reseller.requestevent.thankyou');
 
      Route::get('mylistings', [ResellerController::class, 'mylistings'])->name('reseller.mylistings');
      Route::get('mysales', [ResellerController::class, 'mysales'])->name('reseller.mysales');
@@ -502,6 +503,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('release_my_tickets', 'release_my_tickets')->middleware('auth');
     Route::get('release_ticket_listing/{id}', 'releaseTicketListing')->middleware('auth')->name('release_ticket_listing');
     Route::get('booking_success/{id}', 'booking_success')->middleware('auth');
+    Route::get('booking_confirmed/{id}', 'booking_confirmed')->middleware('auth')->name('customer.booking.confirmed');
     Route::get('booking_failed', 'booking_failed');
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');
     Route::get('show_details_show/{id}', 'show_details_show');

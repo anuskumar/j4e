@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             TicketTypeSeeder::class,
             SplitTypeSeeder::class,
             TicketStatusSeeder::class,
+            PurchaseStatusSeeder::class,
         ]);
     }
 }

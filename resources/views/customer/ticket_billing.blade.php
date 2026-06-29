@@ -478,15 +478,6 @@
 
                                 <div class="info-widget" id="shipping-information">
                                    <h4 class="card-title">Shipping Information</h4>
-                                   @if ($errors->any())
-                                       <div class="alert alert-danger">
-                                           <ul class="mb-0">
-                                               @foreach ($errors->all() as $error)
-                                                   <li>{{ $error }}</li>
-                                               @endforeach
-                                           </ul>
-                                       </div>
-                                   @endif
                                    <div class="row">
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
@@ -579,6 +570,13 @@
 
                                 <div class="payment-widget">
                                     <h4 class="card-title">Payment Method</h4>
+
+                                    @error('cardError')
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
+                                    @error('stripeToken')
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
 
                                     <!-- Credit Card Payment -->
                                     <div class="payment-list">
@@ -897,13 +895,11 @@
 
         function validateShippingForm() {
             var isValid = true;
-            var errorMessages = [];
             
             // Validate shipping name
             if ($('input[name="shipping_name"]').val().trim() === '') {
                 $('input[name="shipping_name"]').addClass('is-invalid');
                 isValid = false;
-                errorMessages.push('Please enter your name.');
             } else {
                 $('input[name="shipping_name"]').removeClass('is-invalid');
             }
@@ -912,7 +908,6 @@
             if ($('textarea[name="shipping_address1"]').val().trim() === '') {
                 $('textarea[name="shipping_address1"]').addClass('is-invalid');
                 isValid = false;
-                errorMessages.push('Please enter your address.');
             } else {
                 $('textarea[name="shipping_address1"]').removeClass('is-invalid');
             }
@@ -921,7 +916,6 @@
             if ($('select[name="shipping_country"]').val() === '' || $('select[name="shipping_country"]').val() === null) {
                 $('select[name="shipping_country"]').addClass('is-invalid');
                 isValid = false;
-                errorMessages.push('Please select a country.');
             } else {
                 $('select[name="shipping_country"]').removeClass('is-invalid');
             }
@@ -930,7 +924,6 @@
             if ($('input[name="shipping_city"]').val().trim() === '') {
                 $('input[name="shipping_city"]').addClass('is-invalid');
                 isValid = false;
-                errorMessages.push('Please enter your city.');
             } else {
                 $('input[name="shipping_city"]').removeClass('is-invalid');
             }
@@ -939,24 +932,17 @@
             if ($('input[name="shipping_pincode"]').val().trim() === '') {
                 $('input[name="shipping_pincode"]').addClass('is-invalid');
                 isValid = false;
-                errorMessages.push('Please enter your pincode.');
             } else {
                 $('input[name="shipping_pincode"]').removeClass('is-invalid');
             }
             
             if (!isValid) {
-                // Show error message
-                if ($('.info-widget .alert-danger').length === 0) {
-                    $('.info-widget').prepend('<div class="alert alert-danger"><ul class="mb-0"></ul></div>');
+                var $firstInvalid = $('#shipping-information .is-invalid').first();
+                if ($firstInvalid.length) {
+                    $('html, body').animate({
+                        scrollTop: $firstInvalid.offset().top - 120
+                    }, 500);
                 }
-                var $errorList = $('.info-widget .alert-danger ul');
-                $errorList.empty();
-                errorMessages.forEach(function(msg) {
-                    $errorList.append('<li>' + msg + '</li>');
-                });
-                $('html, body').animate({
-                    scrollTop: $('.alert-danger').offset().top - 100
-                }, 500);
                 return false;
             }
 

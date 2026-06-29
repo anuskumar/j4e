@@ -6,6 +6,7 @@ use App\Models\OrderStatusUpdate;
 use App\Models\TicketPurchase;
 use App\Models\TicketsGenerated;
 
+use App\Models\Currency;
 use App\Models\Events;
 use App\Models\EventTickets;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session as FacadesSession;
 use App\Services\NotificationService;
+use App\Services\PurchaseInvoiceService;
 use Session;
 // use Stripe;
 use Stripe\Stripe;
@@ -215,8 +217,15 @@ class StripePaymentController extends Controller
         $paymentSucceeded = (($data->status ?? null) === 'succeeded')
             || (($data->paid ?? false) && (int) ($data->amount_received ?? 0) >= $amountInSmallestUnit);
         if ($paymentSucceeded) {
+            $existingPurchase = TicketPurchase::where('payment_id', $data->id)->first();
+            if ($existingPurchase) {
+                return redirect()->route('customer.booking.confirmed', $existingPurchase->id);
+            }
+
             DB::beginTransaction();
             try {
+            $currencyId = $this->resolveCurrencyId($currency, $eventTicket);
+
             $ticket = new TicketPurchase();
             $ticket->event_id = $request->event_id;
             $ticket->event_ticket_id = $request->event_ticket_id;
@@ -229,8 +238,8 @@ class StripePaymentController extends Controller
             $ticket->shipping_pincode = $request->shipping_pincode;
             $ticket->accepted_tearms_condetion = $request->accepted_tearms_condetion ? true :false;
             $ticket->payment_amount = $expectedAmount;
-            $ticket->payment_currency = strtoupper($currency);
-            $ticket->payment_card_number = $data->source->last4;
+            $ticket->payment_currency = $currencyId;
+            $ticket->payment_card_number = $this->resolveChargeLast4($data);
             $ticket->purchase_status = 1;
             $ticket->payment_date = date('Y-m-d H:i:s');
             $ticket->is_payment_completed = $paymentSucceeded ? 1 : 0;
@@ -282,89 +291,47 @@ class StripePaymentController extends Controller
             $event_tickets = EventTickets::where('id',$request->event_ticket_id)->first();
             $user_data = User::where('id',$event_tickets->created_by)->first();
 
-            $maildata = [
-                'email' => $user_data->email,
-                'resellername' => $user_data->name,
-                'eventname' => $event->event_name,
-                'eventdate' => $event->event_from_date,
-                'ticket_name' => $event_tickets->ticket_name,
-                'ticket_count_data' => $ticket_count_data,
-                'price' => $event_tickets->ticket_amount
-            ];
-
             $customerUser = Auth::user();
             $currencyCode = strtoupper($currency);
             $totalPaid = number_format((float) $expectedAmount, 2);
             $eventName = (string) ($event->event_name ?? '');
-            $eventDate = (string) ($event->event_from_date ?? '');
+            $eventTiming = $event_tickets && $event_tickets->event_timing
+                ? \App\Models\EventTiming::find($event_tickets->event_timing)
+                : null;
+            $eventDate = $eventTiming && $eventTiming->event_date
+                ? date('d M Y', strtotime($eventTiming->event_date))
+                : (string) ($event->event_from_date ?? '');
             $ticketName = (string) ($event_tickets->ticket_name ?? '');
-            $purchaseId = (int) ($ticket->id ?? 0);
             $soldCount = (int) $ticket_count_data;
 
             if ($user_data) {
-                app(NotificationService::class)->notifyNewOrder(
-                    $ticket,
-                    $eventName,
-                    (string) ($customerUser->name ?? 'Customer'),
-                    (int) $user_data->id
-                );
-            }
-
-            if ($customerUser && !empty($customerUser->email)) {
                 try {
-                    $customerHtml = '
-                        <h2>Ticket Purchase Confirmation</h2>
-                        <p>Hi ' . e($customerUser->name ?? 'Customer') . ',</p>
-                        <p>Your payment was successful.</p>
-                        <ul>
-                            <li><strong>Purchase ID:</strong> #' . $purchaseId . '</li>
-                            <li><strong>Event:</strong> ' . e($eventName) . '</li>
-                            <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
-                            <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
-                            <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
-                            <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
-                        </ul>
-                    ';
-
-                    Mail::html($customerHtml, function ($message) use ($customerUser, $purchaseId) {
-                        $message->to($customerUser->email)
-                            ->subject('Your Ticket Purchase Confirmation #' . $purchaseId);
-                    });
-                } catch (\Exception $customerMailException) {
-                    report($customerMailException);
-                }
-            }
-
-            if ($user_data && !empty($user_data->email)) {
-                try {
-                    $resellerHtml = '
-                        <h2>Ticket Sold Notification</h2>
-                        <p>Hi ' . e($user_data->name ?? 'Reseller') . ',</p>
-                        <p>A customer has completed ticket purchase.</p>
-                        <ul>
-                            <li><strong>Purchase ID:</strong> #' . $purchaseId . '</li>
-                            <li><strong>Customer:</strong> ' . e($customerUser->name ?? 'Customer') . '</li>
-                            <li><strong>Event:</strong> ' . e($eventName) . '</li>
-                            <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
-                            <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
-                            <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
-                            <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
-                        </ul>
-                    ';
-
-                    Mail::html($resellerHtml, function ($message) use ($user_data, $purchaseId) {
-                        $message->to($user_data->email)
-                            ->subject('Ticket Sold Notification #' . $purchaseId);
-                    });
-                } catch (\Exception $resellerMailException) {
-                    report($resellerMailException);
+                    app(NotificationService::class)->notifyNewOrder(
+                        $ticket,
+                        $eventName,
+                        (string) ($customerUser->name ?? 'Customer'),
+                        (int) $user_data->id
+                    );
+                } catch (\Exception $notificationException) {
+                    report($notificationException);
                 }
             }
 
             DB::commit();
 
-            // Redirect to customer home/profile page (shows their orders/bookings)
-            return redirect()->route('customer.home')->with('success', 'Payment successful! Your order has been confirmed.');
+            $this->sendPurchaseConfirmationEmails(
+                $ticket,
+                $customerUser,
+                $user_data,
+                $eventName,
+                $eventDate,
+                $ticketName,
+                $soldCount,
+                $totalPaid,
+                $currencyCode
+            );
+
+            return redirect()->route('customer.booking.confirmed', $ticket->id);
             } catch (\Exception $e) {
                 DB::rollBack();
                 report($e);
@@ -380,5 +347,119 @@ class StripePaymentController extends Controller
         }
 
 
+    }
+
+    private function sendPurchaseConfirmationEmails(
+        TicketPurchase $ticket,
+        ?User $customerUser,
+        ?User $resellerUser,
+        string $eventName,
+        string $eventDate,
+        string $ticketName,
+        int $soldCount,
+        string $totalPaid,
+        string $currencyCode
+    ): void {
+        $purchaseId = (int) $ticket->id;
+        $invoiceService = app(PurchaseInvoiceService::class);
+        $invoiceFilename = $invoiceService->getInvoiceFilename($purchaseId);
+
+        try {
+            $invoicePdf = $invoiceService->generatePdfBinary($purchaseId);
+        } catch (\Exception $invoiceException) {
+            report($invoiceException);
+            $invoicePdf = null;
+        }
+
+        if ($customerUser && !empty($customerUser->email)) {
+            try {
+                $customerHtml = '
+                    <h2>Congratulations! Your Booking Is Confirmed</h2>
+                    <p>Hi ' . e($customerUser->name ?? 'Customer') . ',</p>
+                    <p>Thank you for your purchase. Your payment was successful and your booking has been confirmed.</p>
+                    <ul>
+                        <li><strong>Order ID:</strong> #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT) . '</li>
+                        <li><strong>Event:</strong> ' . e($eventName) . '</li>
+                        <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
+                        <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
+                        <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
+                        <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
+                        <li><strong>Payment Reference:</strong> ' . e($ticket->payment_id ?? 'N/A') . '</li>
+                    </ul>
+                    <p>Your invoice is attached to this email. You can also view your booking anytime from your account dashboard.</p>
+                ';
+
+                Mail::html($customerHtml, function ($message) use ($customerUser, $purchaseId, $invoicePdf, $invoiceFilename) {
+                    $message->to($customerUser->email)
+                        ->subject('Booking Confirmed #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT));
+
+                    if ($invoicePdf) {
+                        $message->attachData($invoicePdf, $invoiceFilename, [
+                            'mime' => 'application/pdf',
+                        ]);
+                    }
+                });
+            } catch (\Exception $customerMailException) {
+                report($customerMailException);
+            }
+        }
+
+        if ($resellerUser && !empty($resellerUser->email)) {
+            try {
+                $resellerHtml = '
+                    <h2>New Ticket Booking Confirmed</h2>
+                    <p>Hi ' . e($resellerUser->name ?? 'Reseller') . ',</p>
+                    <p>A customer booking has been confirmed and payment was received successfully.</p>
+                    <ul>
+                        <li><strong>Order ID:</strong> #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT) . '</li>
+                        <li><strong>Customer:</strong> ' . e($customerUser->name ?? 'Customer') . '</li>
+                        <li><strong>Customer Email:</strong> ' . e($customerUser->email ?? 'N/A') . '</li>
+                        <li><strong>Event:</strong> ' . e($eventName) . '</li>
+                        <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
+                        <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
+                        <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
+                        <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
+                        <li><strong>Payment Reference:</strong> ' . e($ticket->payment_id ?? 'N/A') . '</li>
+                    </ul>
+                    <p>Please review the order in your reseller dashboard and proceed with fulfillment.</p>
+                ';
+
+                Mail::html($resellerHtml, function ($message) use ($resellerUser, $purchaseId) {
+                    $message->to($resellerUser->email)
+                        ->subject('New Booking Confirmed #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT));
+                });
+            } catch (\Exception $resellerMailException) {
+                report($resellerMailException);
+            }
+        }
+    }
+
+    private function resolveCurrencyId(string $currencyCode, ?EventTickets $eventTicket = null): ?int
+    {
+        $currencyCode = strtoupper(trim($currencyCode));
+
+        $record = Currency::whereRaw('UPPER(short_name) = ?', [$currencyCode])->first();
+        if ($record) {
+            return (int) $record->id;
+        }
+
+        if ($eventTicket && $eventTicket->amount_currency) {
+            return (int) $eventTicket->amount_currency;
+        }
+
+        return null;
+    }
+
+    private function resolveChargeLast4($charge): ?string
+    {
+        if (isset($charge->payment_method_details->card->last4)) {
+            return $charge->payment_method_details->card->last4;
+        }
+
+        if (isset($charge->source) && is_object($charge->source) && isset($charge->source->last4)) {
+            return $charge->source->last4;
+        }
+
+        return null;
     }
 }
