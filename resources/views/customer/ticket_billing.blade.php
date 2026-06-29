@@ -13,6 +13,240 @@
     <!-- /Breadcrumb -->
 
     <!-- Page Content -->
+    <style>
+        .session-timer-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .session-timer-card__row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .session-timer-ring {
+            position: relative;
+            width: 88px;
+            height: 88px;
+            flex-shrink: 0;
+        }
+
+        .session-timer-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .session-timer-ring__bg {
+            fill: none;
+            stroke: #eef2f2;
+            stroke-width: 6;
+        }
+
+        .session-timer-ring__progress {
+            fill: none;
+            stroke: #5cb8b2;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.35s linear;
+        }
+
+        .session-timer-ring__time {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .session-timer-card__info h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0 0 6px;
+        }
+
+        .session-timer-card__info p {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0 0 4px;
+            line-height: 1.45;
+        }
+
+        .session-timer-card__info .session-timer-card__reserved {
+            color: #5cb8b2;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .session-timer-card__expired {
+            text-align: center;
+            padding: 8px 0 12px;
+        }
+
+        .session-timer-card__expired h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: 8px;
+        }
+
+        .btn-release-tickets {
+            display: block;
+            width: 100%;
+            background: #5cb8b2;
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+
+        .btn-release-tickets:hover {
+            background: #49a59f;
+            color: #fff;
+        }
+
+        .personal-details-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .personal-details-card .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+        }
+
+        .personal-details-edit {
+            color: #5cb8b2;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .personal-details-edit:hover {
+            color: #49a59f;
+            text-decoration: underline;
+        }
+
+        .personal-details-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .personal-details-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #374151;
+            padding: 6px 0;
+        }
+
+        .personal-details-list li i {
+            width: 16px;
+            color: #7e0982;
+        }
+
+        .booking-restrictions-wrap {
+            margin-top: 12px;
+        }
+
+        .booking-restrictions-wrap .label {
+            display: block;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .restriction-tag {
+            display: inline-block;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 4px 8px;
+            margin: 0 6px 6px 0;
+        }
+
+        .ticket-pricing-summary {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 24px;
+            background: #f9fafb;
+        }
+
+        .ticket-pricing-summary .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 14px;
+        }
+
+        .ticket-pricing-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .ticket-pricing-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #374151;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ticket-pricing-list li:last-child {
+            border-bottom: none;
+        }
+
+        .ticket-pricing-list li span:last-child {
+            font-weight: 600;
+            color: #111827;
+            text-align: right;
+        }
+
+        .ticket-pricing-list .ticket-pricing-total {
+            margin-top: 6px;
+            padding-top: 12px;
+            border-top: 2px solid #e5e7eb;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .ticket-pricing-list .ticket-pricing-total span:last-child {
+            color: #7e0982;
+            font-size: 18px;
+        }
+    </style>
+
     <div class="content">
         <div class="container">
 
@@ -21,44 +255,30 @@
 
                     <!-- Profile Widget -->
 
-                    <div class="card widget-profile pat-widget-profile">
-                        <div class="card-body">
-                            <div class="pro-widget-content">
-                                <h4><b><a href="customer-profile">Time Remaining</a></b></h4>
-
-                                @if($minutesDifference<15)
-                                 {{-- {{ 15 - $minutesDifference }}   --}}
-                                 <div><h2><span id="time">
-
-
-
-                                </span></h2></div>
-                                @else
-                                <h1>Timer Ended</h1>
-                                @endif
-                                <div class="profile-det-info">
-
-                                    {{-- <div class="customer-details"> --}}
-
-                                        <h5 >
-                                            Your Tickets are Reserved For 15 minutes for Purchasing..
-                                            Please complete the purchase before the timer Ends..
-                                        </h5>
-                                    {{-- </div> --}}
-                                    <a href="{{ url('release_my_tickets') }}" class="btn btn-danger">Relese My Holded Tickets</a>
+                    <div class="session-timer-card">
+                        @if ($remainingSeconds > 0)
+                            <div class="session-timer-card__row">
+                                <div class="session-timer-ring" aria-hidden="true">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle class="session-timer-ring__bg" cx="50" cy="50" r="40"></circle>
+                                        <circle class="session-timer-ring__progress" id="timer-progress" cx="50" cy="50" r="40"></circle>
+                                    </svg>
+                                    <div class="session-timer-ring__time" id="time">--:--</div>
                                 </div>
-
+                                <div class="session-timer-card__info">
+                                    <h4>Time Remaining</h4>
+                                    <p>For security reasons, your session will expire automatically</p>
+                                    <p class="session-timer-card__reserved">Tickets are reserved</p>
+                                </div>
                             </div>
-                            {{-- <div class="customer-info">
-										<ul>
-											<li>Phone <span>+1 952 001 8563</span></li>
-											<li>Age <span>38 Years, Male</span></li>
-											<li>Event Name <span>Sangeet</span></li>
-										</ul>
-									</div> --}}
-                        </div>
+                        @else
+                            <div class="session-timer-card__expired">
+                                <h4>Session Expired</h4>
+                                <p class="text-muted mb-0">Your ticket hold has ended. Please return to the event page to try again.</p>
+                            </div>
+                        @endif
+                        <a href="{{ route('customer_ticket_cart') }}" class="btn-release-tickets">View Cart & Release Tickets</a>
                     </div>
-                    <!-- /Profile Widget -->
                     <div class="card booking-card">
                         <div class="card-header">
                             <h4 class="card-title">Booking Summary</h4>
@@ -105,8 +325,8 @@
                                         if ($initial_ticket_count > $max_calculator_tickets) {
                                             $initial_ticket_count = $max_calculator_tickets;
                                         }
-                                        // Billing must use ticket_amount (customer selling price)
-                                        $ticket_price = $data->ticket_amount ?? 0;
+                                        // Billing uses ticket_amount (customer selling price), fallback to web_price
+                                        $ticket_price = (float) ($data->ticket_amount ?? $data->web_price ?? 0);
                                         $total_amount = $ticket_price * $initial_ticket_count;
                                     @endphp
                                     <ul class="booking-date">
@@ -115,31 +335,31 @@
                                     </ul>
                                     <ul class="booking-fee">
                                         <li>Ticket Name <span>{{ Str::ucfirst($data->ticket_name) }}</span></li>
+                                        @if (!empty($data->seating_type_name))
+                                            <li>Zone <span>{{ $data->seating_type_name }}</span></li>
+                                        @endif
+                                        @if (!empty($data->row))
+                                            <li>Row <span>{{ $data->row }}</span></li>
+                                        @endif
+                                        @if (!empty($data->seat_from) && !empty($data->seat_to))
+                                            <li>Seats <span>{{ $data->seat_from }} – {{ $data->seat_to }}</span></li>
+                                        @endif
+                                        @if (!empty($data->ticket_type_name))
+                                            <li>Ticket Type <span>{{ $data->ticket_type_name }}</span></li>
+                                        @endif
+                                        @if (!empty($data->split_type_name))
+                                            <li>Split Type <span>{{ $data->split_type_name }}</span></li>
+                                        @endif
                                         <li>Number of Tickets <span id="selected-qty-display">{{ $initial_ticket_count }}</span></li>
-                                        <li>Ticket Amount <span id="ticket-amount-display">{{ number_format($ticket_price, 2) . ' ' . $data->short_name }}</span></li>
-                                        <li>Total Amount <span id="total-amount-display">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span></li>
                                     </ul>
-                                    <div class="mt-3 p-2 border rounded">
-                                        <label class="form-label mb-2"><b>Ticket Number Calculator</b></label>
-                                        <div class="input-group input-group-sm" style="max-width: 220px;">
-                                            <button type="button" class="btn btn-outline-secondary" id="qty-minus">-</button>
-                                            <input type="number" id="ticket-count-input" class="form-control text-center" min="1" max="{{ $max_calculator_tickets }}" value="{{ $initial_ticket_count }}">
-                                            <button type="button" class="btn btn-outline-secondary" id="qty-plus">+</button>
+                                    @if (!empty($restrictionLabels))
+                                        <div class="booking-restrictions-wrap">
+                                            <span class="label">Restrictions</span>
+                                            @foreach ($restrictionLabels as $restriction)
+                                                <span class="restriction-tag">{{ $restriction }}</span>
+                                            @endforeach
                                         </div>
-                                        <small class="text-muted d-block mt-1" id="available-tickets-line">Available tickets: {{ $available_ticket_count ?? $max_calculator_tickets }}</small>
-                                        <small class="text-muted d-block mt-1" id="max-reserved-line">Maximum reserved tickets: {{ $max_calculator_tickets }}</small>
-                                        <small class="text-muted d-block mt-1">
-                                            <span id="calc-formula-display">{{ number_format($ticket_price, 2) }} x {{ $initial_ticket_count }} = {{ number_format($total_amount, 2) }} {{ $data->short_name }}</span>
-                                        </small>
-                                    </div>
-                                    <div class="booking-total">
-                                        <ul class="booking-total-list">
-                                            <li>
-                                                <span>Final Amount</span>
-                                                <span class="total-cost" id="final-amount-display">{{ number_format($total_amount, 2) . ' ' . $data->short_name  }}</span>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -147,6 +367,20 @@
                 </div>
 
                 <div class="col-md-8 col-lg-8 col-xl-9">
+                    <div class="card personal-details-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h4 class="card-title">Personal Details</h4>
+                                <a href="{{ url('customer_profile_settings') }}" class="personal-details-edit">Edit</a>
+                            </div>
+                            <ul class="personal-details-list">
+                                <li><i class="fas fa-user"></i> {{ Auth::user()->name }}</li>
+                                <li><i class="fas fa-envelope"></i> {{ Auth::user()->email }}</li>
+                                <li><i class="fas fa-phone"></i> {{ Auth::user()->phone ?? 'Not provided' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-body">
                             @if (Session::has('success'))
@@ -227,7 +461,7 @@
 
                                 @php
                                     // Keep submitted payable amount aligned with displayed ticket amount
-                                    $ticket_price_form = $data->ticket_amount ?? 0;
+                                    $ticket_price_form = (float) ($data->ticket_amount ?? $data->web_price ?? 0);
                                     $total_amount_form = $ticket_price_form * $initial_ticket_count;
                                     // Round to 2 decimal places to preserve cents
                                     $total_amount_form = round($total_amount_form, 2);
@@ -242,7 +476,7 @@
 
 
 
-                                <div class="info-widget">
+                                <div class="info-widget" id="shipping-information">
                                    <h4 class="card-title">Shipping Information</h4>
                                    @if ($errors->any())
                                        <div class="alert alert-danger">
@@ -257,7 +491,7 @@
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
                                                <label>Name <span class="text-danger">*</span></label>
-                                               <input class="form-control @error('shipping_name') is-invalid @enderror" name="shipping_name" value="{{ old('shipping_name', Auth::user()->name) }}" type="text" required>
+                                               <input class="form-control @error('shipping_name') is-invalid @enderror" name="shipping_name" value="{{ old('shipping_name', Auth::user()->shipping_name ?: Auth::user()->name) }}" type="text" required>
                                                @error('shipping_name')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -275,7 +509,7 @@
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
                                                <label>Address Line 2</label>
-                                               <textarea class="form-control @error('shipping_address2') is-invalid @enderror" name="shipping_address2">{{ old('shipping_address2') }}</textarea>
+                                               <textarea class="form-control @error('shipping_address2') is-invalid @enderror" name="shipping_address2">{{ old('shipping_address2', Auth::user()->shipping_address2) }}</textarea>
                                                @error('shipping_address2')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -287,7 +521,7 @@
                                               <select class="form-control @error('shipping_country') is-invalid @enderror" name="shipping_country" id="shipping_country" required>
                                                <option value="">Select Country</option>
                                                @foreach ($countries as $country )
-                                               <option value="{{ $country->id }}" {{ old('shipping_country') == $country->id ? 'selected' : '' }}>{{ $country->country_name }}</option>
+                                               <option value="{{ $country->id }}" {{ (string) old('shipping_country', Auth::user()->shipping_country) === (string) $country->id ? 'selected' : '' }}>{{ $country->country_name }}</option>
                                                @endforeach
                                               </select>
                                                @error('shipping_country')
@@ -298,7 +532,7 @@
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
                                                <label>City <span class="text-danger">*</span></label>
-                                               <input class="form-control @error('shipping_city') is-invalid @enderror" type="text" name="shipping_city" value="{{ old('shipping_city') }}" required>
+                                               <input class="form-control @error('shipping_city') is-invalid @enderror" type="text" name="shipping_city" value="{{ old('shipping_city', Auth::user()->shipping_city) }}" required>
                                                @error('shipping_city')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -307,7 +541,7 @@
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
                                                <label>Pincode <span class="text-danger">*</span></label>
-                                               <input class="form-control @error('shipping_pincode') is-invalid @enderror" type="text" name="shipping_pincode" value="{{ old('shipping_pincode') }}" required>
+                                               <input class="form-control @error('shipping_pincode') is-invalid @enderror" type="text" name="shipping_pincode" value="{{ old('shipping_pincode', Auth::user()->shipping_pincode) }}" required>
                                                @error('shipping_pincode')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -320,6 +554,28 @@
 
 
                                 <!-- /Personal Information -->
+
+                                <div class="info-widget ticket-pricing-summary">
+                                    <h4 class="card-title">Ticket Pricing</h4>
+                                    <ul class="ticket-pricing-list">
+                                        <li>
+                                            <span>Single Ticket Amount</span>
+                                            <span id="ticket-amount-display">{{ number_format($ticket_price_form, 2) . ' ' . $data->short_name }} each</span>
+                                        </li>
+                                        <li>
+                                            <span>Number of Tickets</span>
+                                            <span>{{ $initial_ticket_count }}</span>
+                                        </li>
+                                        <li>
+                                            <span>Subtotal</span>
+                                            <span id="total-amount-display">{{ $initial_ticket_count }} x {{ number_format($ticket_price_form, 2) . ' ' . $data->short_name }} = {{ number_format($total_amount_form, 2) . ' ' . $data->short_name }}</span>
+                                        </li>
+                                        <li class="ticket-pricing-total">
+                                            <span>Final Amount</span>
+                                            <span id="final-amount-display">{{ number_format($total_amount_form, 2) . ' ' . $data->short_name }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
                                 <div class="payment-widget">
                                     <h4 class="card-title">Payment Method</h4>
@@ -442,36 +698,43 @@
     
 
     <script>
-        function startTimer(duration, display) {
-            var timer = duration,
-                minutes, seconds;
-            setInterval(function() {
-                minutes = parseInt(timer / 60, 10);
-                seconds = parseInt(timer % 60, 10);
+        (function () {
+            var remainingSeconds = {{ (int) $remainingSeconds }};
+            var totalSeconds = {{ (int) $sessionDurationSeconds }};
+            var circumference = 2 * Math.PI * 40;
+            var display = document.getElementById('time');
+            var progressRing = document.getElementById('timer-progress');
 
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
+            if (!display || !progressRing || remainingSeconds <= 0) {
+                return;
+            }
 
-                display.textContent = minutes + ":" + seconds;
+            progressRing.style.strokeDasharray = circumference;
+            progressRing.style.strokeDashoffset = circumference * (1 - (remainingSeconds / totalSeconds));
 
-                if (--timer < 0) {
-                    timer = duration;
+            function formatTime(seconds) {
+                var minutes = Math.floor(seconds / 60);
+                var secs = seconds % 60;
+                return minutes + ':' + (secs < 10 ? '0' + secs : secs);
+            }
+
+            display.textContent = formatTime(remainingSeconds);
+
+            var interval = setInterval(function () {
+                remainingSeconds -= 1;
+
+                if (remainingSeconds <= 0) {
+                    display.textContent = '0:00';
+                    progressRing.style.strokeDashoffset = circumference;
+                    clearInterval(interval);
+                    window.location.href = "{{ url('ticket_purchase_expired') }}";
+                    return;
                 }
 
-                if(--timer === 0){
-
-                    location.reload();
-                }
+                display.textContent = formatTime(remainingSeconds);
+                progressRing.style.strokeDashoffset = circumference * (1 - (remainingSeconds / totalSeconds));
             }, 1000);
-        }
-
-        window.onload = function() {
-            var fiveMinutes = 60 * (@php
-                echo (15 - $minutesDifference)
-            @endphp),
-                display = document.querySelector('#time');
-            startTimer(fiveMinutes, display);
-        };
+        })();
     </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
@@ -616,101 +879,9 @@
             }
         });
 
-        var unitPrice = parseFloat("{{ (float) ($data->ticket_amount ?? 0) }}");
-        var maxQty = parseInt("{{ (int) $max_calculator_tickets }}", 10);
+        var unitPrice = parseFloat("{{ (float) ($data->ticket_amount ?? $data->web_price ?? 0) }}");
+        var ticketQty = parseInt("{{ (int) $initial_ticket_count }}", 10);
         var currencyCode = "{{ $data->short_name }}";
-        var holdSyncTimer = null;
-        var suppressHoldSync = true;
-
-        function scheduleHoldSync() {
-            clearTimeout(holdSyncTimer);
-            holdSyncTimer = setTimeout(function() {
-                var qty = sanitizeQty($('#ticket-count-input').val());
-                $.ajax({
-                    url: "{{ route('sync_ticket_hold_count') }}",
-                    method: 'POST',
-                    data: {
-                        event_ticket_id: {{ (int) $id }},
-                        ticket_count: qty
-                    },
-                    success: function(data) {
-                        if (!data || !data.ok) {
-                            return;
-                        }
-                        if (typeof data.max_qty === 'number' || (data.max_qty && !isNaN(parseInt(data.max_qty, 10)))) {
-                            maxQty = parseInt(data.max_qty, 10);
-                            $('#ticket-count-input').attr('max', maxQty);
-                        }
-                        if (data.available_ticket_count !== undefined) {
-                            $('#available-tickets-line').text('Available tickets: ' + data.available_ticket_count);
-                        }
-                        $('#max-reserved-line').text('Maximum reserved tickets: ' + maxQty);
-                        if (parseInt(data.ticket_count, 10) !== qty) {
-                            $('#ticket-count-input').val(data.ticket_count);
-                        }
-                        updateAmountFromQty(true);
-                    },
-                    error: function(xhr) {
-                        var j = xhr.responseJSON;
-                        if (xhr.status === 422 && j && j.code === 'hold_expired' && j.redirect) {
-                            window.location.href = j.redirect;
-                            return;
-                        }
-                        if (j && j.message) {
-                            alert(j.message);
-                        }
-                    }
-                });
-            }, 400);
-        }
-
-        function formatMoney(amount) {
-            return parseFloat(amount).toFixed(2) + ' ' + currencyCode;
-        }
-
-        function sanitizeQty(value) {
-            var qty = parseInt(value, 10);
-            if (isNaN(qty)) qty = 1;
-            if (qty < 1) qty = 1;
-            if (qty > maxQty) qty = maxQty;
-            return qty;
-        }
-
-        function updateAmountFromQty(skipHoldSync) {
-            var qty = sanitizeQty($('#ticket-count-input').val());
-            var total = (unitPrice * qty).toFixed(2);
-
-            $('#ticket-count-input').val(qty);
-            $('#selected-qty-display').text(qty);
-            $('#total-number-input').val(qty);
-            $('#payment-amount-input').val(total);
-            $('#total-amount-display').text(formatMoney(total));
-            $('#final-amount-display').text(formatMoney(total));
-            $('#calc-formula-display').text(unitPrice.toFixed(2) + ' x ' + qty + ' = ' + total + ' ' + currencyCode);
-            $('#open-stripe-checkout').text('Pay ' + parseFloat(total).toFixed(2) + ' {{ $data->currency_name }} (' + qty + ' ticket(s))');
-            if (!suppressHoldSync && !skipHoldSync) {
-                scheduleHoldSync();
-            }
-        }
-
-        $('#qty-minus').on('click', function() {
-            var qty = sanitizeQty($('#ticket-count-input').val());
-            $('#ticket-count-input').val(Math.max(1, qty - 1));
-            updateAmountFromQty();
-        });
-
-        $('#qty-plus').on('click', function() {
-            var qty = sanitizeQty($('#ticket-count-input').val());
-            $('#ticket-count-input').val(Math.min(maxQty, qty + 1));
-            updateAmountFromQty();
-        });
-
-        $('#ticket-count-input').on('input change keyup blur', function() {
-            updateAmountFromQty();
-        });
-
-        updateAmountFromQty();
-        suppressHoldSync = false;
 
         var stripeHandler = StripeCheckout.configure({
             key: "{{ config('services.stripe.key') }}",
@@ -799,7 +970,7 @@
                 return;
             }
 
-            var qty = sanitizeQty($('#ticket-count-input').val());
+            var qty = ticketQty;
             var total = parseFloat(unitPrice * qty).toFixed(2);
             var totalInSmallestUnit = Math.round(parseFloat(total) * 100);
 

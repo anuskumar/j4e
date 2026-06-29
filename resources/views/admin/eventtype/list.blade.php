@@ -59,6 +59,7 @@
                                 <th>SL</th>
                                 <th>Event Type Name</th>
                                 <th>Status</th>
+                                <th>Header Menu</th>
                                 <th class="text-end">Action</th>
                             </tr>
                         </thead>
@@ -72,6 +73,13 @@
                                             <span class="badge bg-success">Active</span>
                                         @else
                                             <span class="badge bg-warning">Inactive</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($val->is_header_menu == 1)
+                                            <span class="badge bg-info">Visible</span>
+                                        @else
+                                            <span class="badge bg-secondary">Hidden</span>
                                         @endif
                                     </td>
                                     <td class="text-end">
@@ -98,6 +106,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -120,8 +129,8 @@
             'zeroRecords' => 'No matching event types found',
         ],
         'columnDefs' => [
-            ['orderable' => false, 'targets' => [3]],
-            ['searchable' => false, 'targets' => [0, 3]],
+            ['orderable' => false, 'targets' => [4]],
+            ['searchable' => false, 'targets' => [0, 4]],
         ],
     ];
 @endphp

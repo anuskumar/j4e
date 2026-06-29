@@ -19,10 +19,13 @@ class EventTiming extends Model
 
     public static function get_ticket_list($event,$timing_id){
 
-        return EventTickets::leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')->
-        leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
-        ->leftjoin('currency','currency.id','event_tickets.amount_currency')->
-        where('event',$event)->where('event_timing',$timing_id)->where('event_tickets.is_admin_approved', 1)->select('*','event_tickets.id as id')->orderBy('event_tickets.web_price', 'asc')->get();
+        return EventTickets::leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
+        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
+        ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ->leftjoin('split_types', 'split_types.id', 'event_tickets.split_type')
+        ->where('event',$event)->where('event_timing',$timing_id)->where('event_tickets.is_admin_approved', 1)
+        ->select('*','event_tickets.id as id', 'split_types.split_name as split_type_name')
+        ->orderBy('event_tickets.web_price', 'asc')->get();
     }
 
     /**
@@ -31,6 +34,8 @@ class EventTiming extends Model
      * so held tickets do not appear in the remaining count for other customers.
      */
     public static function get_available_tickets($ticket_id){
+
+        TicketsGenerated::releaseExpiredHolds($ticket_id);
 
         $data =  TicketsGenerated::leftjoin('event_tickets','event_tickets.id','=','event_ticket_tickets.event_tickets')
         ->where('event_ticket_tickets.event_tickets',$ticket_id)

@@ -18,21 +18,22 @@
   </head>
   @if(Route::is(['page']))
   <body class="home-page">
-  @endif
-  @if(Route::is(['map-grid','map-list']))
+  @elseif(Route::is(['map-grid','map-list']))
   <body class="map-page">
-  @endif
-  @if(Route::is(['chat-speaker','chat']))
+  @elseif(Route::is(['chat-speaker','chat']))
   <body class="chat-page">
-  @endif
-  @if(Route::is(['forgot-password','login','register','speaker-register']))
+  @elseif(Route::is(['forgot-password','login','register','speaker-register']))
   <body class="account-page">
-  @endif
-  @if(Route::is(['video-call','voice-call']))
+  @elseif(Route::is(['video-call','voice-call']))
   <body class="call-page">
+  @else
+  <body>
   @endif
 {{-- @include('layout.partials.header') --}}
 @include('layout.partials.header')
+@if(!Route::is(['chat-instructor','map-grid','map-list','chat','voice-call','video-call','login','register','forgot-password','speaker-register']))
+@include('partials.customer_site_banner')
+@endif
 @yield('content')
 @if(!Route::is(['chat-instructor','map-grid','map-list','chat','voice-call','video-call']))
 @include('layout.partials.footer')

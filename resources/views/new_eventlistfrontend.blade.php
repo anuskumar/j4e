@@ -1,363 +1,181 @@
 @extends('layout.mainlayout')
-@section('content')
 
-<!-- Home Banner -->
-<style>
-    .banner-logo {
-        width: 20%;
-        margin-top: -12%;
-        margin-bottom: 8%;
-    }
-
-    .caption-banner {
-        margin-bottom: 10%;
-    }
-
-    /* Show extra info within an event card */
-    .additional-info {
-        display: none; /* Hide additional information by default */
-    }
-
-    @media (max-width: 767px) {
-        .list-item {
-            display: block;
-            border-bottom: 1px solid #ccc;
-            padding: 15px;
-        }
-    }
-
-    .event-list {
-        max-width: 1140px;
-        margin: 0 auto 40px auto;
-        font-family: Arial, sans-serif;
-    }
-
-    .event-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: #f5f5f5;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        border: 1px solid #e0e0e0;
-        font-family: poppins;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .event-date {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        color: #555;
-        font-weight: bold;
-    }
-
-    .date {
-        font-size: 20px;
-        color: #333;
-        font-weight: 500px;
-    }
-
-    .day {
-        font-size: 16px;
-        color: #000000;
-        font-weight: 500px;
-    }
-
-    .event-details {
-        flex-grow: 1;
-        margin-left: 20px;
-    }
-
-    .event-name {
-        font-size: 18px;
-        font-weight: 600;
-        margin: 0 0 4px 0;
-        color: #111827;
-    }
-
-    .event-location {
-        font-size: 14px;
-        margin: 0 0 4px 0;
-        color: #4b5563;
-    }
-
-    .event-time {
-        font-size: 13px;
-        color: #6b7280;
-    }
-
-    .event-cta {
-        margin-left: 20px;
-        white-space: nowrap;
-    }
-
-    .ticket-button {
-        background-color: #ffffff;
-        color: #022F5C;
-        padding: 8px 16px;
-        border: 1px solid;
-        border-radius: 5px;
-        font-size: 14px;
-        cursor: pointer;
-    }
-
-    .ticket-button:hover {
-        background-color: #022F5C;
-        color: #ffffff;
-    }
-
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-        .event-item {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 15px;
-        }
-        
-        .event-date {
-            flex-direction: row;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 10px;
-            align-items: center;
-        }
-        
-        .event-date .date,
-        .event-date .day {
-            font-size: 16px;
-        }
-        
-        .event-details {
-            margin-left: 0;
-            width: 100%;
-        }
-        
-        .event-name {
-            font-size: 16px;
-        }
-        
-        .event-location,
-        .event-time {
-            font-size: 12px;
-        }
-        
-        .event-cta {
-            margin-left: 0;
-            margin-top: 10px;
-            width: 100%;
-        }
-        
-        .ticket-button {
-            width: 100%;
-            text-align: center;
-            display: block;
-        }
-        
-        .alert-heading {
-            font-size: 18px;
-        }
-        
-        .alert p {
-            font-size: 14px;
-        }
-    }
-
-    .event-item:hover {
-        background-color: #F3EAFF; /* Light blue background on hover */
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    }
-
-    .event-hero {
-        background-color: #022F5C;
-        padding: 30px 0 40px;
-    }
-
-    .event-hero-title {
-        font-size: 30px;
-        font-weight: 600;
-        color: #ffffff;
-        margin-bottom: 5px;
-    }
-
-    .event-hero-subtitle {
-        font-size: 18px;
-        color: #ffffff;
-        margin-bottom: 10px;
-    }
-
-    .event-hero .divider {
-        border-top: 1px solid rgba(255, 255, 255, 0.3);
-        max-width: 200px;
-        margin: 10px 0 20px 0;
-    }
-
-    .event-hero-select {
-        border-radius: 18px;
-        max-width: 260px;
-        margin-left: auto;
-    }
-
-    @media (max-width: 767px) {
-        .event-hero {
-            text-align: center;
-        }
-
-        .event-hero .divider {
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .event-hero-select {
-            margin: 15px auto 0 auto;
-        }
-    }
-</style>
-
-<section class="event-hero">
+@push('customer_banner_hero')
+<div class="customer-site-banner__hero">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="event-hero-title">
-                    {{ strtoupper($event_tag->tag_name) . ' TICKETS' }}
-                </h1>
-                <h2 class="event-hero-subtitle">Tickets</h2>
-                <hr class="divider">
-            </div>
-            <div class="col-md-4 text-md-end">
-                <select class="form-control event-hero-select" id="location-select">
-                    <option value="">All Locations</option>
-                    @foreach ($location as $loc)
-                        @if($loc->id)
-                            <option value="{{ $loc->id }}">{{ $loc->location_name . ' ' . $loc->city_name . ' ,' . $loc->country_name }}</option>
-                        @endif
-                    @endforeach
-                </select>
-            </div>
-        </div>
-    </div>
-</section>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ $event_tag->tag_name ?? 'Events' }} Tickets
+                </li>
+            </ol>
+        </nav>
 
-<!-- Popular Events -->
-<br>
-<section class="popular-events1">
-    <div class="container ml-2 mr-2">
-        <!-- Section Header -->
-        <div class="section-wraper row d-flex align-items-center">
-            @if(!empty($search))
-                <div class="col-md-12">
-                    <div class="alert alert-info" role="alert">
-                        <h4 class="alert-heading">Search Results for "{{ $search }}"</h4>
-                        <p class="mb-0">Found {{ count($data) }} event(s) matching your search.</p>
-                    </div>
+        <div class="row align-items-end">
+            <div class="col-lg-8">
+                <h1 class="customer-site-banner__hero-title">
+                    {{ strtoupper($event_tag->tag_name ?? 'Events') }} TICKETS
+                </h1>
+                <p class="customer-site-banner__hero-meta">
+                    @if(!empty($search))
+                        {{ count($data) }} {{ Str::plural('result', count($data)) }} for "{{ $search }}"
+                    @else
+                        {{ count($data) }} {{ Str::plural('event', count($data)) }} available
+                    @endif
+                </p>
+            </div>
+            @if($location->count())
+            <div class="col-lg-4">
+                <div class="customer-site-banner__hero-filter">
+                    <label for="location-select">Filter by location</label>
+                    <select class="form-control" id="location-select">
+                        <option value="">All Locations</option>
+                        @foreach ($location as $loc)
+                            @if($loc->id)
+                                <option value="{{ $loc->id }}">
+                                    {{ trim($loc->location_name . ' ' . $loc->city_name . ', ' . $loc->country_name) }}
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
                 </div>
-            @else
-                {{-- <div class="col-md-6 text-right" >
-                    <h4>Events</h4>
-                </div> --}}
+            </div>
             @endif
         </div>
-        <!-- /Section Header -->
+    </div>
+</div>
+@endpush
 
-        <!-- Events List -->
-        @if(count($data) > 0)
-        <div class="event-list">
-            @foreach ($data as $val)
-                @php
-                    $singleDay = $val->event_from_date == $val->event_to_date;
-                    $eventDate = $singleDay ? $val->event_to_date : $val->event_from_date;
-                    $timeText = isset($val->timings[0]) ? date('H:i A', strtotime($val->timings[0]->from_time)) : '';
+@section('content')
 
-                    $badge = null;
-                    if ($val->event_to_date) {
-                        $yourDate = \Carbon\Carbon::parse($val->event_to_date);
-                        $startDate = \Carbon\Carbon::now()->startOfWeek();
-                        $endDate = \Carbon\Carbon::now()->endOfWeek();
-                        if ($yourDate->greaterThanOrEqualTo($startDate) && $yourDate->lessThanOrEqualTo($endDate)) {
-                            $badge = 'This Week';
-                        }
-                    }
-                @endphp
-                <div class="event-item">
-                    <div class="event-date">
-                        <span class="date">
-                            {{ $eventDate ? date('d M', strtotime($eventDate)) : '' }}
-                        </span>
-                        <span class="day">
-                            {{ $eventDate ? date('D', strtotime($eventDate)) : '' }}
-                        </span>
-                        @if($timeText)
-                            <span class="event-time">{{ $timeText }}</span>
-                        @endif
-                        @if($badge)
-                            <span class="badge text-bg-primary mt-1">{{ $badge }}</span>
-                        @endif
-                    </div>
-                    <div class="event-details">
-                        <h3 class="event-name">{{ $val->event_name }}</h3>
-                        @if(!empty($val->artist_names) && count($val->artist_names) > 0)
-                            <p class="event-artist" style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">
-                                <i class="fas fa-user"></i> {{ implode(', ', $val->artist_names) }}
-                            </p>
-                        @endif
-                        <p class="event-location">
-                            {{ $val->location_name . ' ' . $val->city_name . ', ' . $val->country_name }}
-                        </p>
-                        <span class="event-time">
-                            @if($singleDay)
-                                {{ $eventDate ? date('d M Y', strtotime($eventDate)) : '' }}
-                            @else
-                                {{ $val->event_from_date ? date('d M Y', strtotime($val->event_from_date)) : '' }}
-                                –
-                                {{ $val->event_to_date ? date('d M Y', strtotime($val->event_to_date)) : '' }}
-                            @endif
-                            @if($timeText)
-                                · {{ $timeText }}
-                            @endif
-                            @if($badge)
-                                · {{ $badge }}
-                            @endif
-                        </span>
-                    </div>
-                    <div class="event-cta">
-                        <a href="{{ url('show_details_show', $val->id) }}" class="ticket-button">See tickets</a>
-                    </div>
+@include('partials.event_list_styles')
+
+<section class="event-list-page">
+    <div class="container event-list-content">
+        <div class="event-list-panel">
+            @if(!empty($search))
+                <div class="alert event-list-search-alert" role="alert">
+                    <h4 class="alert-heading">Search Results</h4>
+                    <p class="mb-0">Showing events matching "{{ $search }}".</p>
                 </div>
-            @endforeach
+            @endif
 
+            @if(count($data) > 0)
+                <div class="event-list-cards" id="event-list-cards">
+                    @foreach ($data as $val)
+                        @php
+                            $singleDay = $val->event_from_date == $val->event_to_date;
+                            $eventDate = $singleDay ? $val->event_to_date : $val->event_from_date;
+                            $timeText = isset($val->timings[0]) ? date('g:i A', strtotime($val->timings[0]->from_time)) : '';
+
+                            $badge = null;
+                            if ($val->event_to_date) {
+                                $yourDate = \Carbon\Carbon::parse($val->event_to_date);
+                                $startDate = \Carbon\Carbon::now()->startOfWeek();
+                                $endDate = \Carbon\Carbon::now()->endOfWeek();
+                                if ($yourDate->greaterThanOrEqualTo($startDate) && $yourDate->lessThanOrEqualTo($endDate)) {
+                                    $badge = 'This Week';
+                                }
+                            }
+
+                            $locationLabel = trim($val->location_name . ' ' . $val->city_name . ', ' . $val->country_name);
+                        @endphp
+                        <article class="event-list-card" data-location-id="{{ $val->location_id ?? '' }}">
+                            <div class="event-list-card__date">
+                                <span class="event-list-card__date-day">{{ $eventDate ? date('d', strtotime($eventDate)) : '--' }}</span>
+                                <span class="event-list-card__date-month">{{ $eventDate ? date('M', strtotime($eventDate)) : '' }}</span>
+                                <span class="event-list-card__date-weekday">{{ $eventDate ? date('D', strtotime($eventDate)) : '' }}</span>
+                            </div>
+
+                            <div class="event-list-card__body">
+                                <h2 class="event-list-card__title">{{ $val->event_name }}</h2>
+                                <div class="event-list-card__meta">
+                                    @if(!empty($val->artist_names) && count($val->artist_names) > 0)
+                                        <span><i class="fas fa-user"></i> {{ implode(', ', $val->artist_names) }}</span>
+                                    @endif
+                                    <span><i class="fas fa-map-marker-alt"></i> {{ $locationLabel }}</span>
+                                    @if($val->venue_name)
+                                        <span><i class="fas fa-building"></i> {{ $val->venue_name }}</span>
+                                    @endif
+                                    <span>
+                                        <i class="far fa-clock"></i>
+                                        @if($singleDay)
+                                            {{ $eventDate ? date('d M Y', strtotime($eventDate)) : '' }}
+                                        @else
+                                            {{ $val->event_from_date ? date('d M Y', strtotime($val->event_from_date)) : '' }}
+                                            –
+                                            {{ $val->event_to_date ? date('d M Y', strtotime($val->event_to_date)) : '' }}
+                                        @endif
+                                        @if($timeText)
+                                            · {{ $timeText }}
+                                        @endif
+                                    </span>
+                                </div>
+                                @if($badge)
+                                    <span class="event-list-card__badge">{{ $badge }}</span>
+                                @endif
+                            </div>
+
+                            <div class="event-list-card__cta">
+                                <a href="{{ url('show_details_show', $val->id) }}" class="event-list-card__btn">See Tickets</a>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+
+                <div class="event-list-empty d-none" id="event-list-empty-filter">
+                    <h4>No events in this location</h4>
+                    <p>Try selecting a different location or view all events.</p>
+                    <button type="button" class="btn btn-primary" id="clear-location-filter">Show All Locations</button>
+                </div>
+            @else
+                <div class="event-list-empty">
+                    <h4>No Events Found</h4>
+                    <p>We couldn't find any events matching your criteria. Please try a different search or browse all events.</p>
+                    <a href="{{ url('/') }}" class="btn btn-primary">Back to Home</a>
+                </div>
+            @endif
         </div>
-        @else
-        <div class="alert alert-warning text-center" role="alert">
-            <h4>No Events Found</h4>
-            <p>We couldn't find any events matching your search criteria. Please try a different search term.</p>
-            <a href="{{ url('/') }}" class="btn btn-primary mt-3">Back to Home</a>
-        </div>
-        @endif
-        <!-- /Events List -->
     </div>
 </section>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var locationSelect = document.getElementById('location-select');
+    var cards = document.querySelectorAll('.event-list-card');
+    var emptyFilter = document.getElementById('event-list-empty-filter');
+    var clearBtn = document.getElementById('clear-location-filter');
 
-    
-    $(document).ready(function() {
-        $('.read-more').click(function() {
-            var $parent = $(this).closest('.event-details');
-            $parent.find('.additional-info').slideDown();
-            $(this).hide();
-            $parent.find('.read-less').show();
+    function filterByLocation(locationId) {
+        var visibleCount = 0;
+
+        cards.forEach(function (card) {
+            var matches = !locationId || String(card.dataset.locationId) === String(locationId);
+            card.style.display = matches ? '' : 'none';
+            if (matches) {
+                visibleCount++;
+            }
         });
 
-        $('.read-less').click(function() {
-            var $parent = $(this).closest('.event-details');
-            $parent.find('.additional-info').slideUp();
-            $(this).hide();
-            $parent.find('.read-more').show();
+        if (emptyFilter) {
+            emptyFilter.classList.toggle('d-none', visibleCount > 0);
+        }
+    }
+
+    if (locationSelect) {
+        locationSelect.addEventListener('change', function () {
+            filterByLocation(this.value);
         });
-    });
+    }
+
+    if (clearBtn && locationSelect) {
+        clearBtn.addEventListener('click', function () {
+            locationSelect.value = '';
+            filterByLocation('');
+        });
+    }
+});
 </script>
 
 @endsection

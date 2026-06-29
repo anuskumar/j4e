@@ -45,6 +45,28 @@
                                         </div>
                                     </div>
                                     <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Text Color</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="me-3">
+                                                    <input type="radio" name="text_color" value="white"
+                                                        {{ old('text_color', $data->text_color ?? 'white') === 'white' ? 'checked' : '' }}>
+                                                    <span> White</span>
+                                                </label>
+                                                <label>
+                                                    <input type="radio" name="text_color" value="black"
+                                                        {{ old('text_color', $data->text_color ?? 'white') === 'black' ? 'checked' : '' }}>
+                                                    <span> Black</span>
+                                                </label>
+                                                @error('text_color')
+                                                    <div class="text-danger small">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
 												<label class="form-label">Status</label>
@@ -52,8 +74,8 @@
 											<div class="col-md-6">
                                                 <div class="col-md-6">
                                                     <div class="custom-controls-stacked">
-                                                        <label class=""><input  type="radio" {{ $data->event_is_active ==1 ? "checked" :'' }} checked value="1" name="is_active"><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                                        <label class=""><input  type="radio"  {{ $data->event_is_active ==0 ? "checked" :'' }} value="0" name="is_active"><span> Inactive</span></label>
+                                                        <label class=""><input  type="radio" {{ ($data->is_active ?? 1) == 1 ? "checked" : '' }} value="1" name="is_active"><span> Active</span></label>&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                                        <label class=""><input  type="radio"  {{ ($data->is_active ?? 1) == 0 ? "checked" : '' }} value="0" name="is_active"><span> Inactive</span></label>
                                                     </div>
                                                 </div>
 

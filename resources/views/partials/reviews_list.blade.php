@@ -45,3 +45,9 @@
     </li>
     @endforelse
 </ul>
+
+@if ($reviewList instanceof \Illuminate\Contracts\Pagination\Paginator)
+<div class="d-flex justify-content-center mt-4">
+    {{ $reviewList->links() }}
+</div>
+@endif

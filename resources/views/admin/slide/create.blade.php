@@ -136,6 +136,15 @@
                         </div>
                     </div>
                     <div class="media mb-0">
+                        <div class="media-icon bg-warning-transparent text-warning">
+                            <i class="fe fe-type"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Text Color</span>
+                            <div id="preview-text-color">White</div>
+                        </div>
+                    </div>
+                    <div class="media mb-0">
                         <div class="media-icon bg-info-transparent text-info">
                             <i class="fe fe-check-circle"></i>
                         </div>
@@ -199,6 +208,27 @@
                             @enderror
                         </div>
                         <div class="col-md-6">
+                            <label class="form-field-label d-block">Text Color <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-3">
+                                <label class="form-check-label d-flex align-items-center gap-2">
+                                    <input type="radio" name="text_color" value="white" class="form-check-input"
+                                        {{ old('text_color', 'white') === 'white' ? 'checked' : '' }}>
+                                    <span>White</span>
+                                </label>
+                                <label class="form-check-label d-flex align-items-center gap-2">
+                                    <input type="radio" name="text_color" value="black" class="form-check-input"
+                                        {{ old('text_color') === 'black' ? 'checked' : '' }}>
+                                    <span>Black</span>
+                                </label>
+                            </div>
+                            @error('text_color')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="row g-3 form-section-spacer">
+                        <div class="col-md-6">
                             <label class="form-field-label d-block">Status</label>
                             <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
                                 <span class="tx-13 fw-semibold">Active</span>
@@ -256,11 +286,13 @@ jQuery(document).ready(function ($) {
         const eventText = $('#event option:selected').text().trim();
         const hasEvent = $('#event').val();
         const isActive = $('#is_active_switch').is(':checked');
+        const textColor = $('input[name="text_color"]:checked').val() || 'white';
 
         $('#preview-slide-title').text(meta ? truncateText(meta, 40) : 'New Slide');
         $('#preview-meta').text(truncateText(meta, 80));
         $('#preview-event').text(hasEvent ? eventText : 'Not selected');
         $('#preview-status').text(isActive ? 'Active' : 'Inactive');
+        $('#preview-text-color').text(textColor.charAt(0).toUpperCase() + textColor.slice(1));
     }
 
     function handleImageFile(file) {
@@ -299,7 +331,7 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    $('#meta_description, #event').on('input change', updatePreview);
+    $('#meta_description, #event, input[name="text_color"]').on('input change', updatePreview);
     updatePreview();
 });
 </script>

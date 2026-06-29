@@ -41,13 +41,22 @@
                             <div id="preview-type-name">Not set yet</div>
                         </div>
                     </div>
-                    <div class="media mb-0">
+                    <div class="media">
                         <div class="media-icon bg-success-transparent text-success">
                             <i class="fe fe-check-circle"></i>
                         </div>
                         <div class="media-body">
                             <span>Status</span>
                             <div id="preview-status">Active</div>
+                        </div>
+                    </div>
+                    <div class="media mb-0">
+                        <div class="media-icon bg-info-transparent text-info">
+                            <i class="fe fe-menu"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Header Menu</span>
+                            <div id="preview-header-menu">Hidden</div>
                         </div>
                     </div>
                 </div>
@@ -91,7 +100,7 @@
                         @enderror
                     </div>
 
-                    <div class="form-group mb-0">
+                    <div class="form-group form-section-spacer">
                         <label class="form-field-label d-block">Status</label>
                         <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
                             <span class="tx-13 fw-semibold">Active</span>
@@ -99,6 +108,18 @@
                                 <input class="form-check-input" type="checkbox" role="switch" id="is_active_switch"
                                     {{ old('is_active', '1') == '1' ? 'checked' : '' }}>
                                 <input type="hidden" name="is_active" id="is_active" value="{{ old('is_active', '1') }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="form-field-label d-block">Show in Header Menu</label>
+                        <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
+                            <span class="tx-13 text-muted">Display this event type in the website header navigation</span>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="is_header_menu_switch"
+                                    {{ old('is_header_menu', '0') == '1' ? 'checked' : '' }}>
+                                <input type="hidden" name="is_header_menu" id="is_header_menu" value="{{ old('is_header_menu', '0') }}">
                             </div>
                         </div>
                     </div>
@@ -122,10 +143,12 @@ jQuery(document).ready(function ($) {
     function updatePreview() {
         const name = $('#name').val().trim();
         const isActive = $('#is_active_switch').is(':checked');
+        const showInHeader = $('#is_header_menu_switch').is(':checked');
 
         $('#preview-name').text(name || 'New Event Type');
         $('#preview-type-name').text(name || 'Not set yet');
         $('#preview-status').text(isActive ? 'Active' : 'Inactive');
+        $('#preview-header-menu').text(showInHeader ? 'Visible' : 'Hidden');
         $('#preview-status-badge')
             .text(isActive ? 'Active' : 'Inactive')
             .toggleClass('bg-success-transparent', isActive)
@@ -134,6 +157,11 @@ jQuery(document).ready(function ($) {
 
     $('#is_active_switch').on('change', function () {
         $('#is_active').val(this.checked ? '1' : '0');
+        updatePreview();
+    });
+
+    $('#is_header_menu_switch').on('change', function () {
+        $('#is_header_menu').val(this.checked ? '1' : '0');
         updatePreview();
     });
 

@@ -497,8 +497,10 @@ Route::controller(FrontendController::class)->group(function () {
     Route::post('submit_ticket_selected', 'submit_ticket_selected')->middleware('auth');
     Route::post('sync_ticket_hold_count', 'syncTicketHoldCount')->middleware('auth')->name('sync_ticket_hold_count');
     Route::get('customer_ticket_billing_page/{id}', 'customer_ticket_billing_page')->middleware('auth')->name('customer_ticket_billing_page');
+    Route::get('customer_ticket_cart', 'customerTicketCart')->middleware('auth')->name('customer_ticket_cart');
     Route::get('ticket_purchase_expired', 'ticket_purchase_expired')->middleware('auth');
     Route::get('release_my_tickets', 'release_my_tickets')->middleware('auth');
+    Route::get('release_ticket_listing/{id}', 'releaseTicketListing')->middleware('auth')->name('release_ticket_listing');
     Route::get('booking_success/{id}', 'booking_success')->middleware('auth');
     Route::get('booking_failed', 'booking_failed');
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');

@@ -46,12 +46,12 @@
                         </div>
                     </div>
                     <div class="media mb-0">
-                        <div class="media-icon bg-success-transparent text-success">
-                            <i class="fe fe-check-circle"></i>
+                        <div class="media-icon bg-info-transparent text-info">
+                            <i class="fe fe-menu"></i>
                         </div>
                         <div class="media-body">
-                            <span>Status</span>
-                            <div>{{ ($data && $data->is_active == 1) ? 'Active' : 'Inactive' }}</div>
+                            <span>Header Menu</span>
+                            <div>{{ ($data->is_header_menu ?? 0) == 1 ? 'Visible' : 'Hidden' }}</div>
                         </div>
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                     </div>
                 </div>
 
-                <div class="form-group mb-0">
+                <div class="form-group form-section-spacer">
                     <label class="form-field-label d-block">Status</label>
                     <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
                         <span class="tx-13 fw-semibold">Active</span>
@@ -80,6 +80,18 @@
                             <span class="badge bg-success">Active</span>
                         @else
                             <span class="badge bg-warning">Inactive</span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="form-group mb-0">
+                    <label class="form-field-label d-block">Header Menu</label>
+                    <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
+                        <span class="tx-13 fw-semibold">Show in website header</span>
+                        @if ($data && ($data->is_header_menu ?? 0) == 1)
+                            <span class="badge bg-info">Visible</span>
+                        @else
+                            <span class="badge bg-secondary">Hidden</span>
                         @endif
                     </div>
                 </div>

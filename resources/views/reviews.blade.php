@@ -22,27 +22,14 @@
 			<!-- Page Content -->
 			<div class="content">
 				<div class="container">
-
-					<div class="row">
-						<div class="col-md-4 col-lg-4 col-xl-3 theiaStickySidebar">
-
-							<!-- Profile Sidebar -->
-                            @include('layout.re_sidebar');
-							<!-- /Profile Sidebar -->
-
-						</div>
-						<div class="col-md-8 col-lg-8 col-xl-9">
+					<div class="row justify-content-center">
+						<div class="col-lg-10 col-xl-9">
 							<div class="doc-review review-listing">
-
 								@include('partials.reviews_list')
-								<!-- /Comment List -->
-
 							</div>
 						</div>
 					</div>
 				</div>
-
 			</div>
 			<!-- /Page Content -->
-			</div>
 	   @endsection

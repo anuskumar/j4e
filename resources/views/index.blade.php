@@ -3,233 +3,58 @@
 
 
 <!-- Home Banner -->
-<style>
-.banner-logo{
-    width: 50%;
-    margin-bottom: 8%;
-    margin-top: -12%;
-}
+@include('partials.homepage_styles')
 
-.caption-banner{
-    margin-bottom: 10%;
-}
-
-img {
-  width: -webkit-fill-available;
-}
-
-@keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-
-/* Mobile responsive styles */
-@media (max-width: 768px) {
-    .main-menu-wrapper {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
-        text-align: center;
-        display: flex !important;
-        flex-direction: column;
-        align-items: center;
-        width: 100% !important;
-        margin: 0 !important;
-    }
-    
-    .main-nav {
-        flex-direction: row !important;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        padding: 5px !important;
-        width: 100% !important;
-        display: flex !important;
-        list-style: none;
-    }
-    
-    .main-nav a {
-        padding: 8px 12px !important;
-        display: inline-block !important;
-        text-align: center;
-        font-size: 12px !important;
-        width: auto !important;
-        margin: 3px !important;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 5px;
-        text-decoration: none;
-    }
-    
-    .menu-header {
-        text-align: center;
-        width: 100%;
-        display: none !important;
-    }
-    
-    /* Hide menu close button on mobile */
-    .menu-close {
-        display: none !important;
-    }
-    
-    /* Ensure parent container of menu is full width */
-    div[style*="background-color: #310e80"] {
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    
-    .carousel-caption {
-        display: none !important;
-    }
-    
-    .carousel-item img {
-        height: 250px !important;
-        object-fit: cover;
-    }
-    
-    .service-box {
-        margin-bottom: 20px;
-    }
-    
-    .service-img {
-        width: 100% !important;
-        height: 200px !important;
-    }
-    
-    .service-img img {
-        height: 100% !important;
-    }
-    
-    .section-header h2 {
-        font-size: 24px;
-    }
-    
-    .popular-events .container,
-    .testimonial-section .container {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-    
-    .title {
-        font-size: 16px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .carousel-item img {
-        height: 180px !important;
-    }
-    
-    .service-img {
-        height: 180px !important;
-    }
-    
-    .section-header h2 {
-        font-size: 20px;
-    }
-    
-    .title {
-        font-size: 14px !important;
-    }
-}
-</style>
-    <div style="background-color: #7e0982; overflow: hidden; white-space: nowrap; padding: 5px;">
-        <span style="display: inline-block; animation: marquee 20s linear infinite; color: white; font-size: 16px;">
-            Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure!<br>
-        </span>
-    </div>
-<div style="background-color: #310e80">
-    {{-- <ul class="main-nav text-center"> <!-- Center-align text -->
-        <li class="col-md-12">
-            <h6 class="text-white">Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</h6>
-        </li>
-    </ul> --}}
-    <div class="main-menu-wrapper" style="padding-left:350px;" >
-
-        <div class="menu-header">
-            <a href="index">
-                <img src="{{ $appLogoUrl }}" class="img-fluid" alt="Logo">
-            </a>
-            <a id="menu_close" class="menu-close" href="javascript:void(0);">
-                <i class="fas fa-times"></i>
-            </a>
-        </div>
-        @php
-        $eventtypes = \App\Models\EventType::where('is_active',1)->select('event_type_name','id')->get();
-        @endphp
-
-        <ul class="main-nav text-center"> <!-- Center-align text -->
-            <a href="{{ url('/') }}">{{'All Tickets'}}</a>
-            @foreach ($eventtypes as $eventtype)
-
-
-                <a href="{{ url('/'.'?type='.$eventtype->id) }}">{{$eventtype->event_type_name.' Tickets'}}</a>
-
-
-
+<section class="home-hero">
+    <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+        @if($slider->count())
+        <ol class="carousel-indicators">
+            @foreach($slider as $index => $slide)
+                <li data-target="#carouselExampleIndicators" data-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}"></li>
             @endforeach
-        </ul>
+        </ol>
+        @endif
+
+        <div class="carousel-inner">
+            @forelse($slider as $index => $slide)
+                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                    <img class="d-block w-100 banner_caro"
+                        src="{{ asset('storage/uploads/slide/' . $slide->slide_image) }}"
+                        alt="{{ $slide->meta_description ?? 'Slide ' . ($index + 1) }}"
+                        onerror="this.src='{{ asset('assets/img/banner.jpg') }}'">
+                    <div class="carousel-caption home-hero__overlay d-none d-md-flex {{ $slide->captionTextColorClass() }}">
+                        <div class="home-hero__caption-text">
+                            <h1>{{ $slide->meta_description }}</h1>
+                        </div>
+                        <div class="home-hero__caption-action">
+                            <a href="{{ route('new_eventlistfrontend') }}" class="btn btn-primary">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="carousel-item active">
+                    <img class="d-block w-100 banner_caro" src="{{ asset('assets/img/banner.jpg') }}" alt="Welcome">
+                </div>
+            @endforelse
+        </div>
+
+        @if($slider->count() > 1)
+        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+        @endif
     </div>
-</div>
-
-
-            <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-
-                <ol class="carousel-indicators">
-                    @foreach($slider as $index => $slide)
-                        <li data-target="#carouselExampleIndicators" data-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}"></li>
-                    @endforeach
-                </ol>
-
-                <div class="carousel-inner">
-                    @foreach($slider as $index => $slide)
-                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                            <img class="d-block w-100 banner_caro" src="{{ asset('storage/uploads/slide/'. $slide->slide_image) }}"  alt="Slide {{ $index + 1 }}">
-                            <div class="carousel-caption d-none d-md-block text-left caption-banner" >
-                                <h1 class="text-white">{{ $slide->meta_description }}</h1>
-                                <button class="btn btn-primary" style="border-radius: 20px;">Book Now</button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                    {{-- <div class="carousel-item active">
-                        <div class="wrapper-content text-center"></div>
-                        <img class="d-block w-100 banner_caro" src="https://media-cldnry.s-nbcnews.com/image/upload/t_nbcnews-fp-1200-630,f_auto,q_auto:best/rockcms/2023-07/230713-taylor-swift-jm-1600-daea0b.jpg"  style="width:100%" height="100px" alt="First slide">
-                        <div class="carousel-caption d-none d-md-block text-left caption-banner" >
-                            <h1 class="text-white"> Tylor Swift</h5>
-                            <button class="btn btn-primary" style="border-radius: 20px;">Book Now</button>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <img class="d-block w-100 banner_caro" src="https://media-cldnry.s-nbcnews.com/image/upload/rockcms/2023-07/230713-taylor-swift-jm-1600-daea0b.jpg" style="width:100%" height="100px" alt="Second slide">
-                        <div class="carousel-caption d-none d-md-block text-left caption-banner" >
-                            <h1 class="text-white"> Tylor Swift</h5>
-                            <button class="btn btn-primary" style="border-radius: 20px;">Book Now</button>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <img class="d-block w-100 banner_caro" src="https://content.fortune.com/wp-content/uploads/2023/07/GettyImages-1524297266-e1689352522521.jpg"  width="1000px" height="700px" alt="Third slide">
-                        <div class="carousel-caption d-none d-md-block text-left caption-banner" >
-                            <h1 class="text-white"> Tylor Swift</h5>
-                            <button class="btn btn-primary" style="border-radius: 20px;">Book Now</button>
-                        </div>
-                    </div> --}}
-                </div>
-                <a class="" href="#carouselExampleIndicators" role="button" data-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="sr-only">Previous</span>
-                </a>
-                <a class="" href="#carouselExampleIndicators" role="button" data-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="sr-only">Next</span>
-                </a>
-              </div>
-			<!-- /Home Banner -->
+</section>
+<!-- /Home Banner -->
 
 <!-- Popular Events -->
             <section class="popular-events">
-				<div class="container" style="margin-left: auto; margin-right: auto;">
+				<div class="container">
 
 					<!-- Section Header -->
 					<div class="section-wraper row d-flex align-items-center">
@@ -248,45 +73,16 @@ img {
                         @foreach ($event_tags as $val)
 
                         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                        <a href="{{ url('new_eventlistfrontend?tag='.$val->id) }}" style="text-decoration: none;">
+                        <a href="{{ url('new_eventlistfrontend?tag='.$val->id) }}" class="event-card">
                             <div class="service-box">
-								<div class="service-img size" style="width: 100%; height: 250px; object-fit: contain; display: block;">
-                                    	<img class="img-fluid" src="{{  asset('storage/uploads/event_tag_images/' . $val->tag_image) }}"
-                                     style="width: 100%; height: 100%; object-fit: cover;" class="img-fluid">
+								<div class="service-img">
+                                    	<img class="img-fluid"
+                                        src="{{ $val->resolveHomepageImageUrl() }}"
+                                        alt="{{ $val->tag_name ?? 'Event' }}"
+                                        onerror="this.src='{{ asset('assets/img/default-event.jpg') }}'">
 								</div>
-
-
-								{{-- <div class="overlay-content">
-									<div class="rating">
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star filled"></i>
-										<i class="fas fa-star"></i>
-										<span class="d-inline-block">3.5</span>
-									</div>
-									<ul class="available-info">
-										<li>
-											<a href="event-details"><h3>Mint Park Hall</h3></a>
-										</li>
-										<li>
-											<p>New Jersey, United States</p>
-										</li>
-										<li>
-											<h4>150 Seats</h4>
-										</li>
-									</ul>
-									<div class="row row-sm">
-										<div class="col-6">
-											<a href="booking" class="btn bok-btn" tabindex="0">Book Now</a>
-										</div>
-										<div class="col-6 text-right">
-											<a href="javascript:void(0);" class="rate cursor-auto" tabindex="0">$ 200.00/HR</a>
-										</div>
-									</div>
-								</div> --}}
 							</div>
-                            <h3 class="title text-center font-weight-bold mt-3" style="color: #022F5C;">{{ strtoupper($val->tag_name)." TICKETS" }}</h3>
+                            <h3 class="event-card__title">{{ strtoupper($val->tag_name) }} TICKETS</h3>
                         </a>
                         </div>
 

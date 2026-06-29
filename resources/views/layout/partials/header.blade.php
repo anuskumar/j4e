@@ -1,475 +1,320 @@
-<?php
-error_reporting(0);
-?>
 <style>
-    /* Hide old sidebar/mobile menu elements */
-    .main-menu-wrapper,
     .navbar-header,
     #mobile_btn,
     .menu-header,
     .menu-close {
         display: none !important;
     }
-    
-    @media (max-width: 991px) {
-        .navbar-brand img {
-            max-width: 180px !important;
-            height: auto !important;
+
+    .site-navbar {
+        background: #7e0982;
+        padding: 8px 0;
+    }
+
+    .site-navbar > .container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+    }
+
+    @media (min-width: 992px) {
+        .site-navbar.navbar-expand-lg > .container {
+            flex-wrap: nowrap;
+            gap: 20px;
         }
-        
-        .navbar-collapse {
-            background: rgb(34,30,105);
-            background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: 8px;
+
+        .site-navbar.navbar-expand-lg .navbar-collapse {
+            flex: 1 1 auto;
+            min-width: 0;
+            display: flex !important;
+            align-items: center;
         }
-        
-        .navbar-nav {
-            margin-top: 10px;
+
+        .site-navbar__search {
+            flex: 1 1 auto;
+            max-width: none;
+            min-width: 0;
+            width: 100%;
         }
-        
-        .navbar-nav .nav-item {
-            padding: 5px 0;
+
+        .site-navbar__search .input-group {
+            width: 100%;
         }
-        
-        .header-top-right {
-            margin-top: 10px;
-        }
-        
-        .search-form-mobile {
-            width: 100% !important;
-            margin-bottom: 15px;
-        }
-        
-        .search-form-mobile .input-group {
-            width: 100% !important;
+
+        .site-navbar .nav-actions {
+            flex: 0 0 auto;
+            margin-left: auto;
+            padding-right: 4px;
         }
     }
-    
+
+    .site-navbar .navbar-brand {
+        flex: 0 0 auto;
+        margin-right: 0;
+        padding: 4px 8px 4px 4px;
+    }
+
+    .site-navbar .navbar-brand img {
+        max-width: 200px;
+        max-height: 56px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .site-navbar .navbar-collapse {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .site-navbar__search {
+        flex: 1 1 auto;
+        min-width: 180px;
+        margin: 0;
+        width: 100%;
+    }
+
+    .site-navbar__search .form-control {
+        min-height: 36px;
+        font-size: 13px;
+        border-radius: 999px 0 0 999px;
+        border-right: 0;
+        padding: 0 12px;
+    }
+
+    .site-navbar__search .input-group .btn {
+        border-radius: 0 999px 999px 0;
+        min-height: 36px;
+        padding: 0 12px;
+    }
+
+    .site-navbar .nav-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: nowrap;
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+
+    .site-navbar .nav-actions.navbar-nav {
+        flex-direction: row;
+    }
+
+    .site-navbar .nav-actions .nav-item {
+        display: flex;
+        align-items: center;
+    }
+
+    .site-navbar .nav-actions .btn-nav {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 12px !important;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+        border-radius: 999px;
+        border: 1px solid #fff;
+        white-space: nowrap;
+        color: #fff !important;
+        text-decoration: none;
+        transition: opacity 0.2s ease, filter 0.2s ease;
+    }
+
+    .site-navbar .nav-actions .btn-nav:hover {
+        color: #fff !important;
+        opacity: 0.92;
+        filter: brightness(1.06);
+        text-decoration: none;
+    }
+
     .navbar-toggler {
         border-color: rgba(255,255,255,0.5);
+        margin-left: auto;
+        flex-shrink: 0;
     }
-    
+
     .navbar-toggler-icon {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    .navbar-dark .navbar-nav .nav-link {
+        color: #fff;
+    }
+
+    .gradient-button {
+        background-image: linear-gradient(to right, #001f3f, #117eea);
+    }
+
+    .gradient-button1 {
+        background-image: linear-gradient(to right, #d900d2, #35042a);
+    }
+
+    .gradient-button2 {
+        background-image: linear-gradient(to right, #671dcf, #221e69);
+    }
+
+    @media (max-width: 991px) {
+        .site-navbar > .container {
+            flex-wrap: wrap;
+        }
+
+        .site-navbar .navbar-brand {
+            order: 1;
+        }
+
+        .navbar-toggler {
+            order: 2;
+        }
+
+        .site-navbar .navbar-collapse {
+            order: 3;
+            flex: 1 1 100%;
+            background: #6d0875;
+            padding: 14px;
+            margin-top: 0;
+            border-radius: 10px;
+        }
+
+        .site-navbar__search {
+            width: 100%;
+        }
+
+        .site-navbar .nav-actions {
+            order: 4;
+            flex: 1 1 100%;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-left: 0;
+            padding-right: 0;
+        }
+    }
+
+    @media (min-width: 992px) and (max-width: 1199px) {
+        .site-navbar .navbar-brand img {
+            max-width: 140px;
+        }
+
+        .site-navbar .nav-actions .btn-nav {
+            padding: 0 10px !important;
+            font-size: 11px;
+        }
     }
 </style>
 
 <!-- Loader -->
 @if(Route::is(['map-grid','map-list']))
-{{-- <div id="loader">
-    <div class="loader">
-        <span></span>
-        <span></span>
-    </div>
-</div> --}}
 @endif
-<!-- /Loader -->
 
-<!-- Main Wrapper -->
 <div class="main-wrapper">
     @if(Route::is(['page']))
-    <!-- Header -->
     <header class="header main-header">
     @endif
     @if(!Route::is(['page']))
-
     @endif
 
-    {{-- <!-- Top Header -->
-    <div class="top-header text-center">
-        <h6 class="text-white">Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</h6>
-    </div>
-    <!-- /Top Header --> --}}
-
-    @php
-    $settings = \App\Models\CompanySettings::first();
-    @endphp
     <header class="header">
-    <!-- Navbar -->
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="min-height: 82px; background: rgb(34,30,105); background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark site-navbar">
+        <div class="container align-items-center">
             <a class="navbar-brand" href="{{ url('/') }}">
-                <img src="{{ $appLogoUrl }}" class="" style="max-width: 300px; height: 70px;" alt="Logo">
+                <img src="{{ $appLogoUrl }}" alt="Logo">
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-
-    <form class="me-3 search-form-mobile" action="{{ url('/') }}" method="GET">
-        <div class="input-group" style="max-width: 577px; width: 100%;">
-            <input type="search" class="form-control rounded-pill" style="border-radius: 30px; min-height: 40px;"
-                placeholder="Search by Event, Artist or Location..." name="search" aria-label="Search" aria-describedby="search-addon"
-                value="{{ request('search') ?? '' }}" required />
-            <button type="submit" class="btn btn-primary rounded-pill ml-1">
-                <i class="fas fa-search"></i>
-            </button>
-        </div>
-    </form>
-
-
-                <ul class="navbar-nav ml-auto"> <!-- Use ml-auto to align items to the right -->
-                    <li class="nav-item">
-
-                        @php
-                        if (Auth::user()) {
-                            $check_cart = \App\Models\TicketsGenerated::where('user_id',Auth::user()->id)->where('is_sold',0)->first();
-
-                        }else{
-                            $check_cart = null;
-                        }
-
-                        @endphp
-
-                        @if($check_cart)
-                        <a class="nav-link" href="{{ route('customer_ticket_billing_page',$check_cart->event_tickets); }}">CART</a>
-                        @endif
-                    </li>
-                    @if(!Auth::user())
-                    <li class="nav-item">
-                        <a class="nav-link login-button btn btn-primary btn-sm gradient-button" style="border-radius: 15px;padding:5px 30px 5px 30px;" href="{{ url('login') }}">Login</a>
-                    </li>
-                    @endif
-                    <li class="nav-item">
-                        <a class="nav-link  btn btn-primary btn-sm  gradient-button1"  style="border-radius: 15px;padding:5px 9px 5px 9px; margin-left: 12px;"href="{{ url('sell_tickets') }}">Sell Tickets</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link " href="{{ route('reseller.requestevent') }}"><u>Request Event</u></a>
-                    </li>
-                    {{-- <li class="nav-item">
-                        <a class="nav-link facebook-button" href="#"target="_blank"><i class="fab fa-facebook-f"></i></a>
-
-                    </li>
-                    <li>
-
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link twitter-button" href="#" target="_blank"><i class="fab fa-twitter"></i></a>
-
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link instagram-button" href="#" target="_blank"><i class="fab fa-instagram"></i></a>
-                    </li> --}}
-                </ul>
-
+                <form class="site-navbar__search" action="{{ url('/') }}" method="GET">
+                    <div class="input-group">
+                        <input type="search" class="form-control"
+                            placeholder="Search by Event, Artist or Location..."
+                            name="search"
+                            value="{{ request('search') ?? '' }}"
+                            required />
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
-        <div class="header-top-right">
-            <!-- User menu -->
-            @if(Auth::check())
+
+            <ul class="navbar-nav nav-actions">
                 @php
-                    $user = Auth::user();
-                    $profileImage = $user->profile
-                        ? asset('storage/uploads/images/' . $user->profile)
-                        : asset('assets/img/customers/customer.jpg');
-
-                    $profileSettingsUrl = $user->user_type === 'reseller'
-                        ? route('reseller.profile')
-                        : url('customer_profile_settings');
+                if (Auth::user()) {
+                    $validHoldStart = \Carbon\Carbon::now()->subMinutes(15);
+                    $check_cart = \App\Models\TicketsGenerated::where('user_id', Auth::user()->id)
+                        ->where('is_sold', 0)
+                        ->where('under_purchase_hold', 1)
+                        ->where('purchase_hold_time', '>=', $validHoldStart)
+                        ->exists();
+                } else {
+                    $check_cart = null;
+                }
                 @endphp
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
-            <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown">
-                <span class="user-img">
-                    <img
-                        class="rounded-circle"
-                        src="{{ $profileImage }}"
-                        width="31"
-                        alt="User Image"
-                        onerror="this.onerror=null;this.src='{{ asset('assets/img/customers/customer.jpg') }}';"
-                    >
-                </span>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right">
-                <div class="user-header">
-                    <div class="avatar avatar-sm">
-                        <img
-                            src="{{ $profileImage }}"
-                            alt="User Image"
-                            class="avatar-img rounded-circle"
-                            onerror="this.onerror=null;this.src='{{ asset('assets/img/customers/customer.jpg') }}';"
-                        >
-                    </div>
-                    <div class="user-text">
-                        <h6>{{ ucfirst($user->name) }}</h6>
-                        <p class="text-muted mb-0">{{ ucfirst($user->user_type) }}</p>
-                    </div>
-                </div>
-                <a class="dropdown-item" href="{{ url('home') }}">Dashboard</a>
-                <a class="dropdown-item" href="{{ $profileSettingsUrl }}">Profile Settings</a>
-                <a class="dropdown-item logout-link" href="{{ route('logout') }}"
-                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                </a>
-            </div>
-            <br>
-            @endif
+
+                @if($check_cart)
+                <li class="nav-item">
+                    <a class="nav-link btn-nav gradient-button" href="{{ route('customer_ticket_cart') }}">Cart</a>
+                </li>
+                @endif
+                @if(!Auth::user())
+                <li class="nav-item">
+                    <a class="nav-link btn-nav gradient-button" href="{{ url('login') }}">Login</a>
+                </li>
+                @endif
+                <li class="nav-item">
+                    <a class="nav-link btn-nav gradient-button1" href="{{ url('sell_tickets') }}">Sell Tickets</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link btn-nav gradient-button2" href="{{ route('reseller.requestevent') }}">Request Event</a>
+                </li>
+                @if(Auth::check())
+                    @php
+                        $user = Auth::user();
+                        $profileImage = $user->profileImageUrl();
+                        $profileSettingsUrl = $user->user_type === 'reseller'
+                            ? route('reseller.profile')
+                            : url('customer_profile_settings');
+                    @endphp
+                    <li class="nav-item dropdown">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+                        <a href="#" class="nav-link dropdown-toggle p-0" data-toggle="dropdown">
+                            <img class="rounded-circle" src="{{ $profileImage }}" width="34" height="34" alt="{{ $user->name }}"
+                                onerror="this.onerror=null;this.src='{{ \App\Models\User::defaultProfileImageUrl() }}';">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <div class="px-3 py-2 border-bottom">
+                                <h6 class="mb-0">{{ ucfirst($user->name) }}</h6>
+                                <small class="text-muted">{{ ucfirst($user->user_type) }}</small>
+                            </div>
+                            <a class="dropdown-item" href="{{ url('home') }}">Dashboard</a>
+                            <a class="dropdown-item" href="{{ $profileSettingsUrl }}">Profile Settings</a>
+                            <a class="dropdown-item logout-link" href="{{ route('logout') }}"
+                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        </div>
+                    </li>
+                @endif
+            </ul>
         </div>
-        
+
         <script>
-            // Ensure logout functionality works from navbar
             document.addEventListener('DOMContentLoaded', function() {
-                var logoutLinks = document.querySelectorAll('.logout-link');
-                logoutLinks.forEach(function(link) {
+                document.querySelectorAll('.logout-link').forEach(function(link) {
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
                         var form = document.getElementById('logout-form');
-                        if (form) {
-                            form.submit();
-                        } else {
-                            // Fallback: create form dynamically
-                            var logoutForm = document.createElement('form');
-                            logoutForm.method = 'POST';
-                            logoutForm.action = '{{ route('logout') }}';
-                            logoutForm.style.display = 'none';
-                            
-                            var csrfInput = document.createElement('input');
-                            csrfInput.type = 'hidden';
-                            csrfInput.name = '_token';
-                            csrfInput.value = '{{ csrf_token() }}';
-                            logoutForm.appendChild(csrfInput);
-                            
-                            document.body.appendChild(logoutForm);
-                            logoutForm.submit();
-                        }
+                        if (form) form.submit();
                     });
                 });
             });
         </script>
 
     </nav>
-    <!-- Navbar -->
     </header>
-    <!-- Navbar -->
-
-    <style>
-        .form-white.input-group>.form-control:focus {
-            border-color: #fff;
-            box-shadow: inset 0 0 0 1px #fff;
-        }
-
-        .navbar-dark .navbar-nav .nav-link {
-            color: #fff;
-        }
-
-        .navbar-dark .navbar-nav .nav-link:hover,
-        .navbar-dark .navbar-nav .nav-link:focus {
-            color: rgba(255, 255, 255, 0.75);
-        }
-    </style>
-
-    {{-- OLD COMMENTED OUT MOBILE MENU CODE - NOT IN USE
-    <nav class="navbar navbar-expand-lg header-nav"
-    @if(Request::path()=='/')
-    style="background: rgb(34,30,105); background: linear-gradient(90deg, rgba(34,30,105,1) 5%, rgba(54,8,94,1) 65%, rgba(103,29,207,1) 100%);padding: 35px!important;"
-    @else
-    @endif>
-        <div class="navbar-header">
-            <a id="mobile_btn" href="javascript:void(0);">
-                <span class="bar-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </span>
-            </a>
-            <a id="mobile_btn" class="navbar-brand" href="{{ url('/') }}" style="margin-left:40px;">
-                <img src="{{ $appLogoUrl }}" class="" width="300px;" height="60px;" alt="Logo">
-            </a>
-
-
-            @php
-            $settings = \App\Models\CompanySettings::first();
-            @endphp
-            <a href="index" class="navbar-brand logo">
-                <img src="{{ $appLogoUrl }}" class="" width="326" height="76" alt="Logo">
-            </a>
-        </div>
-
-        <div class="main-menu-wrapper col-12">
-            <div class="menu-header">
-                <a href="index">
-                    <img src="{{ $appLogoUrl }}" class="img-fluid" alt="Logo">
-                </a>
-                <a id="menu_close" class="menu-close" href="javascript:void(0);">
-                    <i class="fas fa-times"></i>
-                </a>
-            </div>
-            @php
-            $eventtypes = \App\Models\EventType::where('is_active',1)->select('event_type_name','id')->get();
-            @endphp
-
-        </div>
-
-        <div>
-            <ul class="main-nav text-center"> <!-- Center-align text -->
-                <li class="col-md-12">
-                    <h6 class="text-white">Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</h6>
-                </li>
-            </ul>
-            <div class="main-menu-wrapper" style="padding-left:450px;" >
-
-                <div class="menu-header">
-                    <a href="index">
-                        <img src="{{ $appLogoUrl }}" class="img-fluid" alt="Logo">
-                    </a>
-                    <a id="menu_close" class="menu-close" href="javascript:void(0);">
-                        <i class="fas fa-times"></i>
-                    </a>
-                </div>
-                @php
-                $eventtypes = \App\Models\EventType::where('is_active',1)->select('event_type_name','id')->get();
-                @endphp
-
-                <ul class="main-nav text-center"> <!-- Center-align text -->
-                    @foreach ($eventtypes as $eventtype)
-                    <li>
-
-                        <a href="{{ url('/'.'?type='.$eventtype->id) }}">{{$eventtype->event_type_name.' Tickets'}}</a>
-
-
-
-                    </li>
-                    @endforeach
-                </ul>
-            </div>
-        </div> --}}
-
-
-
-        <!-- User Menu or Social Icons -->
-
-    {{-- </nav> --}}
-    <!-- /Header -->
-
-    <style>
-        .licenter {
-            display: flex;
-            justify-content: center;
-        }
-        <style>
-    .login-button {
-        background-color: rgb(174, 255, 0); /* Set your desired background color */
-        color: white; /* Text color */
-        padding: 10px 20px; /* Adjust padding as needed */
-        border-radius: 20px; /* Rounded corners */
-        border-color: white; /* Rounded corners */
-        transition: background-color 0.3s ease; /* Smooth hover transition */
-    }
-
-    .login-button:hover {
-        background-color: darkblue; /* Change the background color on hover */
-    }
-
-    .gradient-button {
-    background-image: linear-gradient(to right, #001f3f, #117eea); /* Gradient colors */
-    color: white; /* Text color */
-    padding: 10px 20px; /* Adjust padding as needed */
-    border: 1px solid white; /* Remove border */
-    border-radius: 5px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    transition: background-image 0.3s ease; /* Smooth hover transition */
-
-}
-
-.gradient-button:hover {
-    background-image: linear-gradient(to right, #001f3f, #0074d9); /* Change the gradient on hover */
-}
-
-
-
-
-
-.gradient-button1 {
-    background-image: linear-gradient(to right, #d900d2, #35042a); /* Gradient colors */
-    color: white; /* Text color */
-    padding: 10px 20px; /* Adjust padding as needed */
-    border: 1px solid white ; /* Remove border */
-    border-radius: 5px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    transition: background-image 0.3s ease; /* Smooth hover transition */
-}
-
-.gradient-button1:hover {
-    background-image: linear-gradient(to right, #d900d2, #5d084a); /* Change the gradient on hover */
-}
-
-.instagram-button {
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    display: inline-flex; /* Display as a flex container */
-    align-items: center; /* Center the icon and text vertically */
-    justify-content: center; /* Center the icon and text horizontally */
-    /* padding: 10px 20px; Adjust padding as needed */
-    border-radius: 15px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    transition: background-image 0.3s ease; /* Smooth hover transition */
-    text-decoration: none; /* Remove underline from the link */
-    padding:5px 9px 5px 9px;
-    border:1px solid white;
-}
-
-.instagram-button:hover {
-    background-image: linear-gradient(to bottom, #ff2d55, #8a3ab9); /* Change the gradient on hover */
-}
-
-.facebook-button {
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    display: inline-flex; /* Display as a flex container */
-    align-items: center; /* Center the icon and text vertically */
-    justify-content: center; /* Center the icon and text horizontally */
-    /* padding: 10px 20px; Adjust padding as needed */
-    border-radius: 15px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    transition: background-image 0.3s ease; /* Smooth hover transition */
-    text-decoration: none; /* Remove underline from the link */
-    padding:5px 9px 5px 9px;
-    margin-left: 18px;
-    border:1px solid white;
-}
-
-.facebook-button:hover {
-    background-image: linear-gradient(to bottom, #ff2d55, #8a3ab9); /* Change the gradient on hover */
-}
-
-
-.twitter-button {
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    display: inline-flex; /* Display as a flex container */
-    align-items: center; /* Center the icon and text vertically */
-    justify-content: center; /* Center the icon and text horizontally */
-    /* padding: 10px 20px; Adjust padding as needed */
-    border-radius: 15px; /* Rounded corners */
-    cursor: pointer; /* Change cursor on hover */
-    transition: background-image 0.3s ease; /* Smooth hover transition */
-    text-decoration: none; /* Remove underline from the link */
-    margin: 0px 5px 0px 5px;
-    padding:5px 9px 5px 9px;
-    border:1px solid white;
-}
-
-.twitter-button:hover {
-    background-image: linear-gradient(to bottom, #ff2d55, #8a3ab9); /* Change the gradient on hover */
-}
-
-.carousel-control-next {
-    /* right: 0; */
-    top: 139px!important;
-}
-.carousel-control-prev {
-    /* left: 0; */
-    top: 139px!important;
-
-}
-
-</style>
-
 
 </div>

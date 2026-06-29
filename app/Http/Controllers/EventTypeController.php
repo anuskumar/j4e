@@ -55,11 +55,13 @@ class EventTypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'is_active' => 'nullable|in:0,1',
+            'is_header_menu' => 'nullable|in:0,1',
         ]);
 
         $eventtypeuser = new EventType();
         $eventtypeuser->event_type_name = $request->name;
         $eventtypeuser->is_active = $request->input('is_active', 1);
+        $eventtypeuser->is_header_menu = $request->input('is_header_menu', 0);
         $eventtypeuser->save();
 
         return redirect('eventtype/list')->with('success', 'Event type created successfully.');
@@ -71,11 +73,13 @@ class EventTypeController extends Controller
             'id' => 'required|exists:event_type,id',
             'event_type_name' => 'required|string|max:255',
             'is_active' => 'nullable|in:0,1',
+            'is_header_menu' => 'nullable|in:0,1',
         ]);
 
         $data = EventType::findOrFail($request->id);
         $data->event_type_name = $request->event_type_name;
         $data->is_active = $request->input('is_active', 0);
+        $data->is_header_menu = $request->input('is_header_menu', 0);
         $data->save();
 
         return redirect('eventtype/list')->with('success', 'Event type updated successfully.');

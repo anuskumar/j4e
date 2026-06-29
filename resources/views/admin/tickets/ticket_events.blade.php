@@ -282,11 +282,11 @@
                                     @endif
                                     <td class="text-end">
                                         <div class="table-action d-flex justify-content-end gap-1">
-                                            <a href="{{ url('tickets/ticket_view', $val->id) }}" class="btn btn-sm btn-info-light" title="View">
+                                            <a href="{{ url('events/view/' . $val->id . '?from=tickets') }}" class="btn btn-sm btn-info-light" title="View Event">
                                                 <i class="far fa-eye"></i>
                                             </a>
                                             <a href="{{ url('tickets/manage_tickets', $val->id) }}" class="btn btn-sm btn-primary-light" title="Manage Tickets">
-                                                <i class="fe fe-ticket"></i>
+                                                <i class="fas fa-ticket-alt"></i>
                                             </a>
                                             <a href="{{ url('tickets/transaction-history', $val->id) }}" class="btn btn-sm btn-success-light" title="Transaction History">
                                                 <i class="fe fe-clock"></i>

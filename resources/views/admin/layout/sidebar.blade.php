@@ -143,6 +143,7 @@
                         <li class="side-menu__label1"><a href="javascript:void(0);">Masters</a></li>
                         <li><a class="slide-item" href="{{ url('location/list') }}">Location</a></li>
                         <li><a class="slide-item" href="{{ url('city/list') }}">City</a></li>
+                        <li><a class="slide-item" href="{{ url('tickettype/list') }}">Ticket Types</a></li>
                     </ul>
                 </li>
                 @if (Auth::user()->user_type == 'superadmin')

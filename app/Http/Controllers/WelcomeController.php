@@ -14,6 +14,7 @@ use App\Models\TicketsGenerated;
 use App\Models\VenueSeating;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class WelcomeController extends Controller
 {
@@ -35,13 +36,11 @@ class WelcomeController extends Controller
             ->get();
         if(empty($type))
         {
-             $event_tags = Events::leftjoin('event_tags','event_tags.id','event.event_tag')->groupBy('event.event_tag')
-                                ->select('*','event_tags.id as id')->get();
+             $event_tags = $this->homepageEventTagsQuery()->get();
         } else{
-             $event_tags = Events::leftjoin('event_tags','event_tags.id','event.event_tag')
-                                    ->where('event.event_type',$type)
-                                    ->groupBy('event.event_tag')
-                                    ->select('*','event_tags.id as id')->get();
+             $event_tags = $this->homepageEventTagsQuery()
+                                    ->where('event.event_type', $type)
+                                    ->get();
         }
 
 
@@ -55,7 +54,7 @@ class WelcomeController extends Controller
         $customer_reviews = CustomerReview::where('is_active', 1)
             ->orderBy('sort_order')
             ->orderBy('id', 'desc')
-            ->get();
+            ->paginate(4);
 
         return view('reviews', compact('customer_reviews'));
     }
@@ -113,7 +112,7 @@ class WelcomeController extends Controller
             $query->where('event.event_tag',$event_tag->id);
         }
 
-        $data = $query->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $query->select('*','event.id as id','location.id as location_id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
             ->customerDisplayOrder()
             ->get();
 
@@ -286,5 +285,21 @@ class WelcomeController extends Controller
         }
 
      }
+
+    private function homepageEventTagsQuery()
+    {
+        return EventTags::query()
+            ->select(
+                'event_tags.id',
+                'event_tags.tag_name',
+                'event_tags.tag_image',
+                DB::raw('MAX(event.event_image) as event_image')
+            )
+            ->join('event', 'event.event_tag', '=', 'event_tags.id')
+            ->where('event_tags.is_active', 1)
+            ->whereNull('event.deleted_at')
+            ->groupBy('event_tags.id', 'event_tags.tag_name', 'event_tags.tag_image')
+            ->orderBy('event_tags.tag_name');
+    }
 
 }

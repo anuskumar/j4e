@@ -19,6 +19,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class EventsController extends Controller
@@ -145,19 +146,43 @@ class EventsController extends Controller
      }
      public function show($id)
     {
-        $data = Events::
-        leftjoin('event_type','event_type.id','event.event_type')
-        ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
-        ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city')
-      ->select('*','event.id as id','venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->find($id);
-    $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
+        $data = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event_type.event_type_name',
+                'event_tags.tag_name as event_tag_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'venue.name as venue_name'
+            )
+            ->findOrFail($id);
 
-    //    dd($data);
-        return view('admin.events.view',compact('data','artists'));
+        $eventTiming = EventTiming::where('event', $id)->where('is_active', 1)->orderBy('id')->first();
+
+        $selectedArtistIds = $data->artists ? json_decode($data->artists, true) : [];
+        $selectedTicketTypeIds = $data->ticket_types ? json_decode($data->ticket_types, true) : [];
+
+        $artistNames = $selectedArtistIds
+            ? ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')
+                ->whereIn('artist.id', $selectedArtistIds)
+                ->get()
+                ->map(fn ($artist) => $artist->artist_name . ' [' . $artist->field_name . ']')
+                ->implode(', ')
+            : '';
+
+        $ticketTypeNames = $selectedTicketTypeIds
+            ? TicketType::whereIn('id', $selectedTicketTypeIds)->pluck('ticket_type_name')->implode(', ')
+            : '';
+
+        return view('admin.events.view', compact('data', 'eventTiming', 'artistNames', 'ticketTypeNames'));
      }
 
     /**
@@ -170,6 +195,7 @@ class EventsController extends Controller
             'event_name' => 'required',
             'event_is_active' => 'required',
             'event_tag' => 'required',
+            'event_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
             'priority' => 'required|integer|min:0|max:9999',
@@ -223,12 +249,13 @@ class EventsController extends Controller
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
-        // $event->event_image = $request->event_image;
-        if($request->hasFile('event_image')){
-            $imageName = time().'.'.$request->event_image->extension();
-            $request->event_image->move(storage_path('uploads/events'), $imageName);
-            $event->event_image =  $imageName;
+        $uploadDir = storage_path('uploads/events');
+        if (! is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
         }
+        $imageName = time().'.'.$request->event_image->extension();
+        $request->event_image->move($uploadDir, $imageName);
+        $event->event_image = $imageName;
         $event->event_is_active = $request->event_is_active;
 
         $event->save();
@@ -249,38 +276,81 @@ class EventsController extends Controller
      public function edit(string $id)
      {
         $event_type = EventType::get();
-        $data=Events::find($id);
-        // dd($data);
-        $venue = VenueModel::
-        leftjoin('location','location.id','venue.location')
-       ->leftjoin('countries','countries.id','location.country')
-       ->leftjoin('cities','cities.id','location.city')
-       ->select('venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
-    $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
-    $eventTags = EventTags::where('is_active',1)->get();
-    $ticketTypes = TicketType::where('is_active', 1)->get();
+        $data = Events::findOrFail($id);
+        $venue = VenueModel::leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        $eventTags = EventTags::where('is_active', 1)->get();
+        $ticketTypes = TicketType::where('is_active', 1)->get();
+        $venueTypes = VenueType::orderBy('venue_type_name')->get();
+        $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+            ->orderBy('location_name')
+            ->get();
+        $artistFields = ArtistField::orderBy('field_name')->get();
+        $eventTiming = EventTiming::where('event', $id)->where('is_active', 1)->orderBy('id')->first();
 
-        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags','ticketTypes'));
-
+        return view('admin.events.edit', compact(
+            'data',
+            'event_type',
+            'artists',
+            'venue',
+            'eventTags',
+            'ticketTypes',
+            'venueTypes',
+            'locations',
+            'artistFields',
+            'eventTiming'
+        ));
      }
      public function update(Request $request){
 
-        // dd($request->request);
+        $data = Events::findOrFail($request->id);
 
-        // dd( $request->artists);
-
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'event_name' => 'required',
             'event_tag' => 'required',
+            'event_image' => [
+                Rule::requiredIf(fn () => empty($data->event_image)),
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:5120',
+            ],
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
             'priority' => 'required|integer|min:0|max:9999',
-
-            // 'event_is_active' => 'required'
+            'event_from_date' => 'required|date',
+            'event_to_date' => 'required|date|after_or_equal:event_from_date',
+            'event_start_time' => 'required|date_format:H:i',
+            'event_end_time' => 'required|date_format:H:i',
         ]);
 
-        $data = Events::find($request->id);
+        $validator->after(function ($validator) use ($request) {
+            $fields = ['event_from_date', 'event_to_date', 'event_start_time', 'event_end_time'];
+            foreach ($fields as $field) {
+                if ($validator->errors()->has($field)) {
+                    return;
+                }
+            }
+
+            $start = Carbon::parse($request->event_from_date . ' ' . $request->event_start_time);
+            $end = Carbon::parse($request->event_to_date . ' ' . $request->event_end_time);
+
+            if (!$end->gt($start)) {
+                $validator->errors()->add(
+                    'event_end_time',
+                    'The event end date and time must be after the event start date and time.'
+                );
+            }
+        });
+
+        $validator->validate();
+
         $data->event_name = $request->event_name;
         $data->event_type = $request->event_type;
         $data->event_desc = $request->event_desc;
@@ -290,6 +360,8 @@ class EventsController extends Controller
 
         $data->artists = json_encode($request->artists);
 
+        } else {
+            $data->artists = null;
         }
         
         if(!$request->ticket_types==null){
@@ -306,23 +378,33 @@ class EventsController extends Controller
         $data->seller_fee_percent = $request->seller_fee_percent;
         $data->customer_fee_percent = $request->customer_fee_percent;
         $data->priority = $request->priority ?? 0;
-        // $data->event_added_by =Auth::user()->id;
         $data->event_is_active = $request->event_is_active;
 
-        // $event->event_image = $request->event_image;
         if($request->hasFile('event_image')){
             $imageName = time().'.'.$request->event_image->extension();
             $request->event_image->move(storage_path('uploads/events'), $imageName);
             $data->event_image =  $imageName;
         }
-        // $data->event_is_active = $request->event_is_active;
 
         $data->save();
 
+        $timing = EventTiming::where('event', $data->id)->where('is_active', 1)->orderBy('id')->first();
+        if ($timing) {
+            $timing->event_date = $request->event_from_date;
+            $timing->from_time = $request->event_start_time;
+            $timing->to_time = $request->event_end_time;
+            $timing->save();
+        } else {
+            $timing = new EventTiming();
+            $timing->event = $data->id;
+            $timing->event_date = $request->event_from_date;
+            $timing->from_time = $request->event_start_time;
+            $timing->to_time = $request->event_end_time;
+            $timing->is_active = 1;
+            $timing->save();
+        }
 
         return redirect('events/list');
-
-
      }
      public function delete( $id)
     {

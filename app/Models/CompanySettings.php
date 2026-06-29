@@ -12,7 +12,7 @@ class CompanySettings extends Model
     use SoftDeletes;
     protected $table = 'company_settings';
 
-    public const DEFAULT_LOGO = 'j4elogo.jpeg';
+    public const DEFAULT_LOGO = 'j4elogo.png';
 
     public static function appLogoUrl(): string
     {

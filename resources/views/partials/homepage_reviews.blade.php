@@ -1,8 +1,9 @@
 @php
-    $homepageReviews = \App\Models\CustomerReview::where('is_active', 1)
-        ->orderBy('sort_order')
-        ->orderBy('id', 'desc')
-        ->get();
+    $homepageReviews = $customer_reviews
+        ?? \App\Models\CustomerReview::active()
+            ->orderBy('sort_order')
+            ->orderBy('id', 'desc')
+            ->get();
 @endphp
 
 <!-- Reviews-->
@@ -17,46 +18,6 @@
                 <a href="{{ route('reviews') }}" class="view-all">View all</a>
             </div>
         </div>
-        <style>
-        /* Reviews section mobile responsive */
-        @media (max-width: 768px) {
-            .section-wraper .col-md-8,
-            .section-wraper .col-md-4 {
-                text-align: center !important;
-            }
-
-            .section-wraper .text-right {
-                text-align: center !important;
-                margin-top: 10px;
-            }
-
-            .testimonial-section .section-header p {
-                font-size: 14px;
-            }
-
-            .testimonial-section .section-header h2 {
-                font-size: 22px;
-            }
-        }
-        </style>
-
-        <style>
-        .read-more-link {
-            color: #3800B9;
-            font-weight: 600;
-            font-size: 14px;
-            display: inline-block;
-            margin-top: 8px;
-        }
-        .single-testimonial .name a,
-        .single-testimonial .name a:hover {
-            color: #000;
-            text-decoration: none;
-        }
-        .single-testimonial .name a:hover {
-            color: #3800B9;
-        }
-        </style>
 
         <div id="testimonial-slider" class="owl-carousel owl-theme testimonial-slider">
             @forelse ($homepageReviews as $review)

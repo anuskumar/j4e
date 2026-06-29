@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
             CompanySettingsSeeder::class,
             VenueTypeSeeder::class,
             VenueSeeder::class,
+            TicketTypeSeeder::class,
+            SplitTypeSeeder::class,
+            TicketStatusSeeder::class,
         ]);
     }
 }

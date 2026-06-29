@@ -39,12 +39,20 @@ class SliderController extends Controller
 
      public function store(Request $request)
      {
-         $request->all();
+         $request->validate([
+             'meta_description' => 'nullable|string',
+             'event' => 'nullable|exists:event,id',
+             'is_active' => 'required|in:0,1',
+             'text_color' => 'required|in:white,black',
+             'slide_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+         ]);
+
         $slider = new SliderModel();
         // $slider->slide_image = $request->slide_image;
         $slider->meta_description = $request->meta_description;
         $slider->eventid= $request->event;
         $slider->is_active = $request->is_active;
+        $slider->text_color = $request->input('text_color', 'white');
         if($request->hasFile('slide_image')){
         $imageName = time().'.'.$request->slide_image->extension();
         $request->slide_image->move(storage_path('uploads/slide'), $imageName);
@@ -65,6 +73,7 @@ class SliderController extends Controller
         $validated = $request->validate([
             'meta_description' => 'required',
             'is_active' => 'required',
+            'text_color' => 'required|in:white,black',
          //   'slide_image' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // Add appropriate validation rules for image uploads
         ]);
 
@@ -78,6 +87,7 @@ class SliderController extends Controller
         // Update the fields
         $data->meta_description = $request->meta_description;
         $data->is_active = $request->is_active;
+        $data->text_color = $request->input('text_color', 'white');
 
         if ($request->hasFile('slide_image')) {
             // Handle image upload

@@ -65,6 +65,7 @@
                                 <th>SL</th>
                                 <th>Banner Image</th>
                                 <th>Meta Description</th>
+                                <th>Text Color</th>
                                 <th>Status</th>
                                 <th class="text-end">Action</th>
                             </tr>
@@ -83,6 +84,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $val->meta_description ?: '-' }}</td>
+                                    <td>{{ ucfirst($val->text_color ?? 'white') }}</td>
                                     <td>
                                         @if ($val->is_active == 1)
                                             <span class="badge bg-success">Active</span>
@@ -115,6 +117,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -137,8 +140,8 @@
             'zeroRecords' => 'No matching slides found',
         ],
         'columnDefs' => [
-            ['orderable' => false, 'targets' => [1, 4]],
-            ['searchable' => false, 'targets' => [0, 1, 4]],
+            ['orderable' => false, 'targets' => [1, 5]],
+            ['searchable' => false, 'targets' => [0, 1, 5]],
         ],
     ];
 @endphp
