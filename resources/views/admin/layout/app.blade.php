@@ -343,6 +343,8 @@
                                         @if (Auth::user()->user_type == 'superadmin')
                                             <a class="dropdown-item" href="{{ url('admin/company_settings') }}"><i
                                                     class="fas fa-sliders-h"></i> Company Settings</a>
+                                            <a class="dropdown-item" href="{{ route('admin.paypal.settings') }}"><i
+                                                    class="fas fa-credit-card"></i> PayPal Integration</a>
                                         @endif
 
                                         <a class="dropdown-item" href="#"

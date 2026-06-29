@@ -159,6 +159,12 @@
                             <span class="side-menu__label">Company Settings</span>
                         </a>
                     </li>
+                    <li class="slide">
+                        <a class="side-menu__item" href="{{ route('admin.paypal.settings') }}">
+                            <i class="side-menu__icon fe fe-credit-card"></i>
+                            <span class="side-menu__label">PayPal Integration</span>
+                        </a>
+                    </li>
                 @endif
             </ul>
             <div class="slide-right" id="slide-right">

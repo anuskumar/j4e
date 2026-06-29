@@ -78,6 +78,43 @@
             margin: 0 0 6px;
         }
 
+        .payment-method-panel {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .payment-method-panel.is-active {
+            display: block;
+        }
+
+        .payment-method-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .payment-method-divider::before,
+        .payment-method-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        #paypal-button-container {
+            max-width: 360px;
+        }
+
+        .paypal-checkout-note {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
         .session-timer-card__info p {
             font-size: 13px;
             color: #6b7280;
@@ -574,17 +611,32 @@
                                     @error('cardError')
                                         <div class="alert alert-danger">{{ $message }}</div>
                                     @enderror
+                                    @error('paypalError')
+                                        <div class="alert alert-danger">{{ $message }}</div>
+                                    @enderror
                                     @error('stripeToken')
                                         <div class="alert alert-danger">{{ $message }}</div>
                                     @enderror
 
-                                    <!-- Credit Card Payment -->
+                                    @if ($paypalEnabled)
+                                        <div class="payment-list">
+                                            <label class="payment-radio credit-card-option">
+                                                <input type="radio" name="payment_method" value="card" checked>
+                                                <span class="checkmark"></span>
+                                                Credit/Debit Card
+                                            </label>
+                                        </div>
+                                        <div class="payment-method-panel is-active" id="payment-panel-card">
+                                    @endif
+
                                     <div class="payment-list">
+                                        @if (! $paypalEnabled)
                                         <label class="payment-radio credit-card-option">
                                             <input type="radio" name="radio" checked>
                                             <span class="checkmark"></span>
                                             Credit/Debit Card
                                         </label>
+                                        @endif
                                         <div class="row">
                                             @if (Session::has('success'))
                                             <div class="alert alert-success text-center">
@@ -593,13 +645,34 @@
                                             </div>
                                         @endif
 
-
                                     @csrf
 
                                     <script src="https://checkout.stripe.com/checkout.js"></script>
                                     <button type="button" id="open-stripe-checkout" class="btn btn-primary">
                                         Pay {{ number_format($total_amount_form, 2) }} {{ $data->currency_name }} ({{ $initial_ticket_count }} ticket(s))
                                     </button>
+                                        </div>
+                                    </div>
+
+                                    @if ($paypalEnabled)
+                                        </div>
+
+                                        <div class="payment-method-divider">or</div>
+
+                                        <div class="payment-list">
+                                            <label class="payment-radio paypal-option">
+                                                <input type="radio" name="payment_method" value="paypal">
+                                                <span class="checkmark"></span>
+                                                PayPal
+                                            </label>
+                                        </div>
+                                        <div class="payment-method-panel" id="payment-panel-paypal">
+                                            <div id="paypal-button-container"></div>
+                                            <p class="paypal-checkout-note mb-0">
+                                                You will be redirected to PayPal to complete your payment securely.
+                                            </p>
+                                        </div>
+                                    @endif
                                             {{-- <div class="col-md-6">
                                                 <div class="form-group card-label">
                                                     <label for="card_name">Name on Card</label>
@@ -645,14 +718,6 @@
                                     </div> --}}
                                     <!-- /Credit Card Payment -->
 
-                                    <!-- Paypal Payment -->
-                                    {{-- <div class="payment-list">
-                                        <label class="payment-radio paypal-option">
-                                            <input type="radio" name="radio">
-                                            <span class="checkmark"></span>
-                                            Paypal
-                                        </label>
-                                    </div> --}}
                                     <!-- /Paypal Payment -->
 
                                     <!-- Terms Accept -->
@@ -973,6 +1038,99 @@
                 email: "{{ Auth::user()->email ?? '' }}"
             });
         });
+
+        function collectCheckoutPayload() {
+            return {
+                shipping_name: $('input[name="shipping_name"]').val(),
+                shipping_address1: $('textarea[name="shipping_address1"]').val(),
+                shipping_address2: $('textarea[name="shipping_address2"]').val(),
+                shipping_country: $('select[name="shipping_country"]').val(),
+                shipping_city: $('input[name="shipping_city"]').val(),
+                shipping_pincode: $('input[name="shipping_pincode"]').val(),
+                payment_amount: $('#payment-amount-input').val(),
+                event_id: $('input[name="event_id"]').val(),
+                event_ticket_id: $('input[name="event_ticket_id"]').val(),
+                total_number: $('#total-number-input').val(),
+                currency_name: $('input[name="currency_name"]').val()
+            };
+        }
+
+        $('input[name="payment_method"]').on('change', function() {
+            var method = $('input[name="payment_method"]:checked').val();
+            $('#payment-panel-card').toggleClass('is-active', method === 'card');
+            $('#payment-panel-paypal').toggleClass('is-active', method === 'paypal');
+        });
+
+        @if ($paypalEnabled)
+        var paypalScript = document.createElement('script');
+        paypalScript.src = @json(\App\Services\PaypalService::make()->sdkUrl($data->short_name));
+        paypalScript.onload = function () {
+            if (!window.paypal) {
+                return;
+            }
+
+            paypal.Buttons({
+                style: {
+                    layout: 'vertical',
+                    color: 'gold',
+                    shape: 'rect',
+                    label: 'paypal'
+                },
+                createOrder: function () {
+                    if (!validateShippingForm()) {
+                        return Promise.reject(new Error('Please complete shipping information.'));
+                    }
+
+                    return fetch(@json(route('paypal.create-order')), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(collectCheckoutPayload())
+                    })
+                    .then(function (response) {
+                        return response.json().then(function (data) {
+                            if (!response.ok) {
+                                throw new Error(data.error || 'Unable to start PayPal checkout.');
+                            }
+                            return data.id;
+                        });
+                    });
+                },
+                onApprove: function (data) {
+                    var payload = collectCheckoutPayload();
+                    payload.order_id = data.orderID;
+
+                    return fetch(@json(route('paypal.capture-order')), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(function (response) {
+                        return response.json().then(function (result) {
+                            if (!response.ok) {
+                                throw new Error(result.error || 'PayPal payment could not be completed.');
+                            }
+                            if (result.redirect) {
+                                window.location.href = result.redirect;
+                            }
+                        });
+                    });
+                },
+                onError: function (error) {
+                    console.error('PayPal error:', error);
+                    alert(error && error.message ? error.message : 'PayPal checkout failed. Please try again.');
+                }
+            }).render('#paypal-button-container');
+        };
+        document.body.appendChild(paypalScript);
+        @endif
 
         // Form validation before final submission (token callback submit)
         $('#payment-form').on('submit', function(e) {

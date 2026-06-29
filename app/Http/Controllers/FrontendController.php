@@ -483,6 +483,9 @@ class FrontendController extends Controller
 
             $countries = CountryModel::get();
 
+            $paypalSettings = \App\Models\PaypalSetting::current();
+            $paypalEnabled = $paypalSettings->isConfigured();
+
             return view('customer.ticket_billing', compact(
                 'minutesDifference',
                 'remainingSeconds',
@@ -493,7 +496,9 @@ class FrontendController extends Controller
                 'customer',
                 'countries',
                 'id',
-                'restrictionLabels'
+                'restrictionLabels',
+                'paypalSettings',
+                'paypalEnabled'
             ));
 
            }
@@ -1026,6 +1031,34 @@ public function update_customer_profile(Request $request){
     $profile->save();
 
     return redirect()->back()->with('success', 'Profile updated successfully.');
+}
+
+public function updateCustomerPassword(Request $request)
+{
+    $request->validate([
+        'current_password' => 'required|string',
+        'new_password' => 'required|string|min:8|confirmed|different:current_password',
+    ], [
+        'current_password.required' => 'Please enter your current password.',
+        'new_password.min' => 'New password must be at least 8 characters.',
+        'new_password.confirmed' => 'Password confirmation does not match.',
+        'new_password.different' => 'New password must be different from your current password.',
+    ]);
+
+    $user = User::findOrFail(Auth::id());
+
+    if (! Hash::check($request->current_password, $user->password)) {
+        return back()
+            ->withErrors(['current_password' => 'Current password is incorrect.'])
+            ->withInput($request->only('new_password'));
+    }
+
+    $user->password = Hash::make($request->new_password);
+    $user->save();
+
+    return redirect()
+        ->back()
+        ->with('password_success', 'Password changed successfully.');
 }
 
 }

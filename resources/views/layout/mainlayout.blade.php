@@ -22,7 +22,7 @@
   <body class="map-page">
   @elseif(Route::is(['chat-speaker','chat']))
   <body class="chat-page">
-  @elseif(Route::is(['forgot-password','login','register','speaker-register']))
+  @elseif(Route::is(['password.forgot', 'password.reset.form', 'login', 'register', 'speaker-register']))
   <body class="account-page">
   @elseif(Route::is(['video-call','voice-call']))
   <body class="call-page">
@@ -31,7 +31,7 @@
   @endif
 {{-- @include('layout.partials.header') --}}
 @include('layout.partials.header')
-@if(!Route::is(['chat-instructor','map-grid','map-list','chat','voice-call','video-call','login','register','forgot-password','speaker-register']))
+@if(!Route::is(['chat-instructor','map-grid','map-list','chat','voice-call','video-call','login','register','password.forgot','password.reset.form','speaker-register']))
 @include('partials.customer_site_banner')
 @endif
 @yield('content')

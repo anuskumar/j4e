@@ -76,6 +76,37 @@
 <?php $page="login";?>
 @extends('layout.mainlayout')
 @section('content')
+<style>
+    .password-toggle-wrap {
+        position: relative;
+    }
+
+    .password-toggle-wrap .form-control {
+        padding-right: 44px;
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #6c757d;
+        padding: 0;
+        line-height: 1;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .password-toggle-btn:hover {
+        color: #671dcf;
+    }
+
+    .password-toggle-btn:focus {
+        outline: none;
+    }
+</style>
 <!-- Page Content -->
 			<div class="content">
 				<div class="container-fluid">
@@ -93,6 +124,11 @@
 										<div class="login-header">
 											<h3>{{ __('Login') }} <span>Application</span></h3>
 										</div>
+
+                                        @if (session('status'))
+                                            <div class="alert alert-success">{{ session('status') }}</div>
+                                        @endif
+
 										<form method="POST" action="{{ route('login') }}">
                                             @csrf
 											<div class="form-group form-focus">
@@ -112,8 +148,13 @@
                                                 @endif
 											</div>
 											<div class="form-group form-focus">
-												<input type="password" name="password"  class="form-control floating @error('password') is-invalid @enderror">
-												<label class="focus-label">Password</label>
+												<div class="password-toggle-wrap">
+													<input type="password" id="password" name="password" class="form-control floating @error('password') is-invalid @enderror" autocomplete="current-password">
+													<button type="button" class="password-toggle-btn" id="password-toggle" aria-label="Show password">
+														<i class="far fa-eye" id="password-toggle-icon"></i>
+													</button>
+												</div>
+												<label class="focus-label" for="password">Password</label>
                                                 @error('password')
                                                 <span class="invalid-feedback" role="alert">
                                                     <strong>{{ $message }}</strong>
@@ -121,7 +162,7 @@
                                                 @enderror
 											</div>
 											<div class="text-right">
-												<a class="forgot-link" href="forgot-password">Forgot Password ?</a>
+												<a class="forgot-link" href="{{ route('password.forgot') }}">Forgot Password ?</a>
 											</div>
 											<button class="btn btn-primary btn-block btn-lg login-btn" type="submit">Login</button>
 											{{-- <div class="login-or">
@@ -151,4 +192,25 @@
 			</div>
 			<!-- /Page Content -->
 			</div>
+
+			<script>
+				document.addEventListener('DOMContentLoaded', function () {
+					var toggleBtn = document.getElementById('password-toggle');
+					var passwordInput = document.getElementById('password');
+					var toggleIcon = document.getElementById('password-toggle-icon');
+
+					if (!toggleBtn || !passwordInput || !toggleIcon) {
+						return;
+					}
+
+					toggleBtn.addEventListener('click', function () {
+						var isHidden = passwordInput.type === 'password';
+
+						passwordInput.type = isHidden ? 'text' : 'password';
+						toggleIcon.classList.toggle('fa-eye', !isHidden);
+						toggleIcon.classList.toggle('fa-eye-slash', isHidden);
+						toggleBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+					});
+				});
+			</script>
 	   @endsection

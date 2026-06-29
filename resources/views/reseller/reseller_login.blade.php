@@ -62,7 +62,7 @@
                                                 @enderror
 											</div>
 											<div class="text-right">
-												<a class="forgot-link" href="{{ url('forgot-password') }}">Forgot Password ?</a>
+												<a class="forgot-link" href="{{ route('password.forgot') }}">Forgot Password ?</a>
 											</div>
 											<button class="btn btn-primary btn-block btn-lg login-btn" type="submit">Login</button>
 

@@ -2,36 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrderStatusUpdate;
 use App\Models\TicketPurchase;
-use App\Models\TicketsGenerated;
-
-use App\Models\Currency;
-use App\Models\Events;
-use App\Models\EventTickets;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Services\TicketCheckoutService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Session as FacadesSession;
-use App\Services\NotificationService;
-use App\Services\PurchaseInvoiceService;
-use Session;
-// use Stripe;
-use Stripe\Stripe;
+use Illuminate\Support\Facades\Auth;
 use Stripe\Charge;
+use Stripe\Stripe;
 
 class StripePaymentController extends Controller
 {
-     /**
-     * success response method.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    public function __construct(private TicketCheckoutService $checkoutService)
+    {
+    }
+
     public function stripe()
     {
-        // return view('stripe.stripe');
         if (Auth::check()) {
             $userType = Auth::user()->user_type;
             if ($userType === 'superadmin') {
@@ -42,144 +27,38 @@ class StripePaymentController extends Controller
                 return redirect()->route('reseller.home');
             }
         }
+
         return redirect()->route('home');
     }
 
-    /**
-     * success response method.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function stripePost(Request $request)
     {
-        // Validate shipping address fields
-        $validated = $request->validate([
-            'shipping_name' => 'required|string|max:255',
-            'shipping_address1' => 'required|string|max:500',
-            'shipping_address2' => 'nullable|string|max:500',
-            'shipping_country' => 'required|numeric|exists:countries,id',
-            'shipping_city' => 'required|string|max:255',
-            'shipping_pincode' => 'required|string|max:20',
-            'stripeToken' => 'required|string',
-            'payment_amount' => 'required|numeric|min:0',
-            'event_id' => 'required|numeric|exists:event,id',
-            'event_ticket_id' => 'required|numeric|exists:event_tickets,id',
-            'total_number' => 'required|numeric|min:1',
-            'currency_name' => 'required|string',
-        ], [
-            'shipping_name.required' => 'Please enter your name.',
-            'shipping_address1.required' => 'Please enter your address.',
-            'shipping_country.required' => 'Please select a country.',
-            'shipping_country.exists' => 'Please select a valid country.',
-            'shipping_city.required' => 'Please enter your city.',
-            'shipping_pincode.required' => 'Please enter your pincode.',
-        ]);
+        $validated = $request->validate(array_merge(
+            $this->checkoutService->shippingRules(),
+            ['stripeToken' => 'required|string']
+        ), $this->checkoutService->shippingMessages());
 
-        // Normalise amount and enforce Stripe minimums per currency
-        $currency = strtolower($request->currency_name);
-        $requestedCount = (int) $request->total_number;
-        $amount = (float) $request->payment_amount;
-        
-        // Check if amount is 0 or very small first
-        if ($amount <= 0) {
-            return back()->withErrors([
-                'cardError' => "Invalid payment amount. Please check the ticket price and quantity.",
-            ])->withInput();
+        $checkout = $this->checkoutService->prepareCheckout($request, 'cardError');
+        if (isset($checkout['errors'])) {
+            return back()->withErrors($checkout['errors'])->withInput();
         }
 
-        $eventTicket = EventTickets::find($request->event_ticket_id);
-        if (! $eventTicket) {
-            return back()->withErrors([
-                'cardError' => 'Selected ticket is not available.',
-            ])->withInput();
-        }
+        $currency = $checkout['currency'];
+        $expectedAmount = $checkout['expected_amount'];
+        $requestedCount = $checkout['requested_count'];
+        $amountInSmallestUnit = (int) round($expectedAmount * 100);
 
-        // Prevent event_id tampering from client payload.
-        if ((int) $eventTicket->event !== (int) $request->event_id) {
-            return back()->withErrors([
-                'cardError' => 'Invalid event selection for this ticket.',
-            ])->withInput();
-        }
-
-        // Validate selected quantity against currently held tickets for this user.
-        $holdValidFrom = now()->subMinutes(15);
-        $heldTicketsQuery = TicketsGenerated::where('event_tickets', $request->event_ticket_id)
-            ->where('user_id', Auth::user()->id)
-            ->where('is_sold', 0)
-            ->where('under_purchase_hold', 1)
-            ->where('purchase_hold_time', '>=', $holdValidFrom)
-            ->orderBy('id');
-
-        $heldCount = (int) $heldTicketsQuery->count();
-
-        if ($heldCount < 1) {
-            return back()->withErrors([
-                'cardError' => 'Your ticket hold has expired. Please select tickets again.',
-            ])->withInput();
-        }
-
-        if ($requestedCount > $heldCount) {
-            $additionalNeeded = $requestedCount - $heldCount;
-
-            $additionalTickets = TicketsGenerated::where('event_tickets', $request->event_ticket_id)
-                ->where('is_sold', 0)
-                ->where('under_purchase_hold', 0)
-                ->orderBy('id')
-                ->take($additionalNeeded)
-                ->lockForUpdate()
-                ->get();
-
-            if ($additionalTickets->count() < $additionalNeeded) {
-                $maxAvailableNow = $heldCount + $additionalTickets->count();
-                return back()->withErrors([
-                    'cardError' => "Only {$maxAvailableNow} ticket(s) are available right now.",
-                ])->withInput();
-            }
-
-            foreach ($additionalTickets as $additionalTicket) {
-                $additionalTicket->user_id = Auth::id();
-                $additionalTicket->under_purchase_hold = 1;
-                $additionalTicket->purchase_hold_time = now();
-                $additionalTicket->save();
-            }
-
-            $heldTicketsQuery = TicketsGenerated::where('event_tickets', $request->event_ticket_id)
-                ->where('user_id', Auth::user()->id)
-                ->where('is_sold', 0)
-                ->where('under_purchase_hold', 1)
-                ->where('purchase_hold_time', '>=', $holdValidFrom)
-                ->orderBy('id');
-
-            $heldCount = (int) $heldTicketsQuery->count();
-            if ($requestedCount > $heldCount) {
-                return back()->withErrors([
-                    'cardError' => "Unable to reserve requested quantity. Please try again.",
-                ])->withInput();
-            }
-        }
-
-        $unitPrice = (float) ($eventTicket->ticket_amount ?? 0);
-        $expectedAmount = round($unitPrice * $requestedCount, 2);
-
-        // Use server-side amount calculation to avoid client-side tampering/mismatch.
-        $amount = $expectedAmount;
-
-        // Convert to smallest currency unit (e.g. cents, fils)
-        $amountInSmallestUnit = (int) round($amount * 100);
-
-        // Stripe minimum amounts (in smallest unit). Adjusted for AED (200 fils = 2.00 AED).
         $minByCurrency = [
             'aed' => 200,
             'usd' => 50,
             'eur' => 50,
-            // fallback for most other currencies
         ];
 
         $minForCurrency = $minByCurrency[$currency] ?? 50;
 
         if ($amountInSmallestUnit < $minForCurrency) {
             $minDisplay = number_format($minForCurrency / 100, 2);
-            $currentAmount = number_format($amount, 2);
+            $currentAmount = number_format($expectedAmount, 2);
 
             return back()->withErrors([
                 'cardError' => "Payment amount ({$currentAmount} " . strtoupper($currency) . ") is below the minimum charge amount of {$minDisplay} " . strtoupper($currency) . ". Please check the ticket price.",
@@ -190,9 +69,9 @@ class StripePaymentController extends Controller
 
         try {
             $data = Charge::create([
-                'amount'   => $amountInSmallestUnit,
-                'currency' =>  $currency,
-                'source'   => $request->stripeToken,
+                'amount' => $amountInSmallestUnit,
+                'currency' => $currency,
+                'source' => $request->stripeToken,
                 'metadata' => [
                     'event_ticket_id' => (string) $request->event_ticket_id,
                     'event_id' => (string) $request->event_id,
@@ -216,238 +95,32 @@ class StripePaymentController extends Controller
 
         $paymentSucceeded = (($data->status ?? null) === 'succeeded')
             || (($data->paid ?? false) && (int) ($data->amount_received ?? 0) >= $amountInSmallestUnit);
-        if ($paymentSucceeded) {
-            $existingPurchase = TicketPurchase::where('payment_id', $data->id)->first();
-            if ($existingPurchase) {
-                return redirect()->route('customer.booking.confirmed', $existingPurchase->id);
-            }
 
-            DB::beginTransaction();
-            try {
-            $currencyId = $this->resolveCurrencyId($currency, $eventTicket);
-
-            $ticket = new TicketPurchase();
-            $ticket->event_id = $request->event_id;
-            $ticket->event_ticket_id = $request->event_ticket_id;
-            $ticket->total_number = $requestedCount;
-            $ticket->shipping_name = $request->shipping_name;
-            $ticket->shipping_address1 = $request->shipping_address1;
-            $ticket->shipping_address2 = $request->shipping_address2;
-            $ticket->shipping_country = $request->shipping_country;
-            $ticket->shipping_city = $request->shipping_city;
-            $ticket->shipping_pincode = $request->shipping_pincode;
-            $ticket->accepted_tearms_condetion = $request->accepted_tearms_condetion ? true :false;
-            $ticket->payment_amount = $expectedAmount;
-            $ticket->payment_currency = $currencyId;
-            $ticket->payment_card_number = $this->resolveChargeLast4($data);
-            $ticket->purchase_status = 1;
-            $ticket->payment_date = date('Y-m-d H:i:s');
-            $ticket->is_payment_completed = $paymentSucceeded ? 1 : 0;
-            $ticket->payment_id = $data->id;
-            $ticket->user_id =Auth::user()->id;
-
-            $ticket->save();
-
-
-            $ticket_count = $heldTicketsQuery->take($requestedCount)->get();
-            $remainingHeldTickets = TicketsGenerated::where('event_tickets', $request->event_ticket_id)
-                ->where('user_id', Auth::user()->id)
-                ->where('is_sold', 0)
-                ->where('under_purchase_hold', 1)
-                ->where('purchase_hold_time', '>=', $holdValidFrom)
-                ->whereNotIn('id', $ticket_count->pluck('id'))
-                ->get();
-
-            $ticket_count_data = $ticket_count->count();
-
-            foreach($ticket_count as $count){
-
-                $generated = TicketsGenerated::find($count->id);
-                $generated->purchase_id = $ticket->id;
-                $generated->is_sold = 1;
-                $generated->under_purchase_hold = 0;
-                $generated->purchase_hold_time = null;
-                $generated->purchase_date = date('Y-m-d H:i:s');
-                $generated->save();
-
-            }
-
-            // Release any extra held tickets that were not part of this purchase.
-            foreach ($remainingHeldTickets as $remainingTicket) {
-                $generated = TicketsGenerated::find($remainingTicket->id);
-                $generated->user_id = null;
-                $generated->under_purchase_hold = 0;
-                $generated->purchase_hold_time = null;
-                $generated->save();
-            }
-
-            $orderStatus = new OrderStatusUpdate();
-            $orderStatus->purchase_id = $ticket->id;
-            $orderStatus->status_id = 1;
-            $orderStatus->created_by = Auth::user()->id;
-            $orderStatus->save();
-
-            $event = Events::where('id',$request->event_id)->first();
-            $event_tickets = EventTickets::where('id',$request->event_ticket_id)->first();
-            $user_data = User::where('id',$event_tickets->created_by)->first();
-
-            $customerUser = Auth::user();
-            $currencyCode = strtoupper($currency);
-            $totalPaid = number_format((float) $expectedAmount, 2);
-            $eventName = (string) ($event->event_name ?? '');
-            $eventTiming = $event_tickets && $event_tickets->event_timing
-                ? \App\Models\EventTiming::find($event_tickets->event_timing)
-                : null;
-            $eventDate = $eventTiming && $eventTiming->event_date
-                ? date('d M Y', strtotime($eventTiming->event_date))
-                : (string) ($event->event_from_date ?? '');
-            $ticketName = (string) ($event_tickets->ticket_name ?? '');
-            $soldCount = (int) $ticket_count_data;
-
-            if ($user_data) {
-                try {
-                    app(NotificationService::class)->notifyNewOrder(
-                        $ticket,
-                        $eventName,
-                        (string) ($customerUser->name ?? 'Customer'),
-                        (int) $user_data->id
-                    );
-                } catch (\Exception $notificationException) {
-                    report($notificationException);
-                }
-            }
-
-            DB::commit();
-
-            $this->sendPurchaseConfirmationEmails(
-                $ticket,
-                $customerUser,
-                $user_data,
-                $eventName,
-                $eventDate,
-                $ticketName,
-                $soldCount,
-                $totalPaid,
-                $currencyCode
-            );
-
-            return redirect()->route('customer.booking.confirmed', $ticket->id);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                report($e);
-                return back()->withErrors([
-                    'cardError' => 'Payment was captured but order confirmation failed. Please contact support with payment reference: ' . ($data->id ?? 'N/A'),
-                ]);
-            }
-
-        }else{
-
-            // return redirect('booking_failed');
+        if (! $paymentSucceeded) {
             return view('stripe.booking_failed_modal');
         }
 
-
-    }
-
-    private function sendPurchaseConfirmationEmails(
-        TicketPurchase $ticket,
-        ?User $customerUser,
-        ?User $resellerUser,
-        string $eventName,
-        string $eventDate,
-        string $ticketName,
-        int $soldCount,
-        string $totalPaid,
-        string $currencyCode
-    ): void {
-        $purchaseId = (int) $ticket->id;
-        $invoiceService = app(PurchaseInvoiceService::class);
-        $invoiceFilename = $invoiceService->getInvoiceFilename($purchaseId);
+        $existingPurchase = TicketPurchase::where('payment_id', $data->id)->first();
+        if ($existingPurchase) {
+            return redirect()->route('customer.booking.confirmed', $existingPurchase->id);
+        }
 
         try {
-            $invoicePdf = $invoiceService->generatePdfBinary($purchaseId);
-        } catch (\Exception $invoiceException) {
-            report($invoiceException);
-            $invoicePdf = null;
+            $ticket = $this->checkoutService->fulfillPurchase(
+                $checkout,
+                $request,
+                $data->id,
+                $this->resolveChargeLast4($data)
+            );
+        } catch (\Exception $e) {
+            report($e);
+
+            return back()->withErrors([
+                'cardError' => 'Payment was captured but order confirmation failed. Please contact support with payment reference: ' . ($data->id ?? 'N/A'),
+            ]);
         }
 
-        if ($customerUser && !empty($customerUser->email)) {
-            try {
-                $customerHtml = '
-                    <h2>Congratulations! Your Booking Is Confirmed</h2>
-                    <p>Hi ' . e($customerUser->name ?? 'Customer') . ',</p>
-                    <p>Thank you for your purchase. Your payment was successful and your booking has been confirmed.</p>
-                    <ul>
-                        <li><strong>Order ID:</strong> #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT) . '</li>
-                        <li><strong>Event:</strong> ' . e($eventName) . '</li>
-                        <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
-                        <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
-                        <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
-                        <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
-                        <li><strong>Payment Reference:</strong> ' . e($ticket->payment_id ?? 'N/A') . '</li>
-                    </ul>
-                    <p>Your invoice is attached to this email. You can also view your booking anytime from your account dashboard.</p>
-                ';
-
-                Mail::html($customerHtml, function ($message) use ($customerUser, $purchaseId, $invoicePdf, $invoiceFilename) {
-                    $message->to($customerUser->email)
-                        ->subject('Booking Confirmed #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT));
-
-                    if ($invoicePdf) {
-                        $message->attachData($invoicePdf, $invoiceFilename, [
-                            'mime' => 'application/pdf',
-                        ]);
-                    }
-                });
-            } catch (\Exception $customerMailException) {
-                report($customerMailException);
-            }
-        }
-
-        if ($resellerUser && !empty($resellerUser->email)) {
-            try {
-                $resellerHtml = '
-                    <h2>New Ticket Booking Confirmed</h2>
-                    <p>Hi ' . e($resellerUser->name ?? 'Reseller') . ',</p>
-                    <p>A customer booking has been confirmed and payment was received successfully.</p>
-                    <ul>
-                        <li><strong>Order ID:</strong> #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT) . '</li>
-                        <li><strong>Customer:</strong> ' . e($customerUser->name ?? 'Customer') . '</li>
-                        <li><strong>Customer Email:</strong> ' . e($customerUser->email ?? 'N/A') . '</li>
-                        <li><strong>Event:</strong> ' . e($eventName) . '</li>
-                        <li><strong>Event Date:</strong> ' . e($eventDate) . '</li>
-                        <li><strong>Ticket:</strong> ' . e($ticketName) . '</li>
-                        <li><strong>Ticket Count:</strong> ' . $soldCount . '</li>
-                        <li><strong>Total Amount:</strong> ' . $totalPaid . ' ' . e($currencyCode) . '</li>
-                        <li><strong>Payment Reference:</strong> ' . e($ticket->payment_id ?? 'N/A') . '</li>
-                    </ul>
-                    <p>Please review the order in your reseller dashboard and proceed with fulfillment.</p>
-                ';
-
-                Mail::html($resellerHtml, function ($message) use ($resellerUser, $purchaseId) {
-                    $message->to($resellerUser->email)
-                        ->subject('New Booking Confirmed #' . str_pad((string) $purchaseId, 6, '0', STR_PAD_LEFT));
-                });
-            } catch (\Exception $resellerMailException) {
-                report($resellerMailException);
-            }
-        }
-    }
-
-    private function resolveCurrencyId(string $currencyCode, ?EventTickets $eventTicket = null): ?int
-    {
-        $currencyCode = strtoupper(trim($currencyCode));
-
-        $record = Currency::whereRaw('UPPER(short_name) = ?', [$currencyCode])->first();
-        if ($record) {
-            return (int) $record->id;
-        }
-
-        if ($eventTicket && $eventTicket->amount_currency) {
-            return (int) $eventTicket->amount_currency;
-        }
-
-        return null;
+        return redirect()->route('customer.booking.confirmed', $ticket->id);
     }
 
     private function resolveChargeLast4($charge): ?string

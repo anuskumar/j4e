@@ -21,6 +21,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaypalSettingsController;
 use App\Http\Controllers\ResellerController;
 use App\Http\Controllers\RestrictionController;
 use App\Http\Controllers\SliderController;
@@ -30,6 +31,8 @@ use App\Http\Controllers\ticketrestrictions;
 use App\Http\Controllers\TicketTypeController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\VenueTypeController;
+use App\Http\Controllers\Auth\CustomerPasswordResetController;
+use App\Http\Controllers\PaypalPaymentController;
 use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\TagController;
 use App\Models\ResellerModel;
@@ -87,6 +90,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmi
     Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.read-all');
     Route::get('notifications/count', [NotificationController::class, 'count'])->name('admin.notifications.count');
+    Route::get('paypal-settings', [PaypalSettingsController::class, 'index'])->name('admin.paypal.settings');
+    Route::post('paypal-settings', [PaypalSettingsController::class, 'update'])->name('admin.paypal.settings.update');
 });
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
@@ -493,6 +498,11 @@ Route::controller(StripePaymentController::class)->group(function () {
     Route::post('stripe', 'stripePost')->name('stripe.post');
 });
 
+Route::middleware('auth')->controller(PaypalPaymentController::class)->group(function () {
+    Route::post('paypal/create-order', 'createOrder')->name('paypal.create-order');
+    Route::post('paypal/capture-order', 'captureOrder')->name('paypal.capture-order');
+});
+
 
 Route::controller(FrontendController::class)->group(function () {
     Route::post('submit_ticket_selected', 'submit_ticket_selected')->middleware('auth');
@@ -518,6 +528,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::post('/filter-tickets', 'filterTickets');
     Route::get('/get-seating-types/{eventId}', 'getSeatingTypes');
     Route::post('/customer-update-profile', 'update_customer_profile')->middleware('auth')->name('customer.profile.update');
+    Route::post('/customer-update-password', 'updateCustomerPassword')->middleware('auth')->name('customer.password.update');
 });
 
 // Route::controller(EmailController::class)->group(function(){
@@ -540,10 +551,13 @@ Route::controller(Emailj4eController::class)->group(function () {
 Route::view('/booking_success_modal', 'booking_success_modal')->name('booking_success_modal');
 Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_failed_modal');
 
-
-
-
-
+Route::controller(CustomerPasswordResetController::class)->group(function () {
+    Route::get('forgot-password', 'showForgotForm')->name('password.forgot');
+    Route::post('forgot-password/send-code', 'sendCode')->name('password.send-code');
+    Route::get('forgot-password/reset', 'showResetForm')->name('password.reset.form');
+    Route::post('forgot-password/reset', 'resetPassword')->name('password.reset.submit');
+    Route::post('forgot-password/resend-code', 'resendCode')->name('password.resend-code');
+});
 
 Auth::routes();
 
