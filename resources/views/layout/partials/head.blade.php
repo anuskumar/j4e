@@ -74,6 +74,11 @@
                 max-width: 100%;
                 height: auto;
             }
+
+            .site-navbar .navbar-brand img {
+                max-width: 170px;
+                height: 44px;
+            }
             
             /* Ensure no fixed sidebars on mobile */
             .theiaStickySidebar {

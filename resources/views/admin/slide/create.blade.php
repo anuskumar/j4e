@@ -48,7 +48,9 @@
 
     .event-image-upload .event-preview-img {
         width: 100%;
-        height: 160px;
+        aspect-ratio: {{ \App\Models\SliderModel::RECOMMENDED_WIDTH }} / {{ \App\Models\SliderModel::RECOMMENDED_HEIGHT }};
+        height: auto;
+        max-height: 160px;
         object-fit: cover;
         border-radius: 8px;
         border: 1px solid #e8ebf3;
@@ -93,6 +95,16 @@
     .form-section-spacer {
         margin-bottom: 1.75rem;
     }
+
+    .slide-image-guidelines {
+        border: 1px solid #b6d4fe;
+        background: #e7f1ff;
+        color: #084298;
+    }
+
+    .slide-image-guidelines .fe {
+        color: #0d6efd;
+    }
 </style>
 
 <div class="row row-sm">
@@ -109,7 +121,10 @@
                 </div>
                 <h5 class="main-profile-name mb-1" id="preview-slide-title">New Slide</h5>
                 <p class="main-profile-name-text text-muted mb-2">Banner Slide</p>
-                <p class="form-field-hint mb-0" id="slide-image-file-name">JPG, PNG or WEBP — recommended 1500×700px</p>
+                <p class="form-field-hint mb-1" id="slide-image-file-name">
+                    <strong>{{ \App\Models\SliderModel::recommendedSizeLabel() }}</strong> recommended
+                </p>
+                <p class="form-field-hint mb-0">JPG, PNG or WEBP</p>
             </div>
         </div>
 
@@ -173,7 +188,22 @@
 
                 <form class="form-horizontal" action="{{ url('slide/store') }}" method="POST" id="slide-create-form" enctype="multipart/form-data">
                     @csrf
-                    <input type="file" name="slide_image" id="slide_image" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp">
+
+                    <div class="mb-4 main-content-label">Slide Image</div>
+
+                    @include('admin.slide.partials.image_size_guidelines')
+
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="slide_image">Banner Image</label>
+                        <input type="file"
+                            name="slide_image"
+                            id="slide_image"
+                            class="form-control @error('slide_image') is-invalid @enderror"
+                            accept="image/jpeg,image/png,image/jpg,image/webp">
+                        @error('slide_image')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
 
                     <div class="mb-4 main-content-label">Basic Information</div>
 
@@ -304,7 +334,7 @@ jQuery(document).ready(function ($) {
             alert('Slide image must not exceed 4MB.');
             $('#slide_image').val('');
             $('#slide-image-preview').attr('src', defaultImage);
-            $('#slide-image-file-name').text('JPG, PNG or WEBP — recommended 1500×700px');
+            $('#slide-image-file-name').html('<strong>{{ \App\Models\SliderModel::recommendedSizeLabel() }}</strong> recommended');
             return;
         }
 

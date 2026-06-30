@@ -17,6 +17,7 @@
 
 @php
     $isReseller = Auth::user()->user_type === 'reseller';
+    $phoneRequired = ! in_array(Auth::user()->user_type, ['admin', 'superadmin'], true);
     $accountLabel = match (Auth::user()->user_type) {
         'superadmin' => 'Admin Account',
         'reseller' => 'Reseller Account',
@@ -218,12 +219,12 @@
 
                                 <div class="row mb-3">
                                     <div class="col-md-3">
-                                        <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                        <label class="form-label">Contact Number @if($phoneRequired)<span class="text-danger">*</span>@endif</label>
                                     </div>
                                     <div class="col-md-9">
                                         <input type="text" class="form-control @error('contact_number') is-invalid @enderror" 
                                                name="contact_number" placeholder="Enter your phone number" 
-                                               value="{{ old('contact_number', $authdata->phone) }}" required>
+                                               value="{{ old('contact_number', $authdata->phone) }}" {{ $phoneRequired ? 'required' : '' }}>
                                         @error('contact_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

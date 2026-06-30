@@ -12,7 +12,7 @@ class CompanySettings extends Model
     use SoftDeletes;
     protected $table = 'company_settings';
 
-    public const DEFAULT_LOGO = 'j4elogo.png';
+    public const DEFAULT_LOGO = 'logoscroll.png';
 
     public static function appLogoUrl(): string
     {
@@ -25,11 +25,13 @@ class CompanySettings extends Model
             $settings ??= static::first();
             $file = $settings?->{$field};
 
-            if ($file && file_exists(public_path('storage/uploads/images/' . $file))) {
-                return asset('storage/uploads/images/' . $file);
+            foreach (static::brandImageCandidates($file) as $candidate) {
+                if (file_exists($candidate['path'])) {
+                    return asset($candidate['url']);
+                }
             }
 
-            if ($field === 'company_logo' || $field === 'company_logo_small') {
+            if (in_array($field, ['company_logo', 'company_logo_small'], true)) {
                 if (file_exists(storage_path('uploads/' . self::DEFAULT_LOGO))) {
                     return asset('storage/uploads/' . self::DEFAULT_LOGO);
                 }
@@ -39,6 +41,39 @@ class CompanySettings extends Model
         }
 
         return asset('assets/img/logoscroll.png');
+    }
+
+    /**
+     * @return array<int, array{path: string, url: string}>
+     */
+    private static function brandImageCandidates(?string $file): array
+    {
+        if (!$file) {
+            return [];
+        }
+
+        return [
+            [
+                'path' => public_path('storage/uploads/images/' . $file),
+                'url' => 'storage/uploads/images/' . $file,
+            ],
+            [
+                'path' => storage_path('uploads/images/' . $file),
+                'url' => 'storage/uploads/images/' . $file,
+            ],
+            [
+                'path' => storage_path('app/public/uploads/images/' . $file),
+                'url' => 'storage/uploads/images/' . $file,
+            ],
+            [
+                'path' => public_path('storage/uploads/' . $file),
+                'url' => 'storage/uploads/' . $file,
+            ],
+            [
+                'path' => storage_path('uploads/' . $file),
+                'url' => 'storage/uploads/' . $file,
+            ],
+        ];
     }
 
     public static function appLogoPath(): ?string
