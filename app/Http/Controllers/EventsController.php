@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 
 class EventsController extends Controller
@@ -190,12 +191,14 @@ class EventsController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->artists);
+        $existingTempImage = $request->input('temp_event_image');
+
         $validator = Validator::make($request->all(), [
             'event_name' => 'required',
             'event_is_active' => 'required',
             'event_tag' => 'required',
-            'event_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'event_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'temp_event_image' => 'nullable|string',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
             'priority' => 'required|integer|min:0|max:9999',
@@ -205,7 +208,11 @@ class EventsController extends Controller
             'event_end_time' => 'required|date_format:H:i',
         ]);
 
-        $validator->after(function ($validator) use ($request) {
+        $validator->after(function ($validator) use ($request, $existingTempImage) {
+            if (!$request->hasFile('event_image') && !$this->isValidTempEventImageFilename($existingTempImage)) {
+                $validator->errors()->add('event_image', 'Please upload an event image.');
+            }
+
             $fields = ['event_from_date', 'event_to_date', 'event_start_time', 'event_end_time'];
             foreach ($fields as $field) {
                 if ($validator->errors()->has($field)) {
@@ -224,7 +231,11 @@ class EventsController extends Controller
             }
         });
 
-        $validated = $validator->validate();
+        if ($validator->fails()) {
+            $this->preserveEventImageOnValidationFailure($request, $existingTempImage);
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $event = new Events();
         $event->event_name = $request->event_name;
@@ -249,13 +260,7 @@ class EventsController extends Controller
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
-        $uploadDir = storage_path('uploads/events');
-        if (! is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-        $imageName = time().'.'.$request->event_image->extension();
-        $request->event_image->move($uploadDir, $imageName);
-        $event->event_image = $imageName;
+        $event->event_image = $this->resolveEventImageForStore($request, $existingTempImage);
         $event->event_is_active = $request->event_is_active;
 
         $event->save();
@@ -602,4 +607,88 @@ class EventsController extends Controller
     $events = Events::where('location_id', $locationId)->get();
     return response()->json($events);
 }
+
+    private function isValidTempEventImageFilename(?string $filename): bool
+    {
+        if ($filename === null || $filename === '') {
+            return false;
+        }
+
+        return (bool) preg_match('/^temp_[a-f0-9\-]+\.(jpe?g|png|webp)$/i', $filename);
+    }
+
+    private function tempEventImagePath(string $filename): string
+    {
+        return storage_path('uploads/events/temp/' . $filename);
+    }
+
+    private function deleteTempEventImage(?string $filename): void
+    {
+        if (!$this->isValidTempEventImageFilename($filename)) {
+            return;
+        }
+
+        $path = $this->tempEventImagePath($filename);
+        if (is_file($path)) {
+            unlink($path);
+        }
+    }
+
+    private function preserveEventImageOnValidationFailure(Request $request, ?string $existingTempImage): void
+    {
+        if (!$request->hasFile('event_image')) {
+            if ($this->isValidTempEventImageFilename($existingTempImage)) {
+                session()->flash('temp_event_image', $existingTempImage);
+            }
+
+            return;
+        }
+
+        $tempDir = storage_path('uploads/events/temp');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $this->deleteTempEventImage($existingTempImage);
+
+        $imageName = 'temp_' . Str::uuid() . '.' . $request->file('event_image')->extension();
+        $request->file('event_image')->move($tempDir, $imageName);
+        session()->flash('temp_event_image', $imageName);
+    }
+
+    private function resolveEventImageForStore(Request $request, ?string $existingTempImage): string
+    {
+        $uploadDir = storage_path('uploads/events');
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if ($request->hasFile('event_image')) {
+            $this->deleteTempEventImage($existingTempImage);
+            $imageName = time() . '.' . $request->file('event_image')->extension();
+            $request->file('event_image')->move($uploadDir, $imageName);
+            session()->forget('temp_event_image');
+
+            return $imageName;
+        }
+
+        if (!$this->isValidTempEventImageFilename($existingTempImage)) {
+            throw ValidationException::withMessages([
+                'event_image' => 'Please upload an event image.',
+            ]);
+        }
+
+        $tempPath = $this->tempEventImagePath($existingTempImage);
+        if (!is_file($tempPath)) {
+            throw ValidationException::withMessages([
+                'event_image' => 'The uploaded event image could not be found. Please upload it again.',
+            ]);
+        }
+
+        $imageName = time() . '.' . pathinfo($existingTempImage, PATHINFO_EXTENSION);
+        rename($tempPath, $uploadDir . '/' . $imageName);
+        session()->forget('temp_event_image');
+
+        return $imageName;
+    }
 }

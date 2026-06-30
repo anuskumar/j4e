@@ -15,6 +15,11 @@
 
 @include('admin.events.partials.event_form_styles')
 
+@php
+    $tempEventImage = old('temp_event_image', session('temp_event_image'));
+    $tempImageUrl = $tempEventImage ? asset('storage/uploads/events/temp/' . $tempEventImage) : null;
+@endphp
+
 <div class="row row-sm">
     <div class="col-lg-4">
         <div class="card mg-b-20">
@@ -23,13 +28,19 @@
                     <img alt="Event image preview"
                         id="event-image-preview"
                         class="event-preview-img"
-                        src="{{ asset('assets/img/events/event-01.jpg') }}"
+                        src="{{ $tempImageUrl ?? asset('assets/img/events/event-01.jpg') }}"
                         onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
                     <label for="event_image" class="fas fa-camera event-image-edit mb-0" title="Upload event image"></label>
                 </div>
                 <h5 class="main-profile-name mb-1" id="preview-event-name">New Event</h5>
                 <p class="main-profile-name-text text-muted mb-2">Priority: <span id="preview-priority">0</span></p>
-                <p class="form-field-hint mb-0" id="event-image-file-name">Event image required — JPG, PNG or WEBP, max 5MB</p>
+                <p class="form-field-hint mb-0" id="event-image-file-name">
+                    @if ($tempEventImage)
+                        Image uploaded — select a new file to replace
+                    @else
+                        Event image required — JPG, PNG or WEBP, max 5MB
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -102,7 +113,8 @@
 
                 <form class="form-horizontal" action="{{ url('events/store') }}" method="POST" id="event-create-form" enctype="multipart/form-data">
                     @csrf
-                    <input type="file" name="event_image" id="event_image" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp" required>
+                    <input type="hidden" name="temp_event_image" id="temp_event_image" value="{{ $tempEventImage }}">
+                    <input type="file" name="event_image" id="event_image" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp">
                     @error('event_image')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
@@ -196,7 +208,7 @@
                     <div class="row g-3 form-section-spacer">
                         <div class="col-md-4">
                             <label class="form-field-label" for="ticket_types">Ticket Types</label>
-                            <select name="ticket_types[]" id="ticket_types" multiple class="form-control select2-multiple master-data-select" data-create-modal="#quickCreateTicketTypeModal" data-placeholder="Select ticket types">
+                            <select name="ticket_types[]" id="ticket_types" multiple class="form-control select2-multiple" data-placeholder="Select ticket types">
                                 @foreach ($ticketTypes as $ticketType)
                                     <option value="{{ $ticketType->id }}"
                                         {{ (is_array(old('ticket_types')) && in_array($ticketType->id, old('ticket_types'))) ? 'selected' : '' }}>
@@ -377,13 +389,13 @@
 jQuery(document).ready(function ($) {
     const defaultImage = @json(asset('assets/img/events/event-01.jpg'));
     const fallbackImage = @json(asset('assets/img/default-event.jpg'));
+    const hasTempImage = @json((bool) $tempEventImage);
     const csrfToken = @json(csrf_token());
     const CREATE_VALUE = '__create_new__';
     const quickCreateUrls = {
         event_tag: @json(url('events/quick-create/event-tag')),
         event_type: @json(url('events/quick-create/event-type')),
         venue: @json(url('events/quick-create/venue')),
-        ticket_types: @json(url('events/quick-create/ticket-type')),
         artists: @json(url('events/quick-create/artist')),
     };
 
@@ -398,7 +410,6 @@ jQuery(document).ready(function ($) {
     appendCreateOption($('#event_tag'), 'Create new event tag...');
     appendCreateOption($('#event_type'), 'Create new event type...');
     appendCreateOption($('#venue'), 'Create new venue...');
-    appendCreateOption($('#ticket_types'), 'Create new ticket type...');
     appendCreateOption($('#artists'), 'Create new artist...');
 
     function formatCreateOption(option) {
@@ -600,11 +611,6 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $('#quick-create-ticket-type-form').on('submit', function (event) {
-        event.preventDefault();
-        submitQuickCreate($(this), quickCreateUrls.ticket_types, $('#ticket_types'));
-    });
-
     $('#quick-create-artist-form').on('submit', function (event) {
         event.preventDefault();
         submitQuickCreate($(this), quickCreateUrls.artists, $('#artists'));
@@ -654,11 +660,11 @@ jQuery(document).ready(function ($) {
     function handleImageFile(file) {
         if (!file || !file.type.startsWith('image/')) return;
 
-        if (file.size > 4 * 1024 * 1024) {
-            alert('Event image must not exceed 4MB.');
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Event image must not exceed 5MB.');
             $('#event_image').val('');
-            $('#event-image-preview').attr('src', defaultImage);
-            $('#event-image-file-name').text('JPG, PNG or WEBP — recommended 1500×700px');
+            $('#event-image-preview').attr('src', hasTempImage ? $('#event-image-preview').attr('src') : defaultImage);
+            $('#event-image-file-name').text(hasTempImage ? 'Image uploaded — select a new file to replace' : 'Event image required — JPG, PNG or WEBP, max 5MB');
             return;
         }
 
@@ -685,7 +691,10 @@ jQuery(document).ready(function ($) {
     });
 
     $('#event-create-form').on('submit', function (e) {
-        if (!$('#event_image')[0].files.length) {
+        const hasSelectedFile = $('#event_image')[0].files.length > 0;
+        const hasStoredTempImage = hasTempImage || ($('#temp_event_image').val() || '').trim() !== '';
+
+        if (!hasSelectedFile && !hasStoredTempImage) {
             e.preventDefault();
             alert('Please upload an event image before saving.');
             return false;

@@ -213,7 +213,7 @@
                     <div class="row g-3 form-section-spacer">
                         <div class="col-md-4">
                             <label class="form-field-label" for="ticket_types">Ticket Types</label>
-                            <select name="ticket_types[]" id="ticket_types" multiple class="form-control select2-multiple master-data-select" data-create-modal="#quickCreateTicketTypeModal" data-placeholder="Select ticket types">
+                            <select name="ticket_types[]" id="ticket_types" multiple class="form-control select2-multiple" data-placeholder="Select ticket types">
                                 @foreach ($ticketTypes as $ticketType)
                                     <option value="{{ $ticketType->id }}"
                                         {{ (is_array(old('ticket_types', $selectedTicketTypes)) && in_array($ticketType->id, old('ticket_types', $selectedTicketTypes))) ? 'selected' : '' }}>
@@ -399,7 +399,6 @@ jQuery(document).ready(function ($) {
         event_tag: @json(url('events/quick-create/event-tag')),
         event_type: @json(url('events/quick-create/event-type')),
         venue: @json(url('events/quick-create/venue')),
-        ticket_types: @json(url('events/quick-create/ticket-type')),
         artists: @json(url('events/quick-create/artist')),
     };
 
@@ -413,7 +412,6 @@ jQuery(document).ready(function ($) {
     appendCreateOption($('#event_tag'), 'Create new event tag...');
     appendCreateOption($('#event_type'), 'Create new event type...');
     appendCreateOption($('#venue'), 'Create new venue...');
-    appendCreateOption($('#ticket_types'), 'Create new ticket type...');
     appendCreateOption($('#artists'), 'Create new artist...');
 
     function formatCreateOption(option) {
@@ -561,10 +559,6 @@ jQuery(document).ready(function ($) {
     $('#quick-create-venue-form').on('submit', function (event) {
         event.preventDefault();
         submitQuickCreate($(this), quickCreateUrls.venue, $('#venue'), { onSuccess: function () { updatePreview(); } });
-    });
-    $('#quick-create-ticket-type-form').on('submit', function (event) {
-        event.preventDefault();
-        submitQuickCreate($(this), quickCreateUrls.ticket_types, $('#ticket_types'));
     });
     $('#quick-create-artist-form').on('submit', function (event) {
         event.preventDefault();

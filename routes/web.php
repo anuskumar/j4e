@@ -334,7 +334,6 @@ Route::group(['prefix' => 'events'], function () {
     Route::post('quick-create/event-tag', [EventsMasterDataController::class, 'storeEventTag']);
     Route::post('quick-create/event-type', [EventsMasterDataController::class, 'storeEventType']);
     Route::post('quick-create/venue', [EventsMasterDataController::class, 'storeVenue']);
-    Route::post('quick-create/ticket-type', [EventsMasterDataController::class, 'storeTicketType']);
     Route::post('quick-create/artist', [EventsMasterDataController::class, 'storeArtist']);
     Route::get('view/{id}', [EventsController::class, 'show']);
     Route::get('edit/{id}', [EventsController::class, 'edit']);

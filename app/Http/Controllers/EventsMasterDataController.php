@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ArtistModel;
 use App\Models\EventType;
 use App\Models\Tag;
-use App\Models\TicketType;
 use App\Models\VenueModel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,28 +102,6 @@ class EventsMasterDataController extends Controller
                 'id' => $venue->id,
                 'text' => $text,
                 'label' => $venueData->venue_name . ' — ' . $venueData->location_name . ', ' . $venueData->city_name,
-            ],
-        ]);
-    }
-
-    public function storeTicketType(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'is_active' => 'nullable|in:0,1',
-        ]);
-
-        $ticketType = new TicketType();
-        $ticketType->ticket_type_name = $validated['name'];
-        $ticketType->is_active = $request->input('is_active', 1);
-        $ticketType->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Ticket type created successfully.',
-            'data' => [
-                'id' => $ticketType->id,
-                'text' => $ticketType->ticket_type_name,
             ],
         ]);
     }
