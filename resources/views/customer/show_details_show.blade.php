@@ -553,6 +553,11 @@
         cursor: not-allowed;
     }
 
+    .btn-book--blocked {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
     .filter-pill--required {
         border-color: #7e0982;
     }
@@ -816,7 +821,7 @@
                                         @csrf
                                         <input type="hidden" value="{{ $dat->id }}" name="event_ticket">
                                         <input type="hidden" name="buy_count" value="">
-                                        <button class="btn btn-primary btn-book" type="submit" disabled title="Please select quantity first">Book</button>
+                                        <button class="btn btn-primary btn-book btn-book--blocked" type="submit" title="Please select quantity first">Book</button>
                                     </form>
                                 </div>
                             </div>
@@ -1011,7 +1016,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
         quantityButton.textContent = currentQuantity + ' Ticket' + (currentQuantity > 1 ? 's' : '');
         quantityButton.classList.add('active');
+        quantityButton.classList.remove('filter-pill--required');
         updateBookButtons();
+    }
+
+    function showQuantityRequiredNotice() {
+        if (typeof swal === 'function') {
+            swal({
+                title: 'Quantity required',
+                text: 'Please select a quantity before booking.',
+                icon: 'warning',
+                button: 'OK',
+            });
+        } else if (typeof toastr !== 'undefined') {
+            toastr.warning('Please select a quantity before booking.');
+        } else {
+            alert('Please select a quantity before booking.');
+        }
+
+        if (quantityButton) {
+            quantityButton.classList.add('filter-pill--required');
+            quantityButton.focus();
+        }
     }
 
     function updateBookButtons() {
@@ -1019,7 +1045,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const card = button.closest('.ticket-container');
             const isVisible = card && card.style.display !== 'none';
             const canBook = quantitySelected && isVisible;
-            button.disabled = !canBook;
+
+            button.disabled = !isVisible;
+            button.classList.toggle('btn-book--blocked', !quantitySelected && isVisible);
+            button.setAttribute('aria-disabled', canBook ? 'false' : 'true');
             button.title = quantitySelected ? '' : 'Please select quantity first';
         });
     }
@@ -1137,10 +1166,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (ticketList) {
+        ticketList.addEventListener('click', function (e) {
+            const button = e.target.closest('.btn-book');
+            if (!button || button.disabled) {
+                return;
+            }
+
+            if (!quantitySelected) {
+                e.preventDefault();
+                showQuantityRequiredNotice();
+            }
+        });
+
         ticketList.addEventListener('submit', function (e) {
             if (!quantitySelected) {
                 e.preventDefault();
-                alert('Please select a quantity before booking.');
+                showQuantityRequiredNotice();
                 return;
             }
 

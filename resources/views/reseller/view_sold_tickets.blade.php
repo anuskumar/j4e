@@ -75,6 +75,7 @@
                                             <th>Event Time</th>
                                             <th>Status</th>
                                             <th>Customer Details</th>
+                                            <th>Invoice</th>
                                             <th>Ticket File</th>
                                         </tr>
                                     </thead>
@@ -121,6 +122,15 @@
                                                                 <i class="fa fa-phone"></i> {{ $ticket->customer_phone ?? 'N/A' }}
                                                             </small>
                                                         </div>
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if (!empty($ticket->purchase_id))
+                                                        <a href="{{ url('view_invoice/' . $ticket->purchase_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                            <i class="fa fa-file-invoice"></i> Invoice #{{ $ticket->purchase_id }}
+                                                        </a>
                                                     @else
                                                         <span class="text-muted">N/A</span>
                                                     @endif

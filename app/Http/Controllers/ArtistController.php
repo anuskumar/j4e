@@ -8,13 +8,57 @@ use Illuminate\Http\Request;
 
 class ArtistController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')
-            ->select('*', 'artist.id as id', 'field_name')
-            ->orderBy('artist.id', 'desc')
+        $query = ArtistModel::leftJoin('artist_field', 'artist_field.id', 'artist.field')
+            ->select(
+                'artist.*',
+                'artist.id as id',
+                'artist_field.field_name'
+            );
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('artist.is_active', (int) $request->status);
+        }
+
+        if ($request->filled('field') && $request->field !== 'all') {
+            $query->where('artist.field', (int) $request->field);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('artist.artist_name', 'like', '%' . $search . '%')
+                    ->orWhere('artist.contact_number', 'like', '%' . $search . '%')
+                    ->orWhere('artist.about', 'like', '%' . $search . '%')
+                    ->orWhere('artist_field.field_name', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('registered_from')) {
+            $query->whereDate('artist.created_at', '>=', $request->registered_from);
+        }
+
+        if ($request->filled('registered_to')) {
+            $query->whereDate('artist.created_at', '<=', $request->registered_to);
+        }
+
+        $data = $query
+            ->orderByDesc('artist.created_at')
+            ->orderByDesc('artist.id')
             ->get();
-        return view('admin.artist.list', compact('data'));
+
+        $artistFields = ArtistField::orderBy('field_name')->get();
+
+        $filters = [
+            'status' => $request->input('status', 'all'),
+            'field' => $request->input('field', 'all'),
+            'search' => $request->search,
+            'registered_from' => $request->registered_from,
+            'registered_to' => $request->registered_to,
+        ];
+
+        return view('admin.artist.list', compact('data', 'filters', 'artistFields'));
     }
 
     public function show(string $id)

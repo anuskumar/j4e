@@ -98,30 +98,4 @@
     </div>
 </div>
 
-<div class="modal fade" id="quickCreateTicketTypeModal" tabindex="-1" aria-labelledby="quickCreateTicketTypeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title" id="quickCreateTicketTypeModalLabel">Create Ticket Type</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="quick-create-ticket-type-form">
-                <div class="modal-body">
-                    <div class="form-group mb-0">
-                        <label class="form-field-label" for="quick_ticket_type_name">Ticket Type Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="quick_ticket_type_name" name="name" maxlength="255" required placeholder="Enter ticket type name">
-                        <div class="invalid-feedback d-block" id="quick_ticket_type_name_error"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="quick-create-ticket-type-submit">
-                        <i class="fe fe-save me-1"></i> Create Ticket Type
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @include('admin.artist.partials.create_modal')

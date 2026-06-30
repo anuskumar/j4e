@@ -12,4 +12,17 @@ class Bankmodel extends Model
     use HasFactory;
     protected $table='event_banks';
 
+    public static function isCompleteForReseller(int $userId): bool
+    {
+        $bankData = self::where('resellerid', $userId)->first();
+
+        if (!$bankData) {
+            return false;
+        }
+
+        return filled($bankData->bank_country)
+            && filled($bankData->accnt_no)
+            && filled($bankData->bic);
+    }
+
 }

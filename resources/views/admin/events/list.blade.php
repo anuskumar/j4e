@@ -79,7 +79,55 @@
         border-radius: 6px;
         border: 1px solid #e8ebf3;
     }
+
+    .event-header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
 </style>
+
+@php
+    $eventExportTitle = 'Events (' . now()->format('d M Y') . ')';
+    $eventExportButtons = [
+        [
+            'extend' => 'excel',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4, 5, 9],
+                'stripHtml' => true,
+            ],
+            'title' => $eventExportTitle,
+        ],
+        [
+            'extend' => 'pdf',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4, 5, 9],
+                'stripHtml' => true,
+            ],
+            'title' => $eventExportTitle,
+            'orientation' => 'landscape',
+            'pageSize' => 'A4',
+        ],
+    ];
+    $eventDatatableOptions = [
+        'language' => [
+            'search' => 'Search events:',
+            'searchPlaceholder' => 'Search events...',
+            'lengthMenu' => 'Show _MENU_ events per page',
+            'info' => 'Showing _START_ to _END_ of _TOTAL_ events',
+            'infoEmpty' => 'No events found',
+            'infoFiltered' => '(filtered from _MAX_ total events)',
+            'zeroRecords' => 'No matching events found',
+        ],
+        'columnDefs' => [
+            ['orderable' => false, 'targets' => [6, 7, 8, 10]],
+            ['searchable' => false, 'targets' => [0, 6, 7, 8, 10]],
+        ],
+    ];
+@endphp
 
 <div class="row row-sm">
     <div class="col-lg-12">
@@ -90,8 +138,14 @@
                         <h4 class="card-title mg-b-10">Events</h4>
                         <p class="text-muted tx-12 mb-0">Manage events, timings, and gallery images.</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="event-header-actions">
                         <span class="badge bg-primary-transparent tx-13">{{ count($data) }} {{ Str::plural('event', count($data)) }}</span>
+                        <button type="button" class="btn btn-sm btn-success" id="event-export-excel">
+                            <i class="fe fe-download me-1"></i> Excel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="event-export-pdf">
+                            <i class="fe fe-file-text me-1"></i> PDF
+                        </button>
                         <a href="{{ url('events/create') }}" class="btn btn-primary btn-sm">
                             <i class="fe fe-plus me-1"></i> Create Event
                         </a>
@@ -270,21 +324,8 @@
 @push('scripts')
 @php
     $datatableJqueryLoaded = true;
-    $datatableOptions = [
-        'language' => [
-            'search' => 'Search events:',
-            'searchPlaceholder' => 'Search events...',
-            'lengthMenu' => 'Show _MENU_ events per page',
-            'info' => 'Showing _START_ to _END_ of _TOTAL_ events',
-            'infoEmpty' => 'No events found',
-            'infoFiltered' => '(filtered from _MAX_ total events)',
-            'zeroRecords' => 'No matching events found',
-        ],
-        'columnDefs' => [
-            ['orderable' => false, 'targets' => [6, 7, 8, 10]],
-            ['searchable' => false, 'targets' => [0, 6, 7, 8, 10]],
-        ],
-    ];
+    $datatableOptions = $eventDatatableOptions;
 @endphp
 @include('datatable.datatable_js')
+@include('admin.events.partials.export_scripts')
 @endpush

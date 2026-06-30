@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerModel;
 use App\Models\User;
+use App\Services\BulkEmailService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,17 +16,57 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $data = User::leftjoin('customers','customers.user_id','users.id')
-        ->select('*','users.id as id','customers.id as customer_id')
-        ->where('users.user_type','customer')
-        ->orderBy('users.created_at', 'desc')
-        ->orderBy('users.id', 'desc')
-        ->get();
-        
-        return view('admin.customer.list',compact('data'));
+        $query = User::leftJoin('customers', 'customers.user_id', 'users.id')
+            ->select('users.*', 'users.id as id', 'customers.id as customer_id')
+            ->where('users.user_type', 'customer');
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('users.is_active', (int) $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('users.email', 'like', '%' . $search . '%')
+                    ->orWhere('users.phone', 'like', '%' . $search . '%')
+                    ->orWhere('users.address', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('registered_from')) {
+            $query->whereDate('users.created_at', '>=', $request->registered_from);
+        }
+
+        if ($request->filled('registered_to')) {
+            $query->whereDate('users.created_at', '<=', $request->registered_to);
+        }
+
+        if ($request->filled('last_login_from')) {
+            $query->whereDate('users.last_login', '>=', $request->last_login_from);
+        }
+
+        if ($request->filled('last_login_to')) {
+            $query->whereDate('users.last_login', '<=', $request->last_login_to);
+        }
+
+        $data = $query
+            ->orderByDesc('users.created_at')
+            ->orderByDesc('users.id')
+            ->get();
+
+        $filters = [
+            'status' => $request->input('status', 'all'),
+            'search' => $request->search,
+            'registered_from' => $request->registered_from,
+            'registered_to' => $request->registered_to,
+            'last_login_from' => $request->last_login_from,
+            'last_login_to' => $request->last_login_to,
+        ];
+
+        return view('admin.customer.list', compact('data', 'filters'));
     }
 
     /**
@@ -231,5 +272,35 @@ class CustomerController extends Controller
             'message' => 'Customer status updated successfully.',
             'status' => $user->is_active
         ]);
+    }
+
+    public function sendBulkEmail(Request $request, BulkEmailService $bulkEmailService)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:50000',
+            'customer_ids' => 'required|array|min:1',
+            'customer_ids.*' => 'required|integer|exists:users,id',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif,webp,zip',
+        ], [
+            'subject.required' => 'Email subject is required.',
+            'message.required' => 'Email message is required.',
+            'customer_ids.required' => 'Select at least one customer to send email.',
+            'customer_ids.min' => 'Select at least one customer to send email.',
+            'attachments.max' => 'You can attach up to 5 files.',
+            'attachments.*.max' => 'Each attachment must not exceed 10MB.',
+            'attachments.*.mimes' => 'Invalid attachment file type.',
+        ]);
+
+        $result = $bulkEmailService->send(
+            'customer',
+            $validated['customer_ids'],
+            $validated['subject'],
+            $validated['message'],
+            $request->file('attachments', [])
+        );
+
+        return response()->json($result, $result['http_status']);
     }
 }

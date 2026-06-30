@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminBulkEmailController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\ArtistfiedController;
@@ -92,6 +93,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmi
     Route::get('notifications/count', [NotificationController::class, 'count'])->name('admin.notifications.count');
     Route::get('paypal-settings', [PaypalSettingsController::class, 'index'])->name('admin.paypal.settings');
     Route::post('paypal-settings', [PaypalSettingsController::class, 'update'])->name('admin.paypal.settings.update');
+    Route::get('sent-emails', [AdminBulkEmailController::class, 'index'])->name('admin.bulk-email.index');
+    Route::get('sent-emails/{bulkEmailLog}', [AdminBulkEmailController::class, 'show'])->name('admin.bulk-email.show');
+    Route::get('sent-emails/{bulkEmailLog}/attachments/{index}', [AdminBulkEmailController::class, 'downloadAttachment'])->name('admin.bulk-email.attachment');
 });
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
@@ -242,6 +246,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('store', [CustomerController::class, 'store']);
         Route::delete('destroy/{id}', [CustomerController::class, 'delete']);
         Route::post('update-status/{id}', [CustomerController::class, 'updateStatus']);
+        Route::post('send-email', [CustomerController::class, 'sendBulkEmail'])->name('admin.customer.send-email');
     });
     
     Route::group(['prefix' => 'reseller'], function () {
@@ -253,6 +258,7 @@ Route::group(['prefix' => 'admin'], function () {
         Route::post('update', [ResellerController::class, 'update']);
         Route::delete('delete/{id}', [ResellerController::class, 'delete']);
         Route::post('update-status/{id}', [ResellerController::class, 'updateStatus']);
+        Route::post('send-email', [ResellerController::class, 'sendBulkEmail'])->name('admin.reseller.send-email');
     });
     
     Route::group(['prefix' => 'artist'], function () {
@@ -334,7 +340,6 @@ Route::group(['prefix' => 'events'], function () {
     Route::post('quick-create/event-tag', [EventsMasterDataController::class, 'storeEventTag']);
     Route::post('quick-create/event-type', [EventsMasterDataController::class, 'storeEventType']);
     Route::post('quick-create/venue', [EventsMasterDataController::class, 'storeVenue']);
-    Route::post('quick-create/ticket-type', [EventsMasterDataController::class, 'storeTicketType']);
     Route::post('quick-create/artist', [EventsMasterDataController::class, 'storeArtist']);
     Route::get('view/{id}', [EventsController::class, 'show']);
     Route::get('edit/{id}', [EventsController::class, 'edit']);
