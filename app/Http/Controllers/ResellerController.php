@@ -1531,7 +1531,10 @@ class ResellerController extends Controller
                 'mobile_applications.name as mobile_applications_name'
             )
             ->first();
-        $bankDetails = BankTransferDetail::with('currency')->where('reseller_id', auth()->id())->get();
+        $resellerId = ResellerModel::where('user_id', auth()->id())->value('id');
+        $bankDetails = $resellerId
+            ? BankTransferDetail::with('currency')->where('reseller_id', $resellerId)->get()
+            : collect();
         // dd($bankDetails->toArray());
         return view('reseller.sellticket_card_data', compact('eventid', 'data', 'currencys', 'bankDetails'));
     }
