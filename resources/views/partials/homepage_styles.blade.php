@@ -1,13 +1,13 @@
 <style>
 /* Homepage – customer-facing polish only */
-.home-hero .carousel-item {
+.home-hero .carousel-item.home-hero__slide {
     position: relative;
-}
-
-.home-hero .carousel-item img.banner_caro {
     width: 100%;
-    height: 420px;
-    object-fit: cover;
+    height: {{ \App\Models\SliderModel::DISPLAY_HEIGHT_DESKTOP }}px;
+    background-color: #12082a;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .home-hero .carousel-caption.home-hero__overlay {
@@ -175,8 +175,8 @@
 }
 
 @media (max-width: 768px) {
-    .home-hero .carousel-item img.banner_caro {
-        height: 240px;
+    .home-hero .carousel-item.home-hero__slide {
+        height: {{ \App\Models\SliderModel::DISPLAY_HEIGHT_MOBILE }}px;
     }
 
     .home-hero .carousel-caption {

@@ -2,6 +2,29 @@
 @extends('admin.layout.app')
 @section('admin_content')
 
+<style>
+    .slide-image-guidelines {
+        border: 1px solid #b6d4fe;
+        background: #e7f1ff;
+        color: #084298;
+    }
+
+    .slide-image-guidelines .fe {
+        color: #0d6efd;
+    }
+
+    .slide-current-image {
+        width: 100%;
+        max-width: 480px;
+        aspect-ratio: {{ \App\Models\SliderModel::RECOMMENDED_WIDTH }} / {{ \App\Models\SliderModel::RECOMMENDED_HEIGHT }};
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #e8ebf3;
+        display: block;
+        margin-bottom: 12px;
+    }
+</style>
+
 				<!-- row -->
 				<div class="row row-sm">
 
@@ -21,13 +44,15 @@
                                             <div class="col-md-3">
                                                 <label class="form-label">Banner Image</label>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-9">
+                                                @include('admin.slide.partials.image_size_guidelines')
+
                                                 @if($data->slide_image)
-                                                    <img alt="" width="100" height="100" src="{{ asset('storage/uploads/slide/' . $data->slide_image) }}" onerror="this.src='{{ asset('assets/img/default-slide.jpg') }}'">
-                                                @else
-                                                    <img alt="" width="100" height="100" src="{{ asset('assets/img/default-slide.jpg') }}">
+                                                    <img alt="Current slide image" class="slide-current-image" src="{{ asset('storage/uploads/slide/' . $data->slide_image) }}" onerror="this.src='{{ asset('assets/img/default-slide.jpg') }}'">
                                                 @endif
-                                                <input type="file" class="form-control"  placeholder="banner" name="slide_image">
+
+                                                <label class="form-label" for="slide_image">Upload new image</label>
+                                                <input type="file" class="form-control" id="slide_image" name="slide_image" accept="image/jpeg,image/png,image/jpg,image/webp">
                                             </div>
                                         </div>
                                     </div>

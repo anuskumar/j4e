@@ -12,6 +12,10 @@
         padding: 8px 0;
     }
 
+    header.header {
+        background: transparent;
+    }
+
     .site-navbar > .container {
         display: flex;
         flex-wrap: wrap;
@@ -52,15 +56,20 @@
 
     .site-navbar .navbar-brand {
         flex: 0 0 auto;
-        margin-right: 0;
-        padding: 4px 8px 4px 4px;
+        display: flex;
+        align-items: center;
+        margin-right: 12px;
+        padding: 6px 0;
+        z-index: 2;
     }
 
     .site-navbar .navbar-brand img {
-        max-width: 200px;
-        max-height: 56px;
+        height: 52px;
         width: auto;
+        max-width: 220px;
         object-fit: contain;
+        object-position: left center;
+        display: block;
     }
 
     .site-navbar .navbar-collapse {
@@ -193,11 +202,17 @@
             margin-left: 0;
             padding-right: 0;
         }
+
+        .site-navbar .navbar-brand img {
+            height: 44px;
+            max-width: 170px;
+        }
     }
 
     @media (min-width: 992px) and (max-width: 1199px) {
         .site-navbar .navbar-brand img {
-            max-width: 140px;
+            max-width: 180px;
+            height: 46px;
         }
 
         .site-navbar .nav-actions .btn-nav {
@@ -222,7 +237,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark site-navbar">
         <div class="container align-items-center">
             <a class="navbar-brand" href="{{ url('/') }}">
-                <img src="{{ $appLogoUrl }}" alt="Logo">
+                <img src="{{ $appLogoUrl }}" width="220" height="52" alt="Logo">
             </a>
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">

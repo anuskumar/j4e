@@ -13,6 +13,24 @@ class SliderModel extends Model
 
     protected $table = 'slider';
 
+    public const DISPLAY_HEIGHT_DESKTOP = 420;
+
+    public const DISPLAY_HEIGHT_MOBILE = 240;
+
+    public const RECOMMENDED_WIDTH = 1920;
+
+    public const RECOMMENDED_HEIGHT = 420;
+
+    public static function recommendedSizeLabel(): string
+    {
+        return self::RECOMMENDED_WIDTH . '×' . self::RECOMMENDED_HEIGHT . 'px';
+    }
+
+    public static function displaySizeLabel(): string
+    {
+        return self::RECOMMENDED_WIDTH . '×' . self::DISPLAY_HEIGHT_DESKTOP . 'px (desktop), full width × ' . self::DISPLAY_HEIGHT_MOBILE . 'px (mobile)';
+    }
+
     protected $fillable = [
         'meta_description',
         'eventid',

@@ -282,11 +282,13 @@ class ResellerController extends Controller
 
     public function updateprofile(Request $request)
     {
+        $phoneRequired = ! in_array(Auth::user()->user_type, ['admin', 'superadmin'], true);
+
         $request->validate([
             'authid' => 'required|integer',
             'name' => 'required|string|max:255',
             'company_email' => 'required|email|max:255',
-            'contact_number' => 'required|string|max:50',
+            'contact_number' => ($phoneRequired ? 'required' : 'nullable') . '|string|max:50',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
@@ -302,7 +304,7 @@ class ResellerController extends Controller
 
         $profiledata->name = $request->name;
         $profiledata->email = $request->company_email;
-        $profiledata->phone = $request->contact_number;
+        $profiledata->phone = $request->input('contact_number');
 
         if ($request->hasFile('profile')) {
             $uploadPath = storage_path('uploads/images');

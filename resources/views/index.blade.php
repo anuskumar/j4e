@@ -17,23 +17,26 @@
 
         <div class="carousel-inner">
             @forelse($slider as $index => $slide)
-                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                    <img class="d-block w-100 banner_caro"
-                        src="{{ asset('storage/uploads/slide/' . $slide->slide_image) }}"
-                        alt="{{ $slide->meta_description ?? 'Slide ' . ($index + 1) }}"
-                        onerror="this.src='{{ asset('assets/img/banner.jpg') }}'">
+                <div class="carousel-item home-hero__slide {{ $index === 0 ? 'active' : '' }}"
+                    style="background-image: url('{{ asset('storage/uploads/slide/' . $slide->slide_image) }}');"
+                    role="img"
+                    aria-label="{{ $slide->meta_description ?? 'Slide ' . ($index + 1) }}">
                     <div class="carousel-caption home-hero__overlay d-none d-md-flex {{ $slide->captionTextColorClass() }}">
                         <div class="home-hero__caption-text">
                             <h1>{{ $slide->meta_description }}</h1>
                         </div>
+                        @if(!empty($slide->eventid))
                         <div class="home-hero__caption-action">
-                            <a href="{{ route('new_eventlistfrontend') }}" class="btn btn-primary">Book Now</a>
+                            <a href="{{ url('show_details_show', $slide->eventid) }}" class="btn btn-primary">Book Now</a>
                         </div>
+                        @endif
                     </div>
                 </div>
             @empty
-                <div class="carousel-item active">
-                    <img class="d-block w-100 banner_caro" src="{{ asset('assets/img/banner.jpg') }}" alt="Welcome">
+                <div class="carousel-item home-hero__slide active"
+                    style="background-image: url('{{ asset('assets/img/banner.jpg') }}');"
+                    role="img"
+                    aria-label="Welcome">
                 </div>
             @endforelse
         </div>
