@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerModel;
 use App\Models\User;
+use App\Services\BulkEmailService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -271,5 +272,35 @@ class CustomerController extends Controller
             'message' => 'Customer status updated successfully.',
             'status' => $user->is_active
         ]);
+    }
+
+    public function sendBulkEmail(Request $request, BulkEmailService $bulkEmailService)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string|max:50000',
+            'customer_ids' => 'required|array|min:1',
+            'customer_ids.*' => 'required|integer|exists:users,id',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,jpg,jpeg,png,gif,webp,zip',
+        ], [
+            'subject.required' => 'Email subject is required.',
+            'message.required' => 'Email message is required.',
+            'customer_ids.required' => 'Select at least one customer to send email.',
+            'customer_ids.min' => 'Select at least one customer to send email.',
+            'attachments.max' => 'You can attach up to 5 files.',
+            'attachments.*.max' => 'Each attachment must not exceed 10MB.',
+            'attachments.*.mimes' => 'Invalid attachment file type.',
+        ]);
+
+        $result = $bulkEmailService->send(
+            'customer',
+            $validated['customer_ids'],
+            $validated['subject'],
+            $validated['message'],
+            $request->file('attachments', [])
+        );
+
+        return response()->json($result, $result['http_status']);
     }
 }

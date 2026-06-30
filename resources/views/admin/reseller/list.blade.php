@@ -138,6 +138,10 @@
                         <button type="button" class="btn btn-sm btn-danger" id="reseller-export-pdf">
                             <i class="fe fe-file-text me-1"></i> PDF
                         </button>
+                        <button type="button" class="btn btn-sm btn-info" id="reseller-send-email-btn"
+                            @disabled(count($data) === 0)>
+                            <i class="fe fe-mail me-1"></i> Send Email
+                        </button>
                         <a href="{{ url('admin/reseller/create') }}" class="btn btn-primary btn-sm">
                             <i class="fe fe-plus me-1"></i> Create Reseller
                         </a>
@@ -288,6 +292,14 @@
     </div>
 </div>
 
+@include('admin.partials.bulk_email_modal', [
+    'emailPrefix' => 'reseller',
+    'modalTitle' => 'Compose Email to Resellers',
+    'modalDescription' => 'Send an email to the currently filtered reseller list. Review the recipients below and uncheck anyone you want to exclude.',
+    'recipientLabel' => 'reseller',
+    'recipients' => $data,
+])
+
 @endsection
 
 @push('scripts')
@@ -394,4 +406,9 @@ jQuery(document).ready(function ($) {
 @endphp
 @include('datatable.datatable_js')
 @include('admin.reseller.partials.export_scripts')
+@include('admin.partials.bulk_email_scripts', [
+    'emailPrefix' => 'reseller',
+    'sendRoute' => route('admin.reseller.send-email'),
+    'recipientIdsField' => 'reseller_ids',
+])
 @endpush

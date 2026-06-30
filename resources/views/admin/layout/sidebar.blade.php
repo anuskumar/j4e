@@ -165,6 +165,12 @@
                             <span class="side-menu__label">PayPal Integration</span>
                         </a>
                     </li>
+                    <li class="slide">
+                        <a class="side-menu__item" href="{{ route('admin.bulk-email.index') }}">
+                            <i class="side-menu__icon fe fe-mail"></i>
+                            <span class="side-menu__label">Sent Emails</span>
+                        </a>
+                    </li>
                 @endif
             </ul>
             <div class="slide-right" id="slide-right">
