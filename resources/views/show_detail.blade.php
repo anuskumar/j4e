@@ -1,7 +1,7 @@
 <?php $page="speaker-profile";?>
 @extends('layout.mainlayout')
 @section('content')
-<link href="https://just4entertainment.com/public/assets/css/toastr.min.css" rel="stylesheet">
+<link href="https://mastrotickets.com//public/assets/css/toastr.min.css" rel="stylesheet">
 
 <!-- Breadcrumb -->
 			<div class="breadcrumb-bar">
@@ -757,7 +757,7 @@
 <!-- Include jQuery if not already included -->
 <!-- Include jQuery if not already included -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://just4entertainment.com/public/assets/js/toastr.min.js"></script>
+<script src="https://mastrotickets.com//public/assets/js/toastr.min.js"></script>
 
 
 

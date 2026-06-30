@@ -26,7 +26,7 @@ class CompanySettingsController extends Controller
         if (!$settings) {
             $settings = new CompanySettings();
             $settings->user_id = $authdata->id;
-            $settings->company_name = 'Just 4 Entertainment';
+            $settings->company_name = 'Mastro Tickets';
             $settings->save();
         }
 

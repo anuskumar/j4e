@@ -1,7 +1,7 @@
 
         <meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-		<title>Events</title>
+		<title>{{ $companySettings?->displayName() ?? 'Events' }}</title>
 
 		<!-- Favicons -->
 		<link type="image/x-icon" href="{{ $appLogoUrl }}" rel="icon">

@@ -234,12 +234,13 @@
                     </div>
 
                     <div class="form-group form-section-spacer">
-                        <label class="form-field-label" for="company_footer_text">Footer Text</label>
+                        <label class="form-field-label" for="company_footer_text">Footer / Banner Text</label>
                         <div class="input-group">
                             <span class="input-group-text align-items-start pt-2"><i class="fe fe-align-left"></i></span>
                             <textarea class="form-control" name="company_footer_text" id="company_footer_text" rows="2"
-                                placeholder="Footer text">{{ $settings->company_footer_text }}</textarea>
+                                placeholder="Shown in the homepage marquee and footer">{{ $settings->company_footer_text }}</textarea>
                         </div>
+                        <p class="form-field-hint mb-0">Displayed in the top homepage banner marquee together with the about text.</p>
                     </div>
 
                     <div class="form-group form-section-spacer">
@@ -247,8 +248,9 @@
                         <div class="input-group">
                             <span class="input-group-text align-items-start pt-2"><i class="fe fe-file-text"></i></span>
                             <textarea class="form-control" name="company_about" id="company_about" rows="4"
-                                placeholder="About company">{{ $settings->company_about }}</textarea>
+                                placeholder="Shown in the footer about section">{{ $settings->company_about }}</textarea>
                         </div>
+                        <p class="form-field-hint mb-0">Main footer description shown on the customer-facing site.</p>
                     </div>
 
                     <div class="mb-4 main-content-label">Brand Images</div>

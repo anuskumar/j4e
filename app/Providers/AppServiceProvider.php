@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
 
         View::share('appLogoUrl', CompanySettings::appLogoUrl());
+        View::share('companySettings', CompanySettings::current());
 
         View::composer('admin.layout.app', function ($view) {
             if (!Auth::check()) {

@@ -139,7 +139,7 @@ class CustomerPasswordResetController extends Controller
 
     private function sendResetCodeEmail(User $user, string $code): void
     {
-        $appName = config('app.name', 'Just 4 Entertainment');
+        $appName = config('app.name', 'Mastro Tickets');
         $logoUrl = \App\Models\CompanySettings::appLogoUrl();
 
         $html = view('emails.password_reset_code', [
