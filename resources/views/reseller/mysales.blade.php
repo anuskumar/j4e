@@ -38,7 +38,7 @@
         <td>
             <select class="form-select" name="ticket_status" aria-label="Default select example">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
-            <option value="0"  {{ request('ticket_status') == '0' ? 'selected' : '' }}>Not available</option>
+            <option value="2"  {{ request('ticket_status') == '2' ? 'selected' : '' }}>Not available</option>
             <option value="1"  {{ request('ticket_status') == '1' ? 'selected' : '' }}>Available</option>
             </select>
         </td>

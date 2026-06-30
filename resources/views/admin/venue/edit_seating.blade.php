@@ -1,134 +1,271 @@
-<?php $page="venue/update";?>
+<?php
+$page = 'venue/edit_seating';
+$seatingImage = $data->seating_image
+    ? asset('storage/uploads/venue_seating/' . $data->seating_image)
+    : asset('assets/img/default-seating.jpg');
+?>
 @extends('admin.layout.app')
+
+@section('page_title', 'Edit Seating')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ url('venue/list') }}">Venues</a></li>
+    <li class="breadcrumb-item"><a href="{{ url('venue/manage_Seating', $venue->id) }}">Manage Seating</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Edit Seating</li>
+@endsection
+
 @section('admin_content')
 
-				<!-- row -->
-				<div class="row row-sm">
+@include('admin.partials.user_form_styles')
 
-					<!-- Col -->
-					<div class="col-lg-10">
-						<div class="card">
-							<div class="card-body">
-								<div class="mb-4 main-content-label">Edit</div>
+<div class="row row-sm">
+    <div class="col-lg-4">
+        <div class="card mg-b-20">
+            <div class="card-body text-center">
+                <div class="event-image-upload mb-3">
+                    <img alt="Seating preview"
+                        id="seating-image-preview"
+                        class="event-preview-img"
+                        src="{{ $seatingImage }}"
+                        onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
+                    <label for="seating_image" class="fas fa-camera event-image-edit mb-0" title="Upload seating image"></label>
+                </div>
+                <h5 class="main-profile-name mb-1" id="preview-seating-name">{{ $data->seating_type_name }}</h5>
+                <p class="main-profile-name-text text-muted mb-2">{{ $venue->name }}</p>
+                <span class="badge {{ $data->is_active == 1 ? 'bg-success-transparent' : 'bg-warning-transparent' }}" id="preview-status-badge">
+                    {{ $data->is_active == 1 ? 'Active' : 'Inactive' }}
+                </span>
+                <p class="form-field-hint mb-0 mt-2" id="seating-image-file-name">
+                    {{ $data->seating_image ? basename($data->seating_image) : 'JPG, PNG or WEBP — max 2MB' }}
+                </p>
+            </div>
+        </div>
 
-                                <form class="form-horizontal"  action="{{ url('venue/update_Seating') }}" method="POST" enctype="multipart/form-data">
-                                    @csrf
-                                    {{-- <div class="mb-4 main-content-label">Name</div> --}}
+        <div class="card mg-b-20">
+            <div class="card-body">
+                <div class="main-content-label tx-13 mg-b-25">Seating Preview</div>
+                <div class="main-profile-contact-list">
+                    <div class="media">
+                        <div class="media-icon bg-primary-transparent text-primary">
+                            <i class="fe fe-grid"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Seating Type</span>
+                            <div id="preview-name">{{ $data->seating_type_name }}</div>
+                        </div>
+                    </div>
+                    <div class="media">
+                        <div class="media-icon bg-success-transparent text-success">
+                            <i class="fe fe-users"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Total Seats</span>
+                            <div id="preview-seats">{{ $data->number_of_seats }}</div>
+                        </div>
+                    </div>
+                    <div class="media mb-0">
+                        <div class="media-icon bg-info-transparent text-info">
+                            <i class="fe fe-hash"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Serial Range</span>
+                            <div id="preview-serial">{{ $data->seat_serial_prefix }}{{ $data->seat_serial_start }} - {{ $data->seat_serial_prefix }}{{ $data->seat_serial_end }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                                   <input type="hidden" name="id" value="{{ $data->id }}">
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Name</label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="text" class="form-control" name="seating_type_name" required   value="{{ $data->seating_type_name }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                {{-- {{ print_r($venue_type) }} --}}
-                                                <label class="form-label">Total Number</label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="number" class="form-control" name="number_of_seats" required  value="{{$data->number_of_seats }}">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label"> Seat Number Prefix</label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="text" class="form-control" name="seat_serial_prefix" required   value="{{ $data->seat_serial_prefix}}">
+                <form class="form-horizontal" action="{{ url('venue/update_Seating') }}" method="POST" id="seating-edit-form" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="id" value="{{ $data->id }}">
+                    <input type="file" name="seating_image" id="seating_image" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp">
 
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Seat Serial Starting Number</label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="number" required class="form-control" name="seat_serial_start"  value="{{$data->seat_serial_start}}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Seat Serial Ending Number</label>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <input type="number" required class="form-control" name="seat_serial_end"  value="{{$data->seat_serial_end}}">
-                                            </div>
-                                        </div>
-                                    </div>
+                    <div class="mb-4 main-content-label">Basic Information</div>
 
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Description</label>
-                                            </div>
-                                            <div class="col-md-6">
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="seating_type_name">Seating Type Name <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fe fe-grid"></i></span>
+                            <input type="text"
+                                class="form-control @error('seating_type_name') is-invalid @enderror"
+                                name="seating_type_name"
+                                id="seating_type_name"
+                                value="{{ old('seating_type_name', $data->seating_type_name) }}"
+                                maxlength="255"
+                                required>
+                        </div>
+                        @error('seating_type_name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                                                 <textarea class="form-control" name="seating_type_desc">
-                                                    {{ $data->seating_type_desc }}
-                                                 </textarea>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <div class="row g-3 form-section-spacer">
+                        <div class="col-md-6">
+                            <label class="form-field-label" for="number_of_seats">Total Seats <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fe fe-users"></i></span>
+                                <input type="number"
+                                    min="1"
+                                    class="form-control @error('number_of_seats') is-invalid @enderror"
+                                    name="number_of_seats"
+                                    id="number_of_seats"
+                                    value="{{ old('number_of_seats', $data->number_of_seats) }}"
+                                    required>
+                            </div>
+                            @error('number_of_seats')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-field-label" for="seat_serial_prefix">Seat Serial Prefix <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fe fe-hash"></i></span>
+                                <input type="text"
+                                    class="form-control @error('seat_serial_prefix') is-invalid @enderror"
+                                    name="seat_serial_prefix"
+                                    id="seat_serial_prefix"
+                                    value="{{ old('seat_serial_prefix', $data->seat_serial_prefix) }}"
+                                    required>
+                            </div>
+                            @error('seat_serial_prefix')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
-                                    <div class="form-group ">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Status</label>
-                                            </div>
-                                            <div class="col-md-6">
+                    <div class="row g-3 form-section-spacer">
+                        <div class="col-md-6">
+                            <label class="form-field-label" for="seat_serial_start">Serial Start <span class="text-danger">*</span></label>
+                            <input type="number"
+                                min="1"
+                                class="form-control @error('seat_serial_start') is-invalid @enderror"
+                                name="seat_serial_start"
+                                id="seat_serial_start"
+                                value="{{ old('seat_serial_start', $data->seat_serial_start) }}"
+                                required>
+                            @error('seat_serial_start')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-field-label" for="seat_serial_end">Serial End <span class="text-danger">*</span></label>
+                            <input type="number"
+                                min="1"
+                                class="form-control @error('seat_serial_end') is-invalid @enderror"
+                                name="seat_serial_end"
+                                id="seat_serial_end"
+                                value="{{ old('seat_serial_end', $data->seat_serial_end) }}"
+                                required>
+                            @error('seat_serial_end')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
-                                                {!! Form::radio('is_active',true,1) !!} Active
-                                                {!! Form::radio('is_active',false,0) !!} Inactive
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="seating_type_desc">Description</label>
+                        <textarea class="form-control @error('seating_type_desc') is-invalid @enderror"
+                            name="seating_type_desc"
+                            id="seating_type_desc"
+                            rows="3">{{ old('seating_type_desc', $data->seating_type_desc) }}</textarea>
+                        @error('seating_type_desc')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-group mb-0">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Image</label>
-
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="custom-controls-stacked">
-                                                    @if($data->seating_image)
-                                                        <img alt="" src="{{ asset('storage/uploads/venue_seating/' . $data->seating_image) }}" onerror="this.src='{{ asset('assets/img/default-seating.jpg') }}'">
-                                                    @else
-                                                        <img alt="" src="{{ asset('assets/img/default-seating.jpg') }}">
-                                                    @endif
-                                                    <br><br>
-                                                    <input type="file" name="seating_image" class="form-control" ><br><br>
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <button class="btn ripple btn-secondary" style="float: right; margin-left:10px;" data-bs-dismiss="modal" type="button">Close</button>
-                                        <button type="submit" class="btn btn-primary waves-effect waves-light" style="float:right;">Update</button>
-                                    </div>
-                                    <br>
-                                </form>
-						</div>
-					</div>
-					<!-- /Col -->
-				</div>
-				<!-- row closed -->
-
+                    <div class="form-group mb-0">
+                        <label class="form-field-label d-block">Status</label>
+                        <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
+                            <span class="tx-13 fw-semibold">Active</span>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="is_active_switch"
+                                    {{ old('is_active', $data->is_active) == '1' ? 'checked' : '' }}>
+                                <input type="hidden" name="is_active" id="is_active" value="{{ old('is_active', $data->is_active) }}">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <a href="{{ url('venue/manage_Seating', $venue->id) }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" form="seating-edit-form" class="btn btn-primary waves-effect waves-light">
+                    <i class="fe fe-save me-1"></i> Update Seating
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
+
+@push('scripts')
+<script>
+jQuery(document).ready(function ($) {
+    const defaultImage = @json(asset('assets/img/default-seating.jpg'));
+
+    function updatePreview() {
+        const name = $('#seating_type_name').val().trim();
+        const seats = $('#number_of_seats').val();
+        const prefix = $('#seat_serial_prefix').val().trim();
+        const start = $('#seat_serial_start').val();
+        const end = $('#seat_serial_end').val();
+        const isActive = $('#is_active_switch').is(':checked');
+
+        $('#preview-seating-name').text(name || 'Seating');
+        $('#preview-name').text(name || 'Not set yet');
+        $('#preview-seats').text(seats || 'Not set yet');
+        $('#preview-serial').text(prefix && start && end ? prefix + start + ' - ' + prefix + end : 'Not set yet');
+        $('#preview-status-badge')
+            .text(isActive ? 'Active' : 'Inactive')
+            .toggleClass('bg-success-transparent', isActive)
+            .toggleClass('bg-warning-transparent', !isActive);
+    }
+
+    function handleImageFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Seating image must not exceed 2MB.');
+            $('#seating_image').val('');
+            return;
+        }
+
+        $('#seating-image-file-name').text(file.name);
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            $('#seating-image-preview').attr('src', event.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    $('#is_active_switch').on('change', function () {
+        $('#is_active').val(this.checked ? '1' : '0');
+        updatePreview();
+    });
+
+    $('#seating_image').on('change', function () {
+        handleImageFile(this.files[0]);
+    });
+
+    $('#seating_type_name, #number_of_seats, #seat_serial_prefix, #seat_serial_start, #seat_serial_end').on('input change', updatePreview);
+});
+</script>
+@endpush

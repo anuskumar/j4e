@@ -52,10 +52,12 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
+            'password_confirmation' => 'required|string|min:6',
             'phone' => 'nullable|string|max:20',
             'country_code' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'nullable|in:0,1',
         ], [
             'name.required' => 'User name is required.',
@@ -64,6 +66,11 @@ class CustomerController extends Controller
             'email.unique' => 'This email is already registered.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 6 characters long.',
+            'password.confirmed' => 'Password and confirm password do not match.',
+            'password_confirmation.required' => 'Please confirm the password.',
+            'profile.image' => 'Profile photo must be an image file.',
+            'profile.mimes' => 'Profile photo must be JPG, PNG, GIF, or WEBP.',
+            'profile.max' => 'Profile photo must not exceed 2MB.',
         ]);
        
 
@@ -84,6 +91,12 @@ class CustomerController extends Controller
         
         if($request->has('address')){
             $user->address = $request->address;
+        }
+
+        if ($request->hasFile('profile')) {
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('profile')->extension();
+            $request->file('profile')->move(storage_path('uploads/images'), $imageName);
+            $user->profile = $imageName;
         }
 
         $user->save();
@@ -142,12 +155,16 @@ class CustomerController extends Controller
             'phone' => 'nullable|string|max:20',
             'country_code' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'nullable|in:0,1',
         ], [
             'name.required' => 'User name is required.',
             'email.required' => 'Email is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email is already registered.',
+            'profile.image' => 'Profile photo must be an image file.',
+            'profile.mimes' => 'Profile photo must be JPG, PNG, GIF, or WEBP.',
+            'profile.max' => 'Profile photo must not exceed 2MB.',
         ]);
 
        $data = User::find($request->id);
@@ -170,6 +187,12 @@ class CustomerController extends Controller
            $data->address=$request->address;
        } else {
            $data->address = null;
+       }
+
+       if ($request->hasFile('profile')) {
+           $imageName = time() . '_' . uniqid() . '.' . $request->file('profile')->extension();
+           $request->file('profile')->move(storage_path('uploads/images'), $imageName);
+           $data->profile = $imageName;
        }
        
        $data->save();

@@ -2,17 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ArtistField;
 use App\Models\ArtistModel;
 use App\Models\EventImages;
 use App\Models\Events;
 use App\Models\EventTags;
 use App\Models\EventTiming;
 use App\Models\EventType;
+use App\Models\LocationModel;
 use App\Models\RequestEventModel;
 use App\Models\TicketType;
 use App\Models\VenueModel;
+use App\Models\VenueType;
+use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class EventsController extends Controller
@@ -21,24 +28,84 @@ class EventsController extends Controller
     {
         $this->middleware('auth');
     }
-    public function index()
+    public function index(Request $request)
     {
+        $query = Events::query()
+            ->leftJoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftJoin('users', 'users.id', 'event.event_added_by')
+            ->leftJoin('venue', 'venue.id', 'event.venue')
+            ->leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event_type.event_type_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'location.id as location_id',
+                'venue.id as venue_id',
+                'venue.name as venue_name'
+            )
+            ->orderByDesc('event.id');
 
+        if ($request->filled('event_type')) {
+            $query->where('event.event_type', $request->event_type);
+        }
 
+        if ($request->filled('location_id')) {
+            $query->where('location.id', $request->location_id);
+        }
 
-        $data = Events::
-        leftjoin('event_type','event_type.id','event.event_type')
-        ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
-        ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city')
-      ->select('*','event.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-      ->orderByDesc('event.id')
-      ->get();
-    //    dd($data);
-      return view('admin.events.list',compact('data'));
+        if ($request->filled('venue_id')) {
+            $query->where('venue.id', $request->venue_id);
+        }
 
+        if ($request->filled('event_date_from')) {
+            $query->whereDate('event.event_from_date', '>=', $request->event_date_from);
+        }
+
+        if ($request->filled('event_date_to')) {
+            $query->where(function ($dateQuery) use ($request) {
+                $dateQuery->whereDate('event.event_to_date', '<=', $request->event_date_to)
+                    ->orWhere(function ($fallback) use ($request) {
+                        $fallback->whereNull('event.event_to_date')
+                            ->whereDate('event.event_from_date', '<=', $request->event_date_to);
+                    });
+            });
+        }
+
+        $data = $query->get();
+
+        $eventTypes = EventType::orderBy('event_type_name')->get();
+
+        $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+            ->orderBy('location_name')
+            ->get();
+
+        $venuesQuery = VenueModel::leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id', 'venue.name as venue_name', 'location_name', 'cities.name as city_name', 'country_name', 'venue.location as location_id');
+
+        if ($request->filled('location_id')) {
+            $venuesQuery->where('venue.location', $request->location_id);
+        }
+
+        $venues = $venuesQuery->orderBy('venue.name')->get();
+
+        $filters = [
+            'event_type' => $request->event_type,
+            'location_id' => $request->location_id,
+            'venue_id' => $request->venue_id,
+            'event_date_from' => $request->event_date_from,
+            'event_date_to' => $request->event_date_to,
+        ];
+
+        return view('admin.events.list', compact('data', 'eventTypes', 'locations', 'venues', 'filters'));
     }
 
     /**
@@ -57,25 +124,65 @@ class EventsController extends Controller
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
     $eventTags = EventTags::where('is_active',1)->get();
     $ticketTypes = TicketType::where('is_active', 1)->get();
-    // dd($event_type);
-    return view('admin.events.create',compact('event_type','venue','artists','eventTags','ticketTypes'));
+    $venueTypes = VenueType::orderBy('venue_type_name')->get();
+    $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+        ->leftJoin('cities', 'cities.id', 'location.city')
+        ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+        ->orderBy('location_name')
+        ->get();
+    $artistFields = ArtistField::orderBy('field_name')->get();
+
+    return view('admin.events.create', compact(
+        'event_type',
+        'venue',
+        'artists',
+        'eventTags',
+        'ticketTypes',
+        'venueTypes',
+        'locations',
+        'artistFields'
+    ));
 
      }
      public function show($id)
     {
-        $data = Events::
-        leftjoin('event_type','event_type.id','event.event_type')
-        ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
-        ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city')
-      ->select('*','event.id as id','venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->find($id);
-    $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
+        $data = Events::leftjoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
+            ->leftjoin('users', 'users.id', 'event.event_added_by')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event_type.event_type_name',
+                'event_tags.tag_name as event_tag_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'venue.name as venue_name'
+            )
+            ->findOrFail($id);
 
-    //    dd($data);
-        return view('admin.events.view',compact('data','artists'));
+        $eventTiming = EventTiming::where('event', $id)->where('is_active', 1)->orderBy('id')->first();
+
+        $selectedArtistIds = $data->artists ? json_decode($data->artists, true) : [];
+        $selectedTicketTypeIds = $data->ticket_types ? json_decode($data->ticket_types, true) : [];
+
+        $artistNames = $selectedArtistIds
+            ? ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')
+                ->whereIn('artist.id', $selectedArtistIds)
+                ->get()
+                ->map(fn ($artist) => $artist->artist_name . ' [' . $artist->field_name . ']')
+                ->implode(', ')
+            : '';
+
+        $ticketTypeNames = $selectedTicketTypeIds
+            ? TicketType::whereIn('id', $selectedTicketTypeIds)->pluck('ticket_type_name')->implode(', ')
+            : '';
+
+        return view('admin.events.view', compact('data', 'eventTiming', 'artistNames', 'ticketTypeNames'));
      }
 
     /**
@@ -84,13 +191,40 @@ class EventsController extends Controller
     public function store(Request $request)
     {
         // dd($request->artists);
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'event_name' => 'required',
             'event_is_active' => 'required',
             'event_tag' => 'required',
+            'event_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
-
+            'customer_fee_percent' => 'required|numeric|min:0|max:100',
+            'priority' => 'required|integer|min:0|max:9999',
+            'event_from_date' => 'required|date',
+            'event_to_date' => 'required|date|after_or_equal:event_from_date',
+            'event_start_time' => 'required|date_format:H:i',
+            'event_end_time' => 'required|date_format:H:i',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $fields = ['event_from_date', 'event_to_date', 'event_start_time', 'event_end_time'];
+            foreach ($fields as $field) {
+                if ($validator->errors()->has($field)) {
+                    return;
+                }
+            }
+
+            $start = Carbon::parse($request->event_from_date . ' ' . $request->event_start_time);
+            $end = Carbon::parse($request->event_to_date . ' ' . $request->event_end_time);
+
+            if (!$end->gt($start)) {
+                $validator->errors()->add(
+                    'event_end_time',
+                    'The event end date and time must be after the event start date and time.'
+                );
+            }
+        });
+
+        $validated = $validator->validate();
 
         $event = new Events();
         $event->event_name = $request->event_name;
@@ -110,19 +244,31 @@ class EventsController extends Controller
         $event->event_from_date = $request->event_from_date;
         $event->event_tag = $request->event_tag;
         $event->seller_fee_percent = $request->seller_fee_percent;
+        $event->customer_fee_percent = $request->customer_fee_percent;
+        $event->priority = $request->priority ?? 0;
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
-        // $event->event_image = $request->event_image;
-        if($request->hasFile('event_image')){
-            $imageName = time().'.'.$request->event_image->extension();
-            $request->event_image->move(storage_path('uploads/events'), $imageName);
-            $event->event_image =  $imageName;
+        $uploadDir = storage_path('uploads/events');
+        if (! is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
         }
+        $imageName = time().'.'.$request->event_image->extension();
+        $request->event_image->move($uploadDir, $imageName);
+        $event->event_image = $imageName;
         $event->event_is_active = $request->event_is_active;
 
         $event->save();
 
+        $timing = new EventTiming();
+        $timing->event = $event->id;
+        $timing->event_date = $request->event_from_date;
+        $timing->from_time = $request->event_start_time;
+        $timing->to_time = $request->event_end_time;
+        $timing->is_active = 1;
+        $timing->save();
+
+        app(NotificationService::class)->notifyEventCreated($event);
 
         return redirect('events/list');
      }
@@ -130,36 +276,81 @@ class EventsController extends Controller
      public function edit(string $id)
      {
         $event_type = EventType::get();
-        $data=Events::find($id);
-        // dd($data);
-        $venue = VenueModel::
-        leftjoin('location','location.id','venue.location')
-       ->leftjoin('countries','countries.id','location.country')
-       ->leftjoin('cities','cities.id','location.city')
-       ->select('venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-       ->get();
-    $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
-    $eventTags = EventTags::where('is_active',1)->get();
-    $ticketTypes = TicketType::where('is_active', 1)->get();
+        $data = Events::findOrFail($id);
+        $venue = VenueModel::leftjoin('location', 'location.id', 'venue.location')
+            ->leftjoin('countries', 'countries.id', 'location.country')
+            ->leftjoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->get();
+        $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
+        $eventTags = EventTags::where('is_active', 1)->get();
+        $ticketTypes = TicketType::where('is_active', 1)->get();
+        $venueTypes = VenueType::orderBy('venue_type_name')->get();
+        $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+            ->orderBy('location_name')
+            ->get();
+        $artistFields = ArtistField::orderBy('field_name')->get();
+        $eventTiming = EventTiming::where('event', $id)->where('is_active', 1)->orderBy('id')->first();
 
-        return view('admin.events.edit',compact('data','event_type','artists','venue','eventTags','ticketTypes'));
-
+        return view('admin.events.edit', compact(
+            'data',
+            'event_type',
+            'artists',
+            'venue',
+            'eventTags',
+            'ticketTypes',
+            'venueTypes',
+            'locations',
+            'artistFields',
+            'eventTiming'
+        ));
      }
      public function update(Request $request){
 
-        // dd($request->request);
+        $data = Events::findOrFail($request->id);
 
-        // dd( $request->artists);
-
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'event_name' => 'required',
             'event_tag' => 'required',
-            'seller_fee_percent' => 'required|numeric|min:0|max:100'
-
-            // 'event_is_active' => 'required'
+            'event_image' => [
+                Rule::requiredIf(fn () => empty($data->event_image)),
+                'nullable',
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:5120',
+            ],
+            'seller_fee_percent' => 'required|numeric|min:0|max:100',
+            'customer_fee_percent' => 'required|numeric|min:0|max:100',
+            'priority' => 'required|integer|min:0|max:9999',
+            'event_from_date' => 'required|date',
+            'event_to_date' => 'required|date|after_or_equal:event_from_date',
+            'event_start_time' => 'required|date_format:H:i',
+            'event_end_time' => 'required|date_format:H:i',
         ]);
 
-        $data = Events::find($request->id);
+        $validator->after(function ($validator) use ($request) {
+            $fields = ['event_from_date', 'event_to_date', 'event_start_time', 'event_end_time'];
+            foreach ($fields as $field) {
+                if ($validator->errors()->has($field)) {
+                    return;
+                }
+            }
+
+            $start = Carbon::parse($request->event_from_date . ' ' . $request->event_start_time);
+            $end = Carbon::parse($request->event_to_date . ' ' . $request->event_end_time);
+
+            if (!$end->gt($start)) {
+                $validator->errors()->add(
+                    'event_end_time',
+                    'The event end date and time must be after the event start date and time.'
+                );
+            }
+        });
+
+        $validator->validate();
+
         $data->event_name = $request->event_name;
         $data->event_type = $request->event_type;
         $data->event_desc = $request->event_desc;
@@ -169,6 +360,8 @@ class EventsController extends Controller
 
         $data->artists = json_encode($request->artists);
 
+        } else {
+            $data->artists = null;
         }
         
         if(!$request->ticket_types==null){
@@ -183,23 +376,35 @@ class EventsController extends Controller
         $data->event_to_date = $request->event_to_date;
         $data->event_tag = $request->event_tag;
         $data->seller_fee_percent = $request->seller_fee_percent;
-        // $data->event_added_by =Auth::user()->id;
+        $data->customer_fee_percent = $request->customer_fee_percent;
+        $data->priority = $request->priority ?? 0;
         $data->event_is_active = $request->event_is_active;
 
-        // $event->event_image = $request->event_image;
         if($request->hasFile('event_image')){
             $imageName = time().'.'.$request->event_image->extension();
             $request->event_image->move(storage_path('uploads/events'), $imageName);
             $data->event_image =  $imageName;
         }
-        // $data->event_is_active = $request->event_is_active;
 
         $data->save();
 
+        $timing = EventTiming::where('event', $data->id)->where('is_active', 1)->orderBy('id')->first();
+        if ($timing) {
+            $timing->event_date = $request->event_from_date;
+            $timing->from_time = $request->event_start_time;
+            $timing->to_time = $request->event_end_time;
+            $timing->save();
+        } else {
+            $timing = new EventTiming();
+            $timing->event = $data->id;
+            $timing->event_date = $request->event_from_date;
+            $timing->from_time = $request->event_start_time;
+            $timing->to_time = $request->event_end_time;
+            $timing->is_active = 1;
+            $timing->save();
+        }
 
         return redirect('events/list');
-
-
      }
      public function delete( $id)
     {
@@ -212,41 +417,99 @@ class EventsController extends Controller
 
     public function multi_images($id){
 
-        $data = EventImages::where('event',$id)->get();
-        return view('admin.events.event_images',compact('data','id'));
+        $event = Events::findOrFail($id);
+        $data = EventImages::where('event', $id)->orderBy('id', 'desc')->get();
+        return view('admin.events.event_images', compact('data', 'id', 'event'));
 
     }
 
-    public function upload_event_images(Request $request){
+    public function upload_event_images(Request $request)
+    {
+        $uploadErrors = $this->collectUploadErrors($request);
+        if ($uploadErrors !== []) {
+            return redirect()->back()->withErrors(['image' => implode(' ', $uploadErrors)]);
+        }
 
-    //    dd($request->request);
+        $request->validate([
+            'event' => 'required|integer|exists:event,id',
+            'image' => 'required|array|min:1',
+            'image.*' => 'required|file|image|mimes:jpeg,png,jpg,webp,gif|max:2048',
+        ], [
+            'image.required' => 'Please select at least one image to upload.',
+            'image.*.max' => 'Each image must not be larger than 2MB.',
+            'image.*.image' => 'Only valid image files are allowed.',
+        ]);
 
-        // if($request->hasFile('image')){
-        //     foreach ($request->File('image') as $key) {
-        //         $val = new EventImages();
-        //         $val->event = $request->event;
-        //         $imageName = time().'.'.Str::random(9).$key->extension();
-        //         $key->move(storage_path('uploads/events'), $imageName);
-        //         $val->image =  $imageName;
-        //         $val->save();
-        // }
+        $uploadDir = storage_path('uploads/events');
+        if (! is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
 
-        $images = [];
+        if (! is_writable($uploadDir)) {
+            return redirect()->back()->withErrors([
+                'image' => 'Upload folder is not writable. Please contact the administrator.',
+            ]);
+        }
 
-        if ($request->hasFile('image')) {
-            foreach ($request->file('image') as $file) {
+        $uploadedCount = 0;
+
+        foreach ($request->file('image') as $file) {
+            if (! $file || ! $file->isValid()) {
+                continue;
+            }
+
+            try {
+                $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadDir, $filename);
+
                 $val = new EventImages();
                 $val->event = $request->event;
-                $filename = rand() . '.' . $file->getClientOriginalExtension();
-                $file->move(storage_path('uploads/events'), $filename);
-                $images[] = $filename;
-                $val->image =  $filename;
+                $val->image = $filename;
                 $val->save();
+                $uploadedCount++;
+            } catch (\Throwable $exception) {
+                report($exception);
+
+                return redirect()->back()->withErrors([
+                    'image' => 'Upload failed while saving the image. Please try again.',
+                ]);
             }
         }
 
-        return redirect()->back();
-       }
+        if ($uploadedCount === 0) {
+            return redirect()->back()->withErrors([
+                'image' => 'No valid images were uploaded. Use JPG, PNG, WEBP or GIF under 2MB.',
+            ]);
+        }
+
+        return redirect()->back()->with('success', $uploadedCount . ' image(s) uploaded successfully.');
+    }
+
+    private function collectUploadErrors(Request $request): array
+    {
+        $messages = [];
+
+        if (! empty($_FILES['image']['error'])) {
+            $errors = (array) $_FILES['image']['error'];
+
+            foreach ($errors as $error) {
+                if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+                    $messages[] = 'One or more images exceed the 2MB upload limit.';
+                } elseif ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
+                    $messages[] = 'One or more images could not be uploaded.';
+                }
+            }
+        }
+
+        if ($messages === [] && ! $request->hasFile('image')) {
+            $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+            if ($contentLength > 0 && empty($request->all()) && empty($_FILES)) {
+                $messages[] = 'Upload failed. The selected files may exceed the server upload limit.';
+            }
+        }
+
+        return array_values(array_unique($messages));
+    }
 
     public function event_timings($id){
 

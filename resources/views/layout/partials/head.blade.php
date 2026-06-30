@@ -4,7 +4,7 @@
 		<title>Events</title>
 
 		<!-- Favicons -->
-		<link type="image/x-icon" href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+		<link type="image/x-icon" href="{{ $appLogoUrl }}" rel="icon">
 
 		<!-- Bootstrap CSS -->
 		<link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">

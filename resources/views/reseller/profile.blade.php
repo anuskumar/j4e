@@ -1,10 +1,32 @@
 <?php $page = 'Reseller/Profile'; ?>
 @extends(Auth::user()->user_type == "reseller" ? 'layouts.reseller_app' : 'admin.layout.app')
+
+@if(Auth::user()->user_type != "reseller")
+@section('page_title', 'My Profile')
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+@endsection
+@endif
+
 @if(Auth::user()->user_type == "reseller")
     @section('content')
 @else
     @section('admin_content')
 @endif
+
+@php
+    $isReseller = Auth::user()->user_type === 'reseller';
+    $accountLabel = match (Auth::user()->user_type) {
+        'superadmin' => 'Admin Account',
+        'reseller' => 'Reseller Account',
+        'customer' => 'Customer Account',
+        default => ucfirst(Auth::user()->user_type) . ' Account',
+    };
+    $profileImage = $authdata->profile
+        ? asset('storage/uploads/images/' . $authdata->profile)
+        : ($isReseller ? asset('assets/img/customers/customer.jpg') : asset('admin_assets/img/faces/6.jpg'));
+@endphp
 
 <style>
     .profile-header {
@@ -101,16 +123,12 @@
 <div class="container-fluid py-4">
     <!-- Profile Header -->
     <div class="profile-header text-center">
-        <div class="d-flex justify-content-center mb-3">
-            @php
-                $resellerProfileImage = $authdata->profile
-                    ? config('app.storage') . "uploads/images/" . $authdata->profile
-                    : asset('assets/img/customers/customer.jpg');
-            @endphp
-            <img src="{{ $resellerProfileImage }}" alt="Profile" class="profile-avatar">
+        <div class="d-flex justify-content-center mb-3 position-relative">
+            <img src="{{ $profileImage }}" alt="Profile" class="profile-avatar" id="profile-avatar-preview"
+                onerror="this.src='{{ asset('admin_assets/img/faces/6.jpg') }}'">
         </div>
         <h3 class="mb-1">{{ $authdata->name }}</h3>
-        <p class="mb-0 opacity-75">Reseller Account</p>
+        <p class="mb-0 opacity-75">{{ $accountLabel }}</p>
     </div>
 
     <!-- Tabs Navigation -->
@@ -127,6 +145,7 @@
                         <i class="fe fe-lock me-2"></i>Change Password
                     </a>
                 </li>
+                @if ($isReseller)
                 <li class="nav-item">
                     <a class="nav-link" id="bank-tab" data-bs-toggle="tab" href="#bank" role="tab">
                         <i class="fe fe-credit-card me-2"></i>Bank Details
@@ -137,6 +156,7 @@
                         <i class="fe fe-map-pin me-2"></i>Address Details
                     </a>
                 </li>
+                @endif
             </ul>
 
             <div class="tab-content p-4">
@@ -216,10 +236,10 @@
                                     </div>
                                     <div class="col-md-9">
                                         <input type="file" class="form-control @error('profile') is-invalid @enderror" 
-                                               name="profile" accept="image/*">
-                                        <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB</small>
+                                               name="profile" id="profile" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                        <small class="text-muted">Accepted formats: JPG, PNG, GIF, WEBP. Max size: 2MB</small>
                                         @error('profile')
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
@@ -314,6 +334,7 @@
                 </div>
 
                 <!-- Bank Details Tab -->
+                @if ($isReseller)
                 <div class="tab-pane fade" id="bank" role="tabpanel">
                     <div class="card profile-card">
                         <div class="card-header">
@@ -566,15 +587,45 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+@if ($isReseller)
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
+@endif
 <script>
-    $(document).ready(function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        const profileInput = document.getElementById('profile');
+        const profilePreview = document.getElementById('profile-avatar-preview');
+        const fallbackImage = @json(asset('admin_assets/img/faces/6.jpg'));
+
+        if (profileInput && profilePreview) {
+            profileInput.addEventListener('change', function () {
+                const file = this.files[0];
+                if (!file || !file.type.startsWith('image/')) {
+                    return;
+                }
+
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Profile image must not exceed 2MB.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    profilePreview.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+
+    @if ($isReseller)
+    jQuery(document).ready(function ($) {
         // Initialize Select2
         $('.select2-select').select2({
             theme: 'bootstrap-5',
@@ -627,6 +678,7 @@
             $('#country').trigger('change');
         }
     });
+    @endif
 
     function validateForm() {
         var oldPassword = document.forms["passwordForm"]["oldpassword"].value;

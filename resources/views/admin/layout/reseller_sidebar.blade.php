@@ -7,19 +7,19 @@
 				<aside class="app-sidebar sidebar-scroll">
 					<div class="main-sidebar-header active">
 						<a class="desktop-logo logo-light active" href="{{url('/home')}}">
-                            <img src="{{ asset('admin_assets/img/brand/572552721.png') }}" class="main-logo" alt="logo">
-                          
+                            <img src="{{ $appLogoUrl }}" class="main-logo" alt="logo">
                         </a>
-						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/572552721.png') }}" class="main-logo" alt="logo"></a>
-						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/favicon.png') }}" alt="logo"></a>
-						<a class="logo-icon mobile-logo icon-dark active" href="{{url('/home')}}"><img src="{{ asset('admin_assets/img/brand/favicon-white.png') }}" alt="logo"></a>
+						<a class="desktop-logo logo-dark active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" class="main-logo" alt="logo"></a>
+						<a class="logo-icon mobile-logo icon-light active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" alt="logo"></a>
+						<a class="logo-icon mobile-logo icon-dark active" href="{{url('/home')}}"><img src="{{ $appLogoUrl }}" alt="logo"></a>
 					</div>
 					<div class="main-sidemenu">
 						<div class="main-sidebar-loggedin">
 							<div class="app-sidebar__user">
 								<div class="dropdown user-pro-body text-center">
 									<div class="user-pic">
-										<img src="{{ asset('admin_assets/img/faces/6.jpg') }}" alt="user-img" class="rounded-circle mCS_img_loaded">
+										<img src="{{ Auth::user()->profileImageUrl() }}" alt="user-img" class="rounded-circle mCS_img_loaded"
+                                            onerror="this.src='{{ asset('admin_assets/img/faces/6.jpg') }}'">
 									</div>
 									<div class="user-info">
 										<h6 class=" mb-0 text-dark">{{ ucfirst(Auth::user()->name) }}</h6>

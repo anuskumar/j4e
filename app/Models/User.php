@@ -45,4 +45,22 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_added_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public static function defaultProfileImageUrl(): string
+    {
+        return asset('assets/img/customers/customer1.jpg');
+    }
+
+    public function profileImageUrl(): string
+    {
+        if ($this->profile) {
+            return asset('storage/uploads/images/' . $this->profile);
+        }
+
+        if (in_array($this->user_type, ['admin', 'superadmin'], true)) {
+            return asset('admin_assets/img/faces/6.jpg');
+        }
+
+        return self::defaultProfileImageUrl();
+    }
 }

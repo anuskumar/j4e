@@ -6,18 +6,22 @@ use App\Http\Controllers\ArtistfiedController;
 use App\Http\Controllers\BankTransferController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\CustomerReviewController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\Emailj4eController;
 use App\Http\Controllers\EventrequestController;
 use App\Http\Controllers\EventsController;
+use App\Http\Controllers\EventsMasterDataController;
 use App\Http\Controllers\EventTypeController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaypalSettingsController;
 use App\Http\Controllers\ResellerController;
 use App\Http\Controllers\RestrictionController;
 use App\Http\Controllers\SliderController;
@@ -27,6 +31,8 @@ use App\Http\Controllers\ticketrestrictions;
 use App\Http\Controllers\TicketTypeController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\VenueTypeController;
+use App\Http\Controllers\Auth\CustomerPasswordResetController;
+use App\Http\Controllers\PaypalPaymentController;
 use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\TagController;
 use App\Models\ResellerModel;
@@ -47,6 +53,8 @@ use Illuminate\Support\Facades\Route;
 // OUR Routes Starts Here
 
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
+Route::get('/reviews', [WelcomeController::class, 'reviews'])->name('reviews');
+Route::get('/reviews/{id}', [WelcomeController::class, 'reviewShow'])->name('reviews.show');
 // Route::get('/event_list_frontend', [WelcomeController::class, 'event_list_frontend']);
 Route::get('/new_eventlistfrontend', [WelcomeController::class, 'new_eventlistfrontend'])->name('new_eventlistfrontend');
 Route::get('/event_ticket_listing', [WelcomeController::class, 'event_ticket_listing']);
@@ -78,6 +86,12 @@ Route::get('/home', [HomeController::class, 'redirectToRoleHome'])->name('home')
 // Role-based home routes
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmin']], function () {
     Route::get('/home', [HomeController::class, 'adminHome'])->name('admin.home');
+    Route::get('notifications/{id}/open', [NotificationController::class, 'open'])->name('admin.notifications.open');
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.read-all');
+    Route::get('notifications/count', [NotificationController::class, 'count'])->name('admin.notifications.count');
+    Route::get('paypal-settings', [PaypalSettingsController::class, 'index'])->name('admin.paypal.settings');
+    Route::post('paypal-settings', [PaypalSettingsController::class, 'update'])->name('admin.paypal.settings.update');
 });
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
@@ -192,6 +206,7 @@ Route::group(['prefix' => 'reseller'], function () {
 
     Route::get('request-event', [EventrequestController::class, 'requestevent'])->name('reseller.requestevent');
     Route::post('request-eventstore', [EventrequestController::class, 'requesteventstore'])->name('reseller.requesteventstore');
+    Route::get('request-event/thank-you', [EventrequestController::class, 'requesteventThankYou'])->name('reseller.requestevent.thankyou');
 
      Route::get('mylistings', [ResellerController::class, 'mylistings'])->name('reseller.mylistings');
      Route::get('mysales', [ResellerController::class, 'mysales'])->name('reseller.mysales');
@@ -269,6 +284,8 @@ Route::group(['prefix' => 'venue'], function () {
     Route::post('update', [VenueController::class, 'update']);
     Route::delete('destroy/{id}', [VenueController::class, 'delete']);
     Route::get('manage_Seating/{id}', [VenueController::class, 'manage_Seating']);
+    Route::get('create_seating/{id}', [VenueController::class, 'create_seating']);
+    Route::get('view_seating/{id}', [VenueController::class, 'view_seating']);
     Route::get('edit_seating/{id}', [VenueController::class, 'edit_seating']);
     Route::post('store_seating', [VenueController::class, 'store_seating']);
     Route::post('update_Seating', [VenueController::class, 'update_Seating']);
@@ -314,6 +331,11 @@ Route::group(['prefix' => 'events'], function () {
     Route::get('create', [EventsController::class, 'create']);
     Route::get('list', [EventsController::class, 'index']);
     Route::post('store', [EventsController::class, 'store']);
+    Route::post('quick-create/event-tag', [EventsMasterDataController::class, 'storeEventTag']);
+    Route::post('quick-create/event-type', [EventsMasterDataController::class, 'storeEventType']);
+    Route::post('quick-create/venue', [EventsMasterDataController::class, 'storeVenue']);
+    Route::post('quick-create/ticket-type', [EventsMasterDataController::class, 'storeTicketType']);
+    Route::post('quick-create/artist', [EventsMasterDataController::class, 'storeArtist']);
     Route::get('view/{id}', [EventsController::class, 'show']);
     Route::get('edit/{id}', [EventsController::class, 'edit']);
     Route::post('update', [EventsController::class, 'update']);
@@ -387,6 +409,16 @@ Route::group(['prefix' => 'slide'], function () {
     Route::delete('destroy/{id}', [SliderController::class, 'delete']);
 });
 
+Route::group(['prefix' => 'customer_review'], function () {
+    Route::get('create', [CustomerReviewController::class, 'create']);
+    Route::post('store', [CustomerReviewController::class, 'store']);
+    Route::get('list', [CustomerReviewController::class, 'index']);
+    Route::get('view/{id}', [CustomerReviewController::class, 'show']);
+    Route::get('edit/{id}', [CustomerReviewController::class, 'edit']);
+    Route::post('update', [CustomerReviewController::class, 'update']);
+    Route::delete('destroy/{id}', [CustomerReviewController::class, 'delete']);
+});
+
 Route::group(['prefix' => 'customer_order'], function () {
 
     // Route::get('create', [SliderController::class, 'create']);
@@ -433,11 +465,15 @@ Route::group(['prefix' => 'currency', 'middleware' => 'auth'], function () {
 });
 Route::get('/get-currency-rate/{id}', [CurrencyController::class, 'getRate']);
 
-Route::group(['prefix' => 'ticket_restrictions'], function () {
+Route::group(['prefix' => 'ticket_restrictions', 'middleware' => 'auth'], function () {
 
+    Route::get('/', [RestrictionController::class, 'index']);
     Route::get('create', [RestrictionController::class, 'create']);
     Route::post('store', [RestrictionController::class, 'store']);
-    Route::get('list', [RestrictionController::class, 'index']);
+    Route::get('list', [RestrictionController::class, 'index'])->name('ticket_restrictions.list');
+    Route::get('view/{id}', [RestrictionController::class, 'show']);
+    Route::get('edit/{id}', [RestrictionController::class, 'edit']);
+    Route::post('update', [RestrictionController::class, 'update']);
     Route::delete('destroy/{id}', [RestrictionController::class, 'delete']);
 });
 
@@ -462,14 +498,22 @@ Route::controller(StripePaymentController::class)->group(function () {
     Route::post('stripe', 'stripePost')->name('stripe.post');
 });
 
+Route::middleware('auth')->controller(PaypalPaymentController::class)->group(function () {
+    Route::post('paypal/create-order', 'createOrder')->name('paypal.create-order');
+    Route::post('paypal/capture-order', 'captureOrder')->name('paypal.capture-order');
+});
+
 
 Route::controller(FrontendController::class)->group(function () {
     Route::post('submit_ticket_selected', 'submit_ticket_selected')->middleware('auth');
     Route::post('sync_ticket_hold_count', 'syncTicketHoldCount')->middleware('auth')->name('sync_ticket_hold_count');
     Route::get('customer_ticket_billing_page/{id}', 'customer_ticket_billing_page')->middleware('auth')->name('customer_ticket_billing_page');
+    Route::get('customer_ticket_cart', 'customerTicketCart')->middleware('auth')->name('customer_ticket_cart');
     Route::get('ticket_purchase_expired', 'ticket_purchase_expired')->middleware('auth');
     Route::get('release_my_tickets', 'release_my_tickets')->middleware('auth');
+    Route::get('release_ticket_listing/{id}', 'releaseTicketListing')->middleware('auth')->name('release_ticket_listing');
     Route::get('booking_success/{id}', 'booking_success')->middleware('auth');
+    Route::get('booking_confirmed/{id}', 'booking_confirmed')->middleware('auth')->name('customer.booking.confirmed');
     Route::get('booking_failed', 'booking_failed');
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');
     Route::get('show_details_show/{id}', 'show_details_show');
@@ -484,6 +528,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::post('/filter-tickets', 'filterTickets');
     Route::get('/get-seating-types/{eventId}', 'getSeatingTypes');
     Route::post('/customer-update-profile', 'update_customer_profile')->middleware('auth')->name('customer.profile.update');
+    Route::post('/customer-update-password', 'updateCustomerPassword')->middleware('auth')->name('customer.password.update');
 });
 
 // Route::controller(EmailController::class)->group(function(){
@@ -506,10 +551,13 @@ Route::controller(Emailj4eController::class)->group(function () {
 Route::view('/booking_success_modal', 'booking_success_modal')->name('booking_success_modal');
 Route::view('/booking_failed_modal', 'booking_failed_modal')->name('booking_failed_modal');
 
-
-
-
-
+Route::controller(CustomerPasswordResetController::class)->group(function () {
+    Route::get('forgot-password', 'showForgotForm')->name('password.forgot');
+    Route::post('forgot-password/send-code', 'sendCode')->name('password.send-code');
+    Route::get('forgot-password/reset', 'showResetForm')->name('password.reset.form');
+    Route::post('forgot-password/reset', 'resetPassword')->name('password.reset.submit');
+    Route::post('forgot-password/resend-code', 'resendCode')->name('password.resend-code');
+});
 
 Auth::routes();
 

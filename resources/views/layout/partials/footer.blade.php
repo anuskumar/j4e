@@ -1,202 +1,190 @@
 <!-- Footer -->
-			<footer class="footer">
+<footer class="footer site-footer">
+    <div class="footer-top">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-widget footer-about">
+                        <a class="navbar-brand d-inline-block mb-3" href="{{ url('/') }}">
+                            <img src="{{ $appLogoUrl }}" width="220" height="55" alt="Logo">
+                        </a>
+                        <div class="footer-about-content">
+                            <p>Just 4 Entertainment is a secondary marketplace for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</p>
+                            <div class="social-icon">
+                                <ul>
+                                    <li><a href="#" class="fabutton" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a></li>
+                                    <li><a href="#" target="_blank" class="twibutton" aria-label="Twitter"><i class="fab fa-twitter"></i></a></li>
+                                    <li><a href="#" target="_blank" class="insbutton" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-				<!-- Footer Top -->
-				<div class="footer-top">
-					<div class="container">
-						<div class="row">
-							<div class="col-lg-3 col-md-6">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-widget footer-menu">
+                        <h2 class="footer-title">Quick Links</h2>
+                        <ul>
+                            <li><a href="{{ url('/') }}">Home</a></li>
+                            <li><a href="{{ route('new_eventlistfrontend') }}">Browse Events</a></li>
+                            <li><a href="{{ url('sell_tickets') }}">Sell Tickets</a></li>
+                            <li><a href="{{ route('reviews') }}">Customer Reviews</a></li>
+                            <li><a href="{{ url('login') }}">Login</a></li>
+                        </ul>
+                    </div>
+                </div>
 
-								<!-- Footer Widget -->
-                                @php
-                                $settings = \App\Models\CompanySettings::first();
-                                @endphp
-								<div class="footer-widget footer-about">
-									{{-- <h2 class="footer-title">About Us</h2> --}}
-                                    <a class="navbar-brand mt-4" href="{{ url('/') }}">
-                                        @if($settings && $settings->company_logo)
-                                            <img src="{{ asset('storage/uploads/images/' . $settings->company_logo) }}" class="" width="265px;" height="65px;" alt="Logo" onerror="this.src='{{ asset('assets/img/logoscroll.png') }}'">
-                                        @else
-                                            <img src="{{ asset('assets/img/logoscroll.png') }}" class="" width="265px;" height="65px;" alt="Logo">
-                                        @endif
-                                    </a>
-									<div class="footer-about-content">
-										<p>Just 4 Entertainment is a secondary market place for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</p>
-										<div class="social-icon">
-											<ul>
-												<li>
-													<a href="#" class=" fabutton"target="_blank "><i class="fab fa-facebook-f"></i> </a>
-												</li>
-												<li>
-													<a href="#" target="_blank" class="twibutton"><i class="fab fa-twitter"></i> </a>
-												</li>
-												<li>
-													<a href="#" target="_blank" class="insbutton"><i class="fab fa-instagram"></i></a>
-												</li>
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-widget footer-contact">
+                        <h2 class="footer-title">Get In Touch</h2>
+                        <div class="footer-contact-info">
+                            <p><i class="fas fa-shield-alt"></i> Secure ticket marketplace</p>
+                            <p><i class="fas fa-ticket-alt"></i> Verified sellers &amp; buyers</p>
+                            <p class="mb-0"><i class="fas fa-headset"></i> Support available for all orders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-											</ul>
+    <div class="footer-bottom">
+        <div class="container">
+            <div class="copyright">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <ul class="policy-menu text-left mb-md-0">
+                            <li><a href="#">Terms and Conditions</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="copyright-menu text-md-right">
+                            <p class="mb-0">&copy; {{ date('Y') }} Just 4 Entertainment. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
 
-										</div>
-									</div>
-								</div>
-								<!-- /Footer Widget -->
-
-							</div>
-
-							<div class="col-lg-3 col-md-6">
-
-								<!-- Footer Widget -->
-								<div class="footer-widget footer-menu">
-									<h2 class="footer-title">Information</h2>
-									<ul>
-										<li><a href="search">Search for Speakers</a></li>
-										<li><a href="events">Events</a></li>
-										<li><a href="customer-dashboard">Customer Dashboard</a></li>
-										<li><a href="login">Login</a></li>
-									</ul>
-								</div>
-								<!-- /Footer Widget -->
-
-							</div>
-
-							<div class="col-lg-3 col-md-6">
-
-								<!-- Footer Widget -->
-								<div class="footer-widget footer-menu">
-									<h2 class="footer-title">Support</h2>
-									<ul>
-										<li><a href="speaker-dashboard">Speaker Dashboard</a></li>
-										<li><a href="booking">Booking</a></li>
-										<li><a href="chat">Chat</a></li>
-										<li><a href="privacy-policy">Privacy & Policy</a></li>
-									</ul>
-								</div>
-								<!-- /Footer Widget -->
-
-							</div>
-
-							<div class="col-lg-3 col-md-6">
-
-								<!-- Footer Widget -->
-								<div class="footer-widget footer-contact">
-									<h2 class="footer-title">Contact Us</h2>
-									<div class="footer-contact-info">
-										<div class="footer-address">
-											<span><i class="fas fa-map-marker-alt"></i></span>
-											<p>251 Hickory Heights Drive,<br> Alaska, AK 99515 </p>
-										</div>
-										<p>
-											<i class="fas fa-phone-alt"></i>
-											+1 907 275 0477
-										</p>
-										<p class="mb-0">
-											<i class="fas fa-envelope"></i>
-											pathivu@example.com
-										</p>
-									</div>
-								</div>
-								<!-- /Footer Widget -->
-
-							</div>
-
-						</div>
-					</div>
-				</div>
-				<!-- /Footer Top -->
-
-				<!-- Footer Bottom -->
-                <div class="footer-bottom">
-					<div class="container">
-
-						<!-- Copyright -->
-						<div class="copyright">
-							<div class="row">
-								<div class="col-md-7 col-lg-6">
-									<div class="copyright-text">
-										<ul class="policy-menu text-left">
-											<li><a href="term-condition">Terms and Conditions</a></li>
-										</ul>
-									</div>
-								</div>
-								<div class="col-md-5 col-lg-6">
-
-									<!-- Copyright Menu -->
-									<div class="copyright-menu">
-										<ul class="policy-menu">
-											<li><p class="mb-0">&copy; 2021 All Rights Reserved</p></li>
-										</ul>
-									</div>
-									<!-- /Copyright Menu -->
-
-								</div>
-							</div>
-						</div>
-						<!-- /Copyright -->
-
-					</div>
-				</div>
-				<!-- /Footer Bottom -->
-
-			</footer>
-			<!-- /Footer -->
-            <style>
-.fabutton{
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    border:1px solid white;
-    border-radius: 15px;
-}
-.twibutton{
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    border:1px solid white;
-    border-radius: 15px;
-}
-.insbutton{
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55); /* Gradient colors */
-    color: white; /* Text color */
-    border:1px solid white;
-    border-radius: 15px;
+<style>
+.site-footer.footer,
+.site-footer .footer-top,
+.site-footer .footer-bottom {
+    background: rgb(34, 30, 105) !important;
+    background-image: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%) !important;
+    background-size: cover !important;
+    background-position: center !important;
 }
 
-/* Footer Mobile Responsive */
+.site-footer .footer-top {
+    padding: 50px 0;
+}
+
+.site-footer .footer-title {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.site-footer .footer-widget.footer-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.site-footer .footer-widget .footer-about-content p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+}
+
+.site-footer .footer-menu ul li {
+    margin-bottom: 10px;
+}
+
+.site-footer .footer-menu ul li a {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.site-footer .footer-menu ul li a:hover {
+    color: #fff;
+}
+
+.site-footer .footer-bottom .copyright {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 25px 0;
+}
+
+.site-footer .footer-bottom .policy-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.site-footer .footer-bottom .policy-menu a,
+.site-footer .footer-bottom .copyright-menu p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.site-footer .footer-bottom .policy-menu a:hover {
+    color: #fff;
+}
+
+.site-footer .social-icon ul {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+}
+
+.site-footer .footer-contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.site-footer .footer-contact-info i {
+    width: 18px;
+    color: #c4b5fd;
+}
+
+.fabutton, .twibutton, .insbutton {
+    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55);
+    color: white;
+    border: 1px solid white;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 @media (max-width: 768px) {
-    .footer-about .navbar-brand img {
-        max-width: 200px !important;
-        height: auto !important;
-    }
-    
-    .footer-widget {
-        margin-bottom: 30px;
+    .site-footer .footer-widget {
+        margin-bottom: 28px;
         text-align: center;
     }
-    
-    .footer-contact-info {
-        text-align: center;
-    }
-    
-    .footer-address {
-        text-align: center;
-    }
-    
-    .social-icon ul {
+
+    .site-footer .footer-contact-info p,
+    .site-footer .social-icon ul {
         justify-content: center;
-        padding-left: 0;
     }
-    
-    .footer-menu ul {
-        padding-left: 0;
-    }
-    
-    .copyright-text,
-    .copyright-menu {
+
+    .site-footer .copyright-menu,
+    .site-footer .policy-menu {
         text-align: center !important;
     }
-    
-    .policy-menu {
-        justify-content: center;
-        padding-left: 0;
-    }
 }
-
-            </style>
+</style>

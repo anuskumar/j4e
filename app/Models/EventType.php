@@ -10,5 +10,21 @@ class EventType extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    protected $table ='event_type';
+    protected $table = 'event_type';
+
+    protected $fillable = [
+        'event_type_name',
+        'is_active',
+        'is_header_menu',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'is_header_menu' => 'boolean',
+    ];
+
+    public function scopeHeaderMenu($query)
+    {
+        return $query->where('is_active', 1)->where('is_header_menu', 1);
+    }
 }

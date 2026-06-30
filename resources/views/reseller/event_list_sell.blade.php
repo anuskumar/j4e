@@ -1,17 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.reseller_app')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sell Events Tickets</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+@push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css">
     <style>
         :root {
-            --primary-color: #d20ae9;
-            --primary-dark: #8b00a8;
+            --primary-color: #7e0982;
+            --primary-dark: #6d0875;
             --success-color: #28a745;
             --danger-color: #dc3545;
             --border-radius: 12px;
@@ -81,7 +75,7 @@
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             border-color: var(--primary-color);
             color: white;
-            box-shadow: 0 4px 12px rgba(210, 10, 233, 0.3);
+            box-shadow: 0 4px 12px rgba(126, 9, 130, 0.3);
         }
 
         .form-label {
@@ -101,7 +95,7 @@
         .form-control:focus,
         .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(210, 10, 233, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(126, 9, 130, 0.25);
         }
 
         .ticket-type {
@@ -109,13 +103,24 @@
             border-radius: var(--border-radius);
             cursor: pointer;
             transition: all 0.3s ease;
-            height: 150px;
+            min-height: 120px;
+            height: 100%;
             width: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            padding: 12px;
+        }
+
+        .ticket-type h6 {
+            font-size: 0.9rem;
+            line-height: 1.3;
+        }
+
+        .ticket-type-row {
+            --bs-gutter-x: 12px;
         }
 
         .ticket-type:hover {
@@ -126,7 +131,7 @@
 
         .ticket-type.border-primary {
             border: 3px solid var(--primary-color) !important;
-            box-shadow: 0 0 0 0.2rem rgba(210, 10, 233, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(126, 9, 130, 0.25);
         }
 
         .form-check-input {
@@ -155,14 +160,14 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: white;
-            box-shadow: 0 4px 15px rgba(210, 10, 233, 0.3);
+            box-shadow: 0 4px 15px rgba(126, 9, 130, 0.3);
             transition: all 0.3s ease;
             min-width: 200px;
         }
 
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(210, 10, 233, 0.4);
+            box-shadow: 0 6px 20px rgba(126, 9, 130, 0.4);
             color: white;
         }
 
@@ -173,7 +178,7 @@
         .info-alert {
             border-left: 4px solid var(--primary-color);
             border-radius: var(--border-radius);
-            background: linear-gradient(135deg, rgba(210, 10, 233, 0.05) 0%, rgba(139, 0, 168, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(126, 9, 130, 0.05) 0%, rgba(109, 8, 117, 0.05) 100%);
         }
 
         .success-alert {
@@ -243,44 +248,9 @@
             }
         }
     </style>
-</head>
+@endpush
 
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mt-2">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url('reseller/event_listing') }}"><strong class="fs-3">Just
-                    4</strong><span class="fs-3 fw-bold" style="color: #d20ae9;">
-                    Entertainment</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="sellDropdown" role="button"
-                            data-bs-toggle="dropdown">Sell</a>
-                        <ul class="dropdown-menu" aria-labelledby="sellDropdown">
-                            <li><a class="dropdown-item" href="#">Sell Tickets</a></li>
-                            <li><a class="dropdown-item" href="{{ route('reseller.mysales') }}">My Sales</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button"
-                            data-bs-toggle="dropdown">Profile <i class="bi bi-person"></i>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="profileDropdown">
-                            <li><a class="dropdown-item" href="{{ route('reseller.profile') }}">My Profile</a></li>
-                            <li><a class="dropdown-item" href="#">Settings</a></li>
-                            <li><a class="dropdown-item" href="#">Log Out</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+@section('content')
     <!-- Main Content -->
     <div class="container mt-4">
         <div class="card mb-3" style="width: 100%;">
@@ -549,10 +519,10 @@
                 <div class="form-section-header">
                     <h5><i class="bi bi-ticket-perforated icon"></i> Choose Ticket Type <span class="text-danger">*</span></h5>
                 </div>
-                    <div class="row g-3">
+                    <div class="row g-3 ticket-type-row">
                     <input type="hidden" id="ticketTypeInput" name="ticket_type" value="{{ old('ticket_type') }}">
                         @foreach ($ticket_type as $type)
-                            <div class="col-md-6 col-lg-4 mb-3 d-flex flex-column">
+                            <div class="col-6 col-lg-3 d-flex flex-column">
                                 <div class="card ticket-type"
                                     style="background-color: {{ $type->background_color ?? ($loop->iteration % 2 == 0 ? '#e3f2fd' : '#f1f8e9') }};"
                                         onclick="selectTicketType('{{ $type->id }}', '{{ $type->ticket_type_name }}')">
@@ -673,84 +643,9 @@
 
         </form>
     </div>
+@endsection
 
-
-
-
-    <!-- Footer -->
-    <footer class="bg-light py-5 mt-5">
-        <div class="container">
-            <div class="row text-center text-md-start">
-                <!-- Guarantee Section -->
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <h5 class="fw-bold"><i class="bi bi-shield-check text-success"></i> Just 4 <span
-                            style="color: #d20ae9;">Entertainment</span> <span class="text-muted">Guarantee</span>
-                    </h5>
-                    <ul class="list-unstyled text-muted">
-                        <li><i class="bi bi-check-circle text-success"></i> World-class security checks</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Transparent pricing</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 100% order guarantee</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Customer service from start to finish</li>
-                    </ul>
-                </div>
-
-                <!-- Our Company Section -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5 class="fw-bold">Our Company</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">About Us</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Partners</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Affiliate Program</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Corporate Service</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">Careers</a></li>
-                    </ul>
-                </div>
-
-                <!-- Help Section -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h5 class="fw-bold">Have Questions?</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">Help Center / Contact Us</a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Live Events Section -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5 class="fw-bold">Live events all over the world</h5>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-secondary"><i class="bi bi-geo-alt"></i> India</button>
-                        <div class="border p-2">
-                            <p class="mb-0"><i class="bi bi-translate"></i> English (UK)</p>
-                            <hr class="my-1">
-                            <p class="mb-0">INR Indian Rupee</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Copyright and Legal Links -->
-            <div class="text-center text-muted">
-                <p class="mb-1">&copy; Just 4 Entertainment 2025 <a href="#"
-                        class="text-decoration-none fw-bold">Company Details</a></p>
-                <p class="small">
-                    Use of this website constitutes acceptance of the
-                    <a href="#" class="text-decoration-none">Terms and Conditions</a>,
-                    <a href="#" class="text-decoration-none">Privacy Policy</a>, and
-                    <a href="#" class="text-decoration-none">Cookies Policy</a>.
-                    <br>
-                    <a href="#" class="text-decoration-none">Mobile Privacy Policy</a> |
-                    <a href="#" class="text-decoration-none">Do Not Share My Personal Information</a> /
-                    <a href="#" class="text-decoration-none">Your Privacy Choices</a>
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
     <script>
         // Configure Toastr
@@ -1060,6 +955,4 @@
             }
         });
     </script>
-</body>
-
-</html>
+@endpush

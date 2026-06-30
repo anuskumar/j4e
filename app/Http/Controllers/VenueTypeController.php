@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\VenueType;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class VenueTypeController extends Controller
 {
@@ -12,76 +11,69 @@ class VenueTypeController extends Controller
     {
         $this->middleware('auth');
     }
+
     public function index()
     {
-
         $data = VenueType::orderBy('id', 'desc')->get();
-        // dd($data);
-        return view('admin.venuetype.list',compact('data'));
 
+        return view('admin.venuetype.list', compact('data'));
     }
 
     public function show(string $id)
     {
+        $data = VenueType::findOrFail($id);
 
-
-        $data = VenueType::find($id);
-        // dd($data);
-        return view('admin.venuetype.view',compact('data'));
-
-
-        // $data = VenueModel::find($id);
-        // return view('admin.venue.view',compact('data'));
-     }
+        return view('admin.venuetype.view', compact('data'));
+    }
 
     public function create()
     {
-        //
-        $venuetype_create=VenueType::get();
-        //  dd($customer_create);
-            return view('admin.venuetype.create',compact('venuetype_create'));
-
+        return view('admin.venuetype.create');
     }
+
     public function edit(string $id)
     {
-       $data=VenueType::find($id);
-       $venue_type_name = VenueType::get();
-       $status=VenueType::get();
-       return view('admin.venuetype.edit',compact('venue_type_name','status','data'));
+        $data = VenueType::findOrFail($id);
 
+        return view('admin.venuetype.edit', compact('data'));
     }
 
     public function store(Request $request)
     {
-        $venuetypeuser = new VenueType();
-        $venuetypeuser->venue_type_name = $request->name;
-        $venuetypeuser->is_active = $request->is_active;
-        $venuetypeuser->save();
-        return redirect('venuetype/list');
-
-     }
-     public function update(Request $request){
-
-        $validated = $request->validate([
-            'id' => 'required',
-
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'is_active' => 'nullable|in:0,1',
         ]);
 
-       $data=VenueType::find($request->id);
-       $data->venue_type_name=$request->venue_type_name;
-       $data->is_active = $request->is_active;
+        $venuetype = new VenueType();
+        $venuetype->venue_type_name = $request->name;
+        $venuetype->is_active = $request->input('is_active', 1);
+        $venuetype->save();
 
-    //   $data->status=$request->status;
+        return redirect('venuetype/list')->with('success', 'Venue type created successfully.');
+    }
 
-       $data->save();
-       return redirect('venuetype/list');
-
-     }
-     public function delete( $id)
+    public function update(Request $request)
     {
-        $data=VenueType::find($id);
-        $data->delete();
-        return redirect('/venuetype/list');
+        $request->validate([
+            'id' => 'required|exists:venue_type,id',
+            'venue_type_name' => 'required|string|max:255',
+            'is_active' => 'nullable|in:0,1',
+        ]);
 
+        $data = VenueType::findOrFail($request->id);
+        $data->venue_type_name = $request->venue_type_name;
+        $data->is_active = $request->input('is_active', 0);
+        $data->save();
+
+        return redirect('venuetype/list')->with('success', 'Venue type updated successfully.');
+    }
+
+    public function delete($id)
+    {
+        $data = VenueType::findOrFail($id);
+        $data->delete();
+
+        return redirect('venuetype/list')->with('success', 'Venue type deleted successfully.');
     }
 }

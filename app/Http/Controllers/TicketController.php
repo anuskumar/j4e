@@ -8,13 +8,18 @@ use App\Mail\TicketRejectedMail;
 use App\Models\Events;
 use App\Models\EventTickets;
 use App\Models\EventTiming;
+use App\Models\EventType;
+use App\Models\LocationModel;
 use App\Models\TicketsGenerated;
 use App\Models\TicketType;
 use App\Models\Currency;
 use App\Models\OutsideSellModel;
 use App\Models\RestrictionModel;
+use App\Models\VenueModel;
 use App\Models\VenueSeating;
 use App\Models\TicketPurchase;
+use App\Models\TicketStatus;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -34,37 +39,127 @@ class TicketController extends Controller
     }
 
 
-    public function index()
+    public function index(Request $request)
     {
-        //
-                // dd('hello');
+        $user = Auth::user();
+        $isReseller = $user->user_type === 'reseller';
 
-        $data_all = Events::
-        leftjoin('event_type','event_type.id','event.event_type')
-        ->leftjoin('users','users.id','event.event_added_by')
-        ->leftjoin('venue','venue.id','event.venue')->
-        leftjoin('location','location.id','venue.location')
-        ->leftjoin('countries','countries.id','location.country')
-        ->leftjoin('cities','cities.id','location.city');
+        $query = Events::query()
+            ->leftJoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftJoin('users', 'users.id', 'event.event_added_by')
+            ->leftJoin('venue', 'venue.id', 'event.venue')
+            ->leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event.event_name as event_name',
+                'event_type.event_type_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'location.id as location_id',
+                'venue.id as venue_id',
+                'venue.name as venue_name',
+                'event.created_at as created_at'
+            )
+            ->orderByDesc('event.id');
 
-        if(!Auth::user()->user_type=="superadmin"){
-
-            $data_all->where('event.event_added_by',Auth::user()->id);
+        if ($isReseller) {
+            $query->whereExists(function ($subQuery) use ($user) {
+                $subQuery->select(DB::raw(1))
+                    ->from('event_tickets')
+                    ->whereColumn('event_tickets.event', 'event.id')
+                    ->where('event_tickets.created_by', $user->id)
+                    ->whereNull('event_tickets.deleted_at');
+            });
         }
 
-        $data = $data_all->select('*','event.id as id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name','event.created_at as created_at')
-       ->latest('event.id')->get();
+        if ($request->filled('event_type')) {
+            $query->where('event.event_type', $request->event_type);
+        }
 
-       foreach($data as $val){
+        if ($request->filled('location_id')) {
+            $query->where('location.id', $request->location_id);
+        }
 
-        $val['waiting_for_approval'] = EventTickets::where('event_tickets.event',$val->id)->where('is_admin_approved',0)->count();
-        $val['my_tickets'] = EventTickets::where('event_tickets.event',$val->id)->where('created_by',Auth::user()->id)->count();
+        if ($request->filled('venue_id')) {
+            $query->where('venue.id', $request->venue_id);
+        }
 
-       }
-    //  dd($data);
-      return view('admin.tickets.ticket_events',compact('data'));
+        if ($request->filled('event_date_from')) {
+            $query->whereDate('event.event_from_date', '>=', $request->event_date_from);
+        }
 
+        if ($request->filled('event_date_to')) {
+            $query->where(function ($dateQuery) use ($request) {
+                $dateQuery->whereDate('event.event_to_date', '<=', $request->event_date_to)
+                    ->orWhere(function ($fallback) use ($request) {
+                        $fallback->whereNull('event.event_to_date')
+                            ->whereDate('event.event_from_date', '<=', $request->event_date_to);
+                    });
+            });
+        }
 
+        if ($request->filled('approval_status')) {
+            if ($request->approval_status === 'pending') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('event_tickets')
+                        ->whereColumn('event_tickets.event', 'event.id')
+                        ->where('event_tickets.is_admin_approved', 0)
+                        ->whereNull('event_tickets.deleted_at');
+                });
+            } elseif ($request->approval_status === 'approved') {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->select(DB::raw(1))
+                        ->from('event_tickets')
+                        ->whereColumn('event_tickets.event', 'event.id')
+                        ->where('event_tickets.is_admin_approved', 1)
+                        ->whereNull('event_tickets.deleted_at');
+                });
+            }
+        }
+
+        $data = $query->get();
+
+        foreach ($data as $val) {
+            $ticketQuery = EventTickets::where('event', $val->id);
+            $val->waiting_for_approval = (clone $ticketQuery)->where('is_admin_approved', 0)->count();
+            $val->my_tickets = (int) (clone $ticketQuery)->where('created_by', $user->id)->sum('no_of_tickets');
+            $val->total_tickets = (int) (clone $ticketQuery)->sum('no_of_tickets');
+        }
+
+        $eventTypes = EventType::orderBy('event_type_name')->get();
+
+        $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('location.id', 'location_name', 'cities.name as city_name', 'country_name')
+            ->orderBy('location_name')
+            ->get();
+
+        $venuesQuery = VenueModel::leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('countries', 'countries.id', 'location.country')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select('venue.id', 'venue.name as venue_name', 'location_name', 'cities.name as city_name', 'country_name', 'venue.location as location_id');
+
+        if ($request->filled('location_id')) {
+            $venuesQuery->where('venue.location', $request->location_id);
+        }
+
+        $venues = $venuesQuery->orderBy('venue.name')->get();
+
+        $filters = [
+            'event_type' => $request->event_type,
+            'location_id' => $request->location_id,
+            'venue_id' => $request->venue_id,
+            'event_date_from' => $request->event_date_from,
+            'event_date_to' => $request->event_date_to,
+            'approval_status' => $request->approval_status,
+        ];
+
+        return view('admin.tickets.ticket_events', compact('data', 'eventTypes', 'locations', 'venues', 'filters', 'isReseller'));
     }
 
     /**
@@ -103,44 +198,110 @@ class TicketController extends Controller
 
 
     //  }
-    public function manage_tickets($id){
-        $data_all = EventTickets::leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
-            ->leftjoin('event','event.id','event_tickets.event')
-            ->leftjoin('venue','venue.id','event.venue')
-            ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
-            ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
-            ->leftjoin('users','users.id','event_tickets.created_by')
-            ->leftjoin('currency','currency.id','event_tickets.amount_currency')
-            ->leftjoin('ticket_status','ticket_status.id','event_tickets.ticket_status')
+    public function manage_tickets(Request $request, $id)
+    {
+        $user = Auth::user();
+        $isReseller = $user->user_type === 'reseller';
+
+        $event = Events::leftJoin('event_type', 'event_type.id', 'event.event_type')
+            ->leftJoin('venue', 'venue.id', 'event.venue')
+            ->leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->select(
+                'event.*',
+                'event.id as id',
+                'event_type.event_type_name',
+                'venue.name as venue_name',
+                'location.location_name',
+                'cities.name as city_name'
+            )
+            ->findOrFail($id);
+
+        $data_all = EventTickets::leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->leftjoin('event', 'event.id', 'event_tickets.event')
+            ->leftjoin('venue', 'venue.id', 'event.venue')
+            ->leftjoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
+            ->leftjoin('event_timings', 'event_timings.id', 'event_tickets.event_timing')
+            ->leftjoin('users', 'users.id', 'event_tickets.created_by')
+            ->leftjoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->leftjoin('ticket_status', 'ticket_status.id', 'event_tickets.ticket_status')
             ->where('event_tickets.event', $id);
-            // info(Auth::user()->user_type);
-            if(Auth::user()->user_type != 'superadmin')
-            {
-                $data_all->where('event_tickets.created_by', Auth::user()->id);
+
+        if ($user->user_type !== 'superadmin') {
+            $data_all->where('event_tickets.created_by', $user->id);
+        }
+
+        if ($request->filled('approval_status')) {
+            if ($request->approval_status === 'pending') {
+                $data_all->where('event_tickets.is_admin_approved', 0);
+            } elseif ($request->approval_status === 'approved') {
+                $data_all->where('event_tickets.is_admin_approved', 1);
+            } elseif ($request->approval_status === 'rejected') {
+                $data_all->where('event_tickets.is_admin_approved', 2);
             }
+        }
 
-        // Filter tickets based on the authenticated user's ID (created_by)
+        if ($request->filled('ticket_type')) {
+            $data_all->where('event_tickets.ticket_type', $request->ticket_type);
+        }
 
+        if ($request->filled('ticket_status')) {
+            $data_all->where('event_tickets.ticket_status', $request->ticket_status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $data_all->where(function ($query) use ($search) {
+                $query->where('event_tickets.ticket_name', 'like', '%' . $search . '%')
+                    ->orWhere('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('users.email', 'like', '%' . $search . '%');
+            });
+        }
 
         $data = $data_all->select(
-            '*',
+            'event_tickets.*',
             'event_tickets.id as id',
             'event_tickets.is_admin_approved as is_admin_approved',
+            'ticket_type.ticket_type_name',
+            'venue_seating.seating_type_name',
+            'event_timings.event_date',
+            'event_timings.from_time',
+            'event_timings.to_time',
             'users.name as reseller_name',
             'users.email as reseller_email',
             'users.phone as reseller_phone',
-            'currency.short_name as currency_short_name'
+            'currency.short_name as currency_short_name',
+            'ticket_status.status_name as ticket_status_name'
         )->latest('event_tickets.created_at')->get();
 
-        $event = Events::find($id);
         $ticket_type = TicketType::get();
         $event_timing = EventTiming::where('event', $id)->get();
-        $venue_seatings = VenueSeating::leftjoin('venue','venue.id','venue_seating.venue')
-            ->where('venue.id', $event->venue)->select('*','venue_seating.id as id')->get();
-        $currency  = Currency::get();
+        $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
+            ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
+        $currency = Currency::get();
         $restrictions = RestrictionModel::get();
+        $ticketStatuses = TicketStatus::where('is_active', 1)->orderBy('id')->get();
 
-        return view('admin.tickets.ticket_list', compact('data', 'id', 'ticket_type', 'event_timing', 'venue_seatings', 'currency', 'restrictions'));
+        $filters = [
+            'approval_status' => $request->approval_status,
+            'ticket_type' => $request->ticket_type,
+            'ticket_status' => $request->ticket_status,
+            'search' => $request->search,
+        ];
+
+        return view('admin.tickets.ticket_list', compact(
+            'data',
+            'id',
+            'event',
+            'ticket_type',
+            'event_timing',
+            'venue_seatings',
+            'currency',
+            'restrictions',
+            'ticketStatuses',
+            'filters',
+            'isReseller'
+        ));
     }
 
 
@@ -491,6 +652,10 @@ class TicketController extends Controller
         $data->created_by = Auth::user()->id;
         $data->save();
 
+        if ($request->post('event_id') == '') {
+            app(NotificationService::class)->notifyTicketCreated($data);
+        }
+
         // dd($request->request);
         if ($request->post('event_id')) {
             return back()->with('success', 'Ticket Updated successfully');
@@ -508,20 +673,50 @@ class TicketController extends Controller
      */
     public function show(string $id)
     {
-        $data = EventTickets::
-        leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
-        ->leftjoin('event','event.id','event_tickets.event')
-        ->leftjoin('venue','venue.id','event.venue')
-        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
-        ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
-        ->leftjoin('ticket_status','ticket_status.id','event_tickets.ticket_status')
-        ->where('event_tickets.id',$id)
-        ->select('*','event_tickets.id as id')->first();
+        $data = EventTickets::query()
+            ->leftJoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
+            ->leftJoin('event', 'event.id', 'event_tickets.event')
+            ->leftJoin('venue', 'venue.id', 'event.venue')
+            ->leftJoin('location', 'location.id', 'venue.location')
+            ->leftJoin('cities', 'cities.id', 'location.city')
+            ->leftJoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
+            ->leftJoin('event_timings', 'event_timings.id', 'event_tickets.event_timing')
+            ->leftJoin('ticket_status', 'ticket_status.id', 'event_tickets.ticket_status')
+            ->leftJoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->leftJoin('users', 'users.id', 'event_tickets.created_by')
+            ->leftJoin('split_types', 'split_types.id', 'event_tickets.split_type')
+            ->where('event_tickets.id', $id)
+            ->select(
+                'event_tickets.*',
+                'event_tickets.id as id',
+                'ticket_type.ticket_type_name',
+                'event.event_name',
+                'event.event_image',
+                'event.event_from_date',
+                'event.event_to_date',
+                'venue.name as venue_name',
+                'location.location_name',
+                'cities.name as city_name',
+                'venue_seating.seating_type_name',
+                'event_timings.event_date',
+                'event_timings.from_time',
+                'event_timings.to_time',
+                'ticket_status.status_name as ticket_status_name',
+                'currency.short_name as currency_short_name',
+                'currency.name as currency_name',
+                'users.name as reseller_name',
+                'users.email as reseller_email',
+                'users.phone as reseller_phone',
+                'split_types.split_name as split_type_name'
+            )
+            ->firstOrFail();
 
-        // dd($data);
-        return view('admin.tickets.ticket_view',compact('data'));
+        $restrictionIds = $data->ticket_restrictions ? json_decode($data->ticket_restrictions, true) : [];
+        $restrictionNames = is_array($restrictionIds) && $restrictionIds
+            ? RestrictionModel::whereIn('id', $restrictionIds)->pluck('restrictions')->implode(', ')
+            : '';
 
-
+        return view('admin.tickets.ticket_view', compact('data', 'restrictionNames'));
     }
 
     /**
@@ -575,17 +770,55 @@ class TicketController extends Controller
         //
     }
 
-    public function manage_individual_tickets($id){
+    public function manage_individual_tickets(Request $request, $id)
+    {
+        $eventTicket = EventTickets::leftJoin('event', 'event.id', 'event_tickets.event')
+            ->leftJoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->where('event_tickets.id', $id)
+            ->select(
+                'event_tickets.*',
+                'event_tickets.id as id',
+                'event.event_name',
+                'currency.short_name as currency_short_name'
+            )
+            ->firstOrFail();
 
-        // $data = TicketsGenerated::where('event_tickets',$id)->get();
+        $query = TicketsGenerated::with('outsideSell')->where('event_tickets', $id);
 
-        $data = TicketsGenerated::with('outsideSell')->where('event_tickets', $id)->get();
-        
-        // Get the main event ticket to show/update ticket price
-        $eventTicket = EventTickets::find($id);
-        
-        return view('admin.tickets.generated_ticket_list', compact('data', 'eventTicket'));
+        if ($request->filled('sold_status')) {
+            if ($request->sold_status === 'sold') {
+                $query->where('is_sold', 1);
+            } elseif ($request->sold_status === 'unsold') {
+                $query->where('is_sold', 0);
+            }
+        }
 
+        if ($request->filled('hold_status')) {
+            if ($request->hold_status === 'hold') {
+                $query->where('under_purchase_hold', 1);
+            } elseif ($request->hold_status === 'no_hold') {
+                $query->where('under_purchase_hold', 0);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('ticket_serial_number', 'like', '%' . $search . '%')
+                    ->orWhere('seat_number_prefix', 'like', '%' . $search . '%')
+                    ->orWhere('seat_id', 'like', '%' . $search . '%');
+            });
+        }
+
+        $data = $query->orderBy('id')->get();
+
+        $filters = [
+            'sold_status' => $request->sold_status,
+            'hold_status' => $request->hold_status,
+            'search' => $request->search,
+        ];
+
+        return view('admin.tickets.generated_ticket_list', compact('data', 'eventTicket', 'filters'));
     }
     
     public function updateTicketPrice(Request $request, $id)
@@ -728,7 +961,7 @@ public function updateStatus(Request $request, $id)
         ], 404);
     }
 
-    $ticket->ticket_status = ! $ticket->ticket_status;
+    $ticket->ticket_status = (int) $ticket->ticket_status === 1 ? 2 : 1;
 
     $ticket->save();
 

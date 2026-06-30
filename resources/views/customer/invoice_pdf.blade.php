@@ -178,8 +178,9 @@
                 @if($settings && $settings->company_name)
                     <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">{{ $settings->company_name }}</div>
                 @endif
-                @if($settings && $settings->company_logo && file_exists(public_path('storage/uploads/images/' . $settings->company_logo)))
-                    <img src="{{ public_path('storage/uploads/images/' . $settings->company_logo) }}" alt="Logo" class="invoice-logo">
+                @php $logoPath = \App\Models\CompanySettings::appLogoPath(); @endphp
+                @if($logoPath)
+                    <img src="{{ $logoPath }}" alt="Logo" class="invoice-logo">
                 @endif
             </div>
             <div class="invoice-header-right">

@@ -29,6 +29,7 @@ use App\Models\User;
 use App\Models\VenueModel;
 use App\Models\VenueSeating;
 use App\Models\VenueType;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Faker\Provider\ar_EG\Address;
 use Illuminate\Http\Request;
@@ -91,14 +92,15 @@ class ResellerController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation rules
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
+            'password_confirmation' => 'required|string|min:6',
             'phone' => 'required|string|max:20',
             'country_code' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'is_active' => 'nullable|in:0,1',
         ], [
             'name.required' => 'User name is required.',
@@ -107,7 +109,12 @@ class ResellerController extends Controller
             'email.unique' => 'This email is already registered.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 6 characters long.',
+            'password.confirmed' => 'Password and confirm password do not match.',
+            'password_confirmation.required' => 'Please confirm the password.',
             'phone.required' => 'Phone number is required.',
+            'profile.image' => 'Profile photo must be an image file.',
+            'profile.mimes' => 'Profile photo must be JPG, PNG, GIF, or WEBP.',
+            'profile.max' => 'Profile photo must not exceed 2MB.',
         ]);
 
         $user = new User();
@@ -117,15 +124,18 @@ class ResellerController extends Controller
         $user->password = Hash::make($request->password);
         $user->email_added_at = now();
         $user->is_active = $request->has('is_active') ? $request->is_active : 1;
-        
-        // Store phone number with country code
-        if ($request->has('phone') && !empty($request->phone)) {
-            $countryCode = $request->has('country_code') && !empty($request->country_code) ? $request->country_code : '+91 (IN)';
-            $user->phone = $countryCode . ' ' . $request->phone;
-        }
-        
-        if ($request->has('address')) {
+
+        $countryCode = $request->filled('country_code') ? $request->country_code : '+91 (IN)';
+        $user->phone = $countryCode . ' ' . $request->phone;
+
+        if ($request->filled('address')) {
             $user->address = $request->address;
+        }
+
+        if ($request->hasFile('profile')) {
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('profile')->extension();
+            $request->file('profile')->move(storage_path('uploads/images'), $imageName);
+            $user->profile = $imageName;
         }
 
         $user->save();
@@ -156,8 +166,16 @@ class ResellerController extends Controller
      */
     public function edit(string $id)
     {
-        $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')->select('*', 'users.id as id')->find($id);
-        // dd($data);
+        $data = User::leftJoin('resellers', 'resellers.user_id', 'users.id')
+            ->select('users.*', 'users.id as id', 'resellers.is_admin_approved', 'resellers.is_trusted')
+            ->where('users.id', $id)
+            ->where('users.user_type', 'reseller')
+            ->first();
+
+        if (!$data) {
+            return redirect('admin/reseller/list')->with('error', 'Reseller not found.');
+        }
+
         return view('admin.reseller.edit', compact('data'));
     }
 
@@ -167,27 +185,59 @@ class ResellerController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'name'  => 'required',
-            'email' => 'required',
+            'id' => 'required|exists:users,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $request->id,
+            'phone' => 'required|string|max:20',
+            'country_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'is_active' => 'nullable|in:0,1',
+            'is_admin_approved' => 'nullable|in:0,1',
+            'is_trusted' => 'nullable|in:0,1',
+        ], [
+            'name.required' => 'User name is required.',
+            'email.required' => 'Email is required.',
+            'email.unique' => 'This email is already registered.',
+            'phone.required' => 'Phone number is required.',
+            'profile.image' => 'Profile photo must be an image file.',
+            'profile.mimes' => 'Profile photo must be JPG, PNG, GIF, or WEBP.',
+            'profile.max' => 'Profile photo must not exceed 2MB.',
         ]);
 
-        $data            = User::find($request->id);
+        $data = User::find($request->id);
+        if (!$data) {
+            return redirect('admin/reseller/list')->with('error', 'Reseller not found.');
+        }
+
         if ($data->email !== $request->email) {
             $data->email_added_at = now();
         }
-        $data->name      = $request->name;
-        $data->email     = $request->email;
-        $data->phone     = $request->phone;
-        $data->address   = $request->address;
-        $data->is_active = $request->is_active;
+
+        $data->name = $request->name;
+        $data->email = $request->email;
+        $data->address = $request->address;
+        $data->is_active = $request->has('is_active') ? $request->is_active : 0;
+
+        $countryCode = $request->filled('country_code') ? $request->country_code : '+91 (IN)';
+        $data->phone = $countryCode . ' ' . $request->phone;
+
+        if ($request->hasFile('profile')) {
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('profile')->extension();
+            $request->file('profile')->move(storage_path('uploads/images'), $imageName);
+            $data->profile = $imageName;
+        }
+
         $data->save();
 
-        $val                    = ResellerModel::where('user_id', $request->id)->first();
-        $val->is_admin_approved = $request->is_admin_approved;
-        $val->is_trusted        = $request->is_trusted;
-        $val->save();
+        $val = ResellerModel::where('user_id', $request->id)->first();
+        if ($val) {
+            $val->is_admin_approved = $request->input('is_admin_approved', 0);
+            $val->is_trusted = $request->input('is_trusted', 0);
+            $val->save();
+        }
 
-        return redirect('/admin/reseller/list');
+        return redirect('admin/reseller/list')->with('success', 'Reseller updated successfully.');
     }
 
     /**
@@ -211,36 +261,63 @@ class ResellerController extends Controller
 
     public function profile()
     {
-        $authdata = User::leftJoin('reseller_profiles', 'reseller_profiles.reseller_id', '=', 'users.id')
-            ->select('users.*', 'reseller_profiles.reseller_id', 'reseller_profiles.reseller_image')
-            ->where('users.id', Auth::user()->id)
-            ->first();
-        //  dd($authdata);
-        $bankData   = Bankmodel::where('resellerid', Auth::user()->id)->first();
-        $adreesdata = SellerPostalAddress::where('resellerid', Auth::user()->id)->first();
+        $authdata = User::where('users.id', Auth::id())->first();
 
-        $country = CountryModel::get();
+        $bankData = null;
+        $adreesdata = null;
+        $country = collect();
+
+        if (Auth::user()->user_type === 'reseller') {
+            $authdata = User::leftJoin('reseller_profiles', 'reseller_profiles.reseller_id', '=', 'users.id')
+                ->select('users.*', 'reseller_profiles.reseller_id', 'reseller_profiles.reseller_image')
+                ->where('users.id', Auth::id())
+                ->first();
+            $bankData = Bankmodel::where('resellerid', Auth::id())->first();
+            $adreesdata = SellerPostalAddress::where('resellerid', Auth::id())->first();
+            $country = CountryModel::get();
+        }
 
         return view('reseller.profile', compact('authdata', 'bankData', 'adreesdata', 'country'));
     }
+
     public function updateprofile(Request $request)
     {
+        $request->validate([
+            'authid' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'company_email' => 'required|email|max:255',
+            'contact_number' => 'required|string|max:50',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
 
-        $profiledata        = User::where('id', $request->authid)->first();
+        if ((int) $request->authid !== Auth::id()) {
+            abort(403);
+        }
+
+        $profiledata = User::findOrFail($request->authid);
+
         if ($profiledata->email !== $request->company_email) {
             $profiledata->email_added_at = now();
         }
-        $profiledata->name  = $request->name;
+
+        $profiledata->name = $request->name;
         $profiledata->email = $request->company_email;
         $profiledata->phone = $request->contact_number;
 
         if ($request->hasFile('profile')) {
-            $imageName = time() . '.' . $request->profile->extension();
-            $request->profile->move(storage_path('uploads/images'), $imageName);
+            $uploadPath = storage_path('uploads/images');
+            if (! is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('profile')->extension();
+            $request->file('profile')->move($uploadPath, $imageName);
             $profiledata->profile = $imageName;
         }
+
         $profiledata->save();
-        return redirect()->back();
+
+        return redirect()->back()->with('success', 'Profile updated successfully.');
     }
 
     public function updatebankdata(Request $request)
@@ -375,6 +452,8 @@ class ResellerController extends Controller
         $event->event_is_active = $request->event_is_active;
 
         $event->save();
+
+        app(NotificationService::class)->notifyEventCreated($event);
 
         return redirect('reseller/manage_event');
     }
@@ -887,6 +966,8 @@ class ResellerController extends Controller
         $data->created_by        = Auth::user()->id;
         $data->save();
 
+        app(NotificationService::class)->notifyTicketCreated($data);
+
         // dd($request->request);
 
         return redirect('reseller/manage_tickets' . '/' . $request->event)->with('success', 'Ticket Created successfully');
@@ -1165,6 +1246,8 @@ class ResellerController extends Controller
 
                 // Commit the transaction
                 DB::commit();
+
+                app(NotificationService::class)->notifyTicketCreated($data);
 
             } catch (\Exception $e) {
                 // Rollback the transaction on any error

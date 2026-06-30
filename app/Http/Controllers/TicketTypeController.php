@@ -15,9 +15,9 @@ class TicketTypeController extends Controller
     public function index()
     {
 
-        $data = TicketType::get();
-        // dd($data);
-        return view('admin.tickettype.list',compact('data'));
+        $data = TicketType::orderBy('id')->get();
+
+        return view('admin.tickettype.list', compact('data'));
 
     }
 

@@ -10,13 +10,11 @@ class ArtistController extends Controller
 {
     public function index()
     {
-
-
-        $data=ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id','field_name')->orderBy('artist.id', 'desc')->get();
-        // dd($data);
-        return view('admin.artist.list',compact('data'));
-
-
+        $data = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')
+            ->select('*', 'artist.id as id', 'field_name')
+            ->orderBy('artist.id', 'desc')
+            ->get();
+        return view('admin.artist.list', compact('data'));
     }
 
     public function show(string $id)
@@ -35,12 +33,9 @@ class ArtistController extends Controller
 
     public function create()
     {
-        //
-        $artist_create=ArtistField::get();
-        //  dd($customer_create);
-        $artist=ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
-            return view('admin.artist.create',compact('artist_create','artist'));
+        $artist_create = ArtistField::orderBy('field_name')->get();
 
+        return view('admin.artist.create', compact('artist_create'));
     }
     public function edit(string $id)
     {

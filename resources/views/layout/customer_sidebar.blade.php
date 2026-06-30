@@ -1,8 +1,8 @@
 <div class="dashboard-widget">
     <nav class="dashboard-menu">
         <ul>
-            <li>
-                <a href="{{ url('home') }}">
+            <li class="{{ request()->routeIs('customer.home') ? 'active' : '' }}">
+                <a href="{{ route('customer.home') }}">
                     <i class="fas fa-columns"></i>
                     <span>Dashboard</span>
                 </a>

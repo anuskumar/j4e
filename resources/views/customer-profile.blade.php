@@ -1,855 +1,540 @@
-<?php $page="customer-profile";?>
+<?php $page = 'customer-dashboard'; ?>
 @extends('layout.mainlayout')
 @section('content')
-<!-- Breadcrumb -->
-			<div class="breadcrumb-bar">
-				<div class="container-fluid">
-					<div class="row align-items-center">
-						<div class="col-md-12 col-12">
-							<nav aria-label="breadcrumb" class="page-breadcrumb">
-								<ol class="breadcrumb">
-									<li class="breadcrumb-item"><a href="{{ url('home') }}">Home</a></li>
-									<li class="breadcrumb-item active" aria-current="page">Profile</li>
-								</ol>
-							</nav>
-							<h2 class="breadcrumb-title">Profile</h2>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- /Breadcrumb -->
 
-			<!-- Page Content -->
-			<div class="content">
-				<div class="container">
+@php
+    $user = Auth::user();
+    $profileImage = $user->profileImageUrl();
+    $defaultAvatar = \App\Models\User::defaultProfileImageUrl();
+    $totalBookings = $all_bookings->count();
+    $upcomingCount = $upcomming_booking->count();
+    $totalSpent = $all_bookings->where('is_payment_completed', 1)->sum('payment_amount');
+    $completedCount = $all_bookings->where('purchase_status', 6)->count();
+@endphp
 
-					<div class="row">
-						<div class="col-md-4 col-lg-4 col-xl-3 theiaStickySidebar dct-dashbd-lft">
+<style>
+    .customer-dashboard {
+        background: #f4f6fb;
+        padding: 0 0 60px;
+    }
 
-							<!-- Profile Widget -->
-							<div class="card widget-profile pat-widget-profile">
-								<div class="card-body">
-									<div class="pro-widget-content">
-										<div class="profile-info-widget">
-											<a href="#" class="booking-doc-img">
-												<img src="{{ asset('assets/img/customers/customer.jpg') }}" alt="User Image">
-											</a>
-											<div class="profile-det-info">
-												<h3>{{ ucfirst(Auth::user()->name) }}</h3>
+    .customer-dashboard__hero {
+        background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
+        color: #fff;
+        padding: 32px 0 48px;
+        margin-bottom: -28px;
+    }
 
-												<div class="customer-details">
-													<h5><b>customer ID :</b> {{ Auth::user()->id }}</h5>
-													{{-- <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> Newyork, United States</h5> --}}
-												</div>
-											</div>
-										</div>
-									</div>
-									<div class="customer-info">
-										<ul>
-											<li>Phone <span>{{ Auth::user()->phone }}</span></li>
-											<li>Email <span>{{ Auth::user()->email }}</span></li>
-											{{-- <li>Gender <span>{{ Auth::user()-> }}</span></li> --}}
-										</ul>
-									</div>
-								</div>
-                                <hr>
-                            @include('layout.customer_sidebar');
-							</div>
+    .customer-dashboard__hero h1 {
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
 
-							<!-- /Profile Widget -->
+    .customer-dashboard__hero p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 15px;
+    }
 
-							<!-- Last Booking -->
-							<div class="card">
-								<div class="card-header">
-									<h4 class="card-title">Last Booking</h4>
-								</div>
-								<ul class="list-group list-group-flush">
+    .customer-dashboard__hero-actions .btn {
+        border-radius: 999px;
+        font-weight: 600;
+        padding: 10px 20px;
+    }
 
-                                    @foreach ($last_booking as $val)
+    .customer-dashboard__hero-actions .btn-light {
+        color: #221e69;
+    }
 
-                                    <li class="list-group-item">
-										<div class="media align-items-center">
-											<div class="mr-3">
-												@if($val->event_image)
-                                                    <img alt="Image placeholder" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" class="avatar rounded-circle" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
-                                                @else
-                                                    <img alt="Image placeholder" src="{{ asset('assets/img/events/event-01.jpg') }}" class="avatar rounded-circle">
-                                                @endif
-											</div>
-											<div class="media-body">
-												<h5 class="d-block mb-0">{{ $val->event_name }} </h5>
-												<span class="d-block text-sm text-muted">{{ $val->tag_name }}, {{ $val->event_type_name }}</span>
-												<span class="d-block text-sm text-muted">
-                                                    @if(!empty(@$val['event_date']->event_date))
-                                                        {{ date('d M Y', strtotime(@$val['event_date']->event_date)) }}
-                                                    @endif
-                                                    @if(!empty(@$val['event_date']->from_time))
-                                                        {{ date('g:i A', strtotime(@$val['event_date']->from_time)) }}
-                                                    @endif
-                                                </span>
-											</div>
-										</div>
-									</li>
+    .customer-stat-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid rgba(103, 29, 207, 0.08);
+        box-shadow: 0 8px 24px rgba(34, 30, 105, 0.06);
+        padding: 22px 20px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
 
-                                    @endforeach
+    .customer-stat-card__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
 
+    .customer-stat-card__icon--primary { background: rgba(98, 89, 202, 0.12); color: #6259ca; }
+    .customer-stat-card__icon--success { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+    .customer-stat-card__icon--warning { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .customer-stat-card__icon--info { background: rgba(14, 165, 233, 0.12); color: #0284c7; }
 
-								</ul>
-							</div>
-							<!-- /Last Booking -->
+    .customer-stat-card__label {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 2px;
+    }
 
-						</div>
+    .customer-stat-card__value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.2;
+    }
 
-						<div class="col-md-8 col-lg-8 col-xl-9 dct-appoinment">
-							<div class="card">
-								<div class="card-body pt-0">
-									<div class="user-tabs">
-										<ul class="nav nav-tabs nav-tabs-bottom nav-justified flex-wrap">
-											<li class="nav-item">
-												<a class="nav-link active" href="#pat_appointments" data-toggle="tab">All Bookings</a>
-											</li>
-											<li class="nav-item">
-												<a class="nav-link" href="#pres" data-toggle="tab"><span>Upcomming Events</span></a>
-											</li>
-											{{-- <li class="nav-item">
-												<a class="nav-link" href="#medical" data-toggle="tab"><span class="med-records">Event Info</span></a>
-											</li>
-											<li class="nav-item">
-												<a class="nav-link" href="#billing" data-toggle="tab"><span>Billing</span></a>
-											</li> --}}
-										</ul>
-									</div>
-									<div class="tab-content">
+    .customer-panel {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid rgba(103, 29, 207, 0.08);
+        box-shadow: 0 8px 24px rgba(34, 30, 105, 0.06);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
 
-										<!-- Booking Tab -->
-										<div id="pat_appointments" class="tab-pane fade show active">
-											<div class="card card-table mb-0">
-												<div class="card-body">
-													<div class="table-responsive">
-														<table class="table table-hover table-center mb-0">
-															<thead>
-																<tr>
-																	<th>Event</th>
-																	<th>Event Date</th>
-																	<th>Booking Date</th>
-																	<th>Amount</th>
-																	<th>Purchased Date</th>
-																	<th>Status</th>
-																	<th>Payment Status</th>
-																	<th>Tickets</th>
-																	<th></th>
-																</tr>
-															</thead>
-															<tbody>
-                                                                @foreach ($all_bookings as $val)
+    .customer-panel__header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #eef0f6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
 
+    .customer-panel__header h4 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: #111827;
+    }
 
-																<tr>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="{{ url('show_details_show',$val->event_id) }}" class="avatar avatar-sm mr-2">
-																				@if($val->event_image)
-                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
-                                                                                @else
-                                                                                    <img class="avatar-img rounded-circle" src="{{ asset('assets/img/events/event-01.jpg') }}" alt="User Image">
-                                                                                @endif
-																			</a>
-																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }}</span></a>
-																		</h2>
-																	</td>
-																	<td>
-                                                                        @if(!empty(@$val['event_date']->event_date))
-                                                                            {{ date('d M Y', strtotime(@$val['event_date']->event_date)) }}
-                                                                        @endif
-                                                                        <span class="d-block text-info">
-                                                                            @if(!empty(@$val['event_date']->from_time))
-                                                                                {{ date('g:i A', strtotime(@$val['event_date']->from_time)) }}
-                                                                            @endif
-                                                                        </span>
-                                                                    </td>
-																	<td>{{ !empty($val->event_from_date) ? date('d M Y', strtotime($val->event_from_date)) : '-' }}</td>
-																	<td>{{ number_format((float) @$val->payment_amount, 2) }} {{ @$val->short_name }}</td>
-																	<td>{{ !empty($val->created_at) ? date('d M Y h:i A', strtotime($val->created_at)) : '-' }}</td>
-																	<td>
-                                                                       {{ @$val->status_name }}
-                                                                    </td>
-																	<td>
-                                                                        {{ @$val->is_payment_completed == 1 ? "Payment Completed" :"Not Completed"}}
-                                                                        {{-- <span class="badge badge-pill bg-success-light">Confirm</span> --}}
-                                                                    </td>
-																	<td>
-																		@if(isset($val['tickets']) && $val['tickets']->count() > 0)
-																			<a href="{{ route('customer.ticket.details', $val->id) }}" class="btn btn-sm btn-primary" title="View Ticket Details">
-																				<i class="fas fa-ticket-alt"></i> Ticket Details
-																			</a>
-																		@else
-																			<span class="text-muted">-</span>
-																		@endif
-                                                                    </td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="{{ url('view_invoice',$val->id) }}" class="btn btn-sm bg-success-light">
-																				<i class="far fa-edit"></i> Invoice
-																			</a>
-                                                                            <a href="{{ url('show_booking_details_show',$val->id) }}" class="btn btn-sm bg-success-light">
-																				<i class="far fa-edit"></i> view
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-                                                                @endforeach
+    .customer-profile-card {
+        text-align: center;
+        padding: 28px 20px 20px;
+    }
 
-															</tbody>
-														</table>
-													</div>
-												</div>
-											</div>
-										</div>
-										<!-- /Booking Tab -->
+    .customer-profile-card__avatar {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f3f4f6;
+        margin-bottom: 14px;
+    }
 
-										<!-- Programs Tab -->
-										<div class="tab-pane fade" id="pres">
-											<div class="text-right">
-												{{-- <a href="add-programs" class="add-new-btn">Add Programs</a> --}}
-											</div>
-											<div class="card card-table mb-0">
-												<div class="card-body">
-													<div class="table-responsive">
-														<table class="table table-hover table-center mb-0">
-															<thead>
-																<tr>
-																	<th>Date </th>
-																	<th>Name</th>
-																	<th>Amount</th>
-																	<th></th>
+    .customer-profile-card h3 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
 
-																</tr>
-															</thead>
-															<tbody>
-                                                                @foreach ($upcomming_booking as $val)
-                                                                <tr>
-																	<td>{{ !empty($val->event_from_date) ? date('d M Y', strtotime($val->event_from_date)) : '-' }}</td>
+    .customer-profile-card__meta {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 16px;
+    }
 
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="{{ url('show_details_show',$val->event_id) }}" class="avatar avatar-sm mr-2">
-																				@if($val->event_image)
-																					<img class="avatar-img rounded-circle" src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="User Image" onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
-																				@else
-																					<img class="avatar-img rounded-circle" src="{{ asset('assets/img/events/event-01.jpg') }}" alt="User Image">
-																				@endif
-																			</a>
-																			<a href="{{ url('show_details_show',$val->event_id) }}">{{ $val->event_name }} <span>{{ $val->tag_name }}, {{ $val->event_type_name }} <span></span></a>
-																		</h2>
-																	</td>
-                                                                    <td>{{ number_format((float) @$val->payment_amount, 2) }} {{ @$val->short_name }}</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="{{ url('view_invoice',$val->id) }}" class="btn btn-sm bg-success-light">
-																				<i class="far fa-edit"></i> Invoice
-																			</a>
-																			<a href="{{ url('show_booking_details_show',$val->id) }}" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-                                                                @endforeach
+    .customer-profile-card__details {
+        list-style: none;
+        margin: 0;
+        padding: 0 16px 16px;
+        text-align: left;
+    }
 
+    .customer-profile-card__details li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 13px;
+    }
 
-															</tbody>
-														</table>
-													</div>
-												</div>
-											</div>
-										</div>
-										<!-- /Programs Tab -->
+    .customer-profile-card__details li:last-child { border-bottom: none; }
+    .customer-profile-card__details li span:first-child { color: #6b7280; }
+    .customer-profile-card__details li span:last-child { font-weight: 600; color: #111827; text-align: right; word-break: break-word; }
 
-										<!-- Event Details Tab -->
-										<div class="tab-pane fade" id="medical">
-											<div class="text-right">
-												<a href="#" class="add-new-btn" data-toggle="modal" data-target="#add_medical_records">Add Event Info</a>
-											</div>
-											<div class="card card-table mb-0">
-												<div class="card-body">
-													<div class="table-responsive">
-														<table class="table table-hover table-center mb-0">
-															<thead>
-																<tr>
-																	<th>ID</th>
-																	<th>Date </th>
-																	<th>Event</th>
-																	<th>Created</th>
-																	<th></th>
-																</tr>
-															</thead>
-															<tbody>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0010</a></td>
-																	<td>14 Nov 2020</td>
-																	<td>Sangeet</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-01.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Blaine Skipper <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0009</a></td>
-																	<td>13 Nov 2020</td>
-																	<td>Birthday</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-02.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Wayte Barlow <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																			<a href="edit-programs" class="btn btn-sm bg-success-light" data-toggle="modal" data-target="#add_medical_records">
-																				<i class="fas fa-edit"></i> Edit
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-danger-light">
-																				<i class="far fa-trash-alt"></i> Delete
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0008</a></td>
-																	<td>12 Nov 2020</td>
-																	<td>Wedding</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-03.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Meerta Tyson <span>DJ Reader</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0007</a></td>
-																	<td>11 Nov 2020</td>
-																	<td>Conference</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-04.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Rhodes Glaser <span>DJ, Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0006</a></td>
-																	<td>10 Nov 2020</td>
-																	<td>Party</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-05.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Dallin Donaldson <span>Artist & DJ</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0005</a></td>
-																	<td>9 Nov 2020</td>
-																	<td>Baby Shower</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-06.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Mykah Derr <span>DJ, Artist</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0004</a></td>
-																	<td>8 Nov 2020</td>
-																	<td>Seminar</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-07.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Ozella Barbee <span>DJ, Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0003</a></td>
-																	<td>7 Nov 2020</td>
-																	<td>Wedding</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-08.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Mayeer Busch <span>Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0002</a></td>
-																	<td>6 Nov 2020</td>
-																	<td>Song Release</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-09.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Farren Blalock <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td><a href="javascript:void(0);">#MR-0001</a></td>
-																	<td>5 Nov 2020</td>
-																	<td>Conference</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-10.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Sissel Browne <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-															</tbody>
-														</table>
-													</div>
-												</div>
-											</div>
-										</div>
-										<!-- /Event Details Tab -->
+    .customer-sidebar-nav .dashboard-menu ul { padding: 0 12px 16px; }
+    .customer-sidebar-nav .dashboard-menu ul li a {
+        border-radius: 10px;
+        padding: 12px 14px;
+    }
+    .customer-sidebar-nav .dashboard-menu ul li.active a {
+        background: linear-gradient(90deg, rgba(34, 30, 105, 0.08), rgba(103, 29, 207, 0.1));
+        color: #6259ca;
+        font-weight: 600;
+    }
 
-										<!-- Billing Tab -->
-										<div class="tab-pane" id="billing">
-											<div class="text-right">
-												<a class="add-new-btn" href="add-billing">Add Billing</a>
-											</div>
-											<div class="card card-table mb-0">
-												<div class="card-body">
-													<div class="table-responsive">
+    .customer-recent-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border-bottom: 1px solid #f3f4f6;
+    }
 
-														<table class="table table-hover table-center mb-0">
-															<thead>
-																<tr>
-																	<th>Invoice No</th>
-																	<th>Speaker</th>
-																	<th>Amount</th>
-																	<th>Paid On</th>
-																	<th></th>
-																</tr>
-															</thead>
-															<tbody>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0010</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-01.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Ruby Perrin <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td>$450</td>
-																	<td>14 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0009</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-02.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Wayte Barlow <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td>$300</td>
-																	<td>13 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																			<a href="edit-billing" class="btn btn-sm bg-success-light">
-																				<i class="fas fa-edit"></i> Edit
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-danger-light">
-																				<i class="far fa-trash-alt"></i> Delete
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0008</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-03.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Meerta Tyson <span>DJ Reader</span></a>
-																		</h2>
-																	</td>
-																	<td>$150</td>
-																	<td>12 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0007</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-04.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Rhodes Glaser <span>DJ, Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td>$50</td>
-																	<td>11 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0006</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-05.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Dallin Donaldson <span>Artist & DJ</span></a>
-																		</h2>
-																	</td>
-																	<td>$600</td>
-																	<td>10 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0005</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-06.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Mykah Derr <span>DJ, Artist</span></a>
-																		</h2>
-																	</td>
-																	<td>$200</td>
-																	<td>9 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0004</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-07.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Ozella Barbee <span>DJ, Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td>$100</td>
-																	<td>8 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0003</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-08.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Mayeer Busch <span>Mix Engineer</span></a>
-																		</h2>
-																	</td>
-																	<td>$250</td>
-																	<td>7 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0002</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-09.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Farren Blalock <span>DJ, Producer</span></a>
-																		</h2>
-																	</td>
-																	<td>$175</td>
-																	<td>6 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-																<tr>
-																	<td>
-																		<a href="invoice-view">#INV-0001</a>
-																	</td>
-																	<td>
-																		<h2 class="table-avatar">
-																			<a href="speaker-profile" class="avatar avatar-sm mr-2">
-																				<img class="avatar-img rounded-circle" src="assets/img/speakers/speaker-thumb-10.jpg" alt="User Image">
-																			</a>
-																			<a href="speaker-profile">Sissel Browne <span>#0010</span></a>
-																		</h2>
-																	</td>
-																	<td>$550</td>
-																	<td>5 Nov 2020</td>
-																	<td class="text-right">
-																		<div class="table-action">
-																			<a href="javascript:void(0);" class="btn btn-sm bg-primary-light">
-																				<i class="fas fa-print"></i> Print
-																			</a>
-																			<a href="javascript:void(0);" class="btn btn-sm bg-info-light">
-																				<i class="far fa-eye"></i> View
-																			</a>
-																		</div>
-																	</td>
-																</tr>
-															</tbody>
-														</table>
-													</div>
-												</div>
-											</div>
-										</div>
-										<!-- Billing Tab -->
+    .customer-recent-item:last-child { border-bottom: none; }
 
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+    .customer-recent-item__img {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
 
-				</div>
+    .customer-recent-item__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 2px;
+        line-height: 1.3;
+    }
 
-			</div>
-			<!-- /Page Content -->
+    .customer-recent-item__meta {
+        font-size: 12px;
+        color: #6b7280;
+    }
 
-			</div>
-			<!-- Add Event Records Modal -->
-		<div class="modal fade custom-modal" id="add_medical_records">
-			<div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h3 class="modal-title">Event Info</h3>
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-					</div>
-					<form>
-						<div class="modal-body">
-							<div class="form-group">
-								<label>Date</label>
-								<input type="text" class="form-control datetimepicker" value="31-10-2020">
-							</div>
-							<div class="form-group">
-								<label>Event ( Optional )</label>
-								<textarea class="form-control"></textarea>
-							</div>
-							<div class="submit-section text-center">
-								<button type="submit" class="btn btn-primary submit-btn">Submit</button>
-								<button type="button" class="btn btn-secondary submit-btn" data-dismiss="modal">Cancel</button>
-							</div>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-		<!-- /Add Event Records Modal -->
-	   @endsection
+    .customer-tabs .nav-link {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #6b7280;
+        margin-right: 8px;
+        margin-bottom: 8px;
+    }
+
+    .customer-tabs .nav-link.active {
+        background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(103, 29, 207, 1) 100%);
+        color: #fff;
+    }
+
+    .booking-card {
+        border: 1px solid #eef0f6;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 16px;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .booking-card:hover {
+        border-color: rgba(103, 29, 207, 0.2);
+        box-shadow: 0 8px 20px rgba(34, 30, 105, 0.08);
+    }
+
+    .booking-card__top {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+
+    .booking-card__image {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .booking-card__title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .booking-card__subtitle {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .booking-card__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+        margin-bottom: 16px;
+    }
+
+    @media (min-width: 768px) {
+        .booking-card__grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    .booking-card__field span {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #9ca3af;
+        margin-bottom: 2px;
+    }
+
+    .booking-card__field strong {
+        font-size: 13px;
+        color: #111827;
+        font-weight: 600;
+    }
+
+    .booking-card__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 14px;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .booking-card__actions .btn {
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 16px;
+    }
+
+    .booking-card__actions .btn-primary {
+        background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(103, 29, 207, 1) 100%);
+        border: none;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-badge--success { background: #dcfce7; color: #166534; }
+    .status-badge--warning { background: #fef3c7; color: #92400e; }
+    .status-badge--danger { background: #fee2e2; color: #991b1b; }
+    .status-badge--info { background: #dbeafe; color: #1e40af; }
+    .status-badge--secondary { background: #f3f4f6; color: #4b5563; }
+
+    .customer-empty {
+        text-align: center;
+        padding: 48px 24px;
+        color: #6b7280;
+    }
+
+    .customer-empty__icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 28px;
+        color: #9ca3af;
+    }
+
+    .customer-empty h5 {
+        color: #111827;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .alert-dashboard {
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="breadcrumb-bar">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-12 col-12">
+                <nav aria-label="breadcrumb" class="page-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">My Dashboard</li>
+                    </ol>
+                </nav>
+                <h2 class="breadcrumb-title">My Dashboard</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="customer-dashboard__hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1>Welcome back, {{ ucfirst($user->name) }}!</h1>
+                <p>Manage your bookings, download invoices, and view upcoming events in one place.</p>
+            </div>
+            <div class="col-lg-4 text-lg-right mt-3 mt-lg-0 customer-dashboard__hero-actions">
+                <a href="{{ url('/') }}" class="btn btn-light mr-2 mb-2">
+                    <i class="fas fa-search mr-1"></i> Browse Events
+                </a>
+                <a href="{{ url('customer_profile_settings') }}" class="btn btn-outline-light mb-2">
+                    <i class="fas fa-user-cog mr-1"></i> Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content customer-dashboard">
+    <div class="container">
+        @if(session('success'))
+            <div class="alert alert-success alert-dashboard">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dashboard">{{ session('error') }}</div>
+        @endif
+
+        <div class="row mb-4">
+            <div class="col-sm-6 col-xl-3 mb-3 mb-xl-0">
+                <div class="customer-stat-card">
+                    <div class="customer-stat-card__icon customer-stat-card__icon--primary">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div>
+                        <div class="customer-stat-card__label">Total Bookings</div>
+                        <div class="customer-stat-card__value">{{ $totalBookings }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 mb-3 mb-xl-0">
+                <div class="customer-stat-card">
+                    <div class="customer-stat-card__icon customer-stat-card__icon--info">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="customer-stat-card__label">Upcoming Events</div>
+                        <div class="customer-stat-card__value">{{ $upcomingCount }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 mb-3 mb-xl-0">
+                <div class="customer-stat-card">
+                    <div class="customer-stat-card__icon customer-stat-card__icon--success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="customer-stat-card__label">Completed Orders</div>
+                        <div class="customer-stat-card__value">{{ $completedCount }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="customer-stat-card">
+                    <div class="customer-stat-card__icon customer-stat-card__icon--warning">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div>
+                        <div class="customer-stat-card__label">Total Spent</div>
+                        <div class="customer-stat-card__value">{{ number_format((float) $totalSpent, 2) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4 col-xl-3 mb-4">
+                <div class="customer-panel">
+                    <div class="customer-profile-card">
+                        <img src="{{ $profileImage }}" alt="{{ $user->name }}"
+                            class="customer-profile-card__avatar"
+                            onerror="this.onerror=null;this.src='{{ $defaultAvatar }}';">
+                        <h3>{{ ucfirst($user->name) }}</h3>
+                        <div class="customer-profile-card__meta">Customer ID #{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}</div>
+                    </div>
+                    <ul class="customer-profile-card__details">
+                        <li><span>Email</span><span>{{ $user->email }}</span></li>
+                        <li><span>Phone</span><span>{{ $user->phone ?: '—' }}</span></li>
+                    </ul>
+                    <div class="customer-sidebar-nav">
+                        @include('layout.customer_sidebar')
+                    </div>
+                </div>
+
+                @if($last_booking->count())
+                <div class="customer-panel">
+                    <div class="customer-panel__header">
+                        <h4>Recent Bookings</h4>
+                    </div>
+                    @foreach($last_booking as $val)
+                        <div class="customer-recent-item">
+                            @if($val->event_image)
+                                <img src="{{ asset('storage/uploads/events/' . $val->event_image) }}" alt="" class="customer-recent-item__img"
+                                    onerror="this.onerror=null;this.src='{{ asset('assets/img/events/event-01.jpg') }}';">
+                            @else
+                                <img src="{{ asset('assets/img/events/event-01.jpg') }}" alt="" class="customer-recent-item__img">
+                            @endif
+                            <div>
+                                <div class="customer-recent-item__title">{{ $val->event_name }}</div>
+                                <div class="customer-recent-item__meta">
+                                    {{ $val->tag_name }}, {{ $val->event_type_name }}
+                                    @if(!empty($val['event_date']->event_date))
+                                        · {{ date('d M Y', strtotime($val['event_date']->event_date)) }}
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                @endif
+            </div>
+
+            <div class="col-lg-8 col-xl-9">
+                <div class="customer-panel">
+                    <div class="customer-panel__header">
+                        <h4>My Bookings</h4>
+                        <ul class="nav customer-tabs mb-0" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-toggle="tab" href="#all-bookings" role="tab">All Bookings ({{ $totalBookings }})</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#upcoming-bookings" role="tab">Upcoming ({{ $upcomingCount }})</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content p-3 p-md-4">
+                        <div class="tab-pane fade show active" id="all-bookings" role="tabpanel">
+                            @forelse($all_bookings as $val)
+                                @include('partials.customer_booking_card', ['booking' => $val])
+                            @empty
+                                <div class="customer-empty">
+                                    <div class="customer-empty__icon"><i class="fas fa-ticket-alt"></i></div>
+                                    <h5>No bookings yet</h5>
+                                    <p class="mb-3">You haven't purchased any tickets. Explore events and book your first experience.</p>
+                                    <a href="{{ url('/') }}" class="btn btn-primary" style="border-radius:999px;">Browse Events</a>
+                                </div>
+                            @endforelse
+                        </div>
+
+                        <div class="tab-pane fade" id="upcoming-bookings" role="tabpanel">
+                            @forelse($upcomming_booking as $val)
+                                @include('partials.customer_booking_card', ['booking' => $val, 'compact' => true])
+                            @empty
+                                <div class="customer-empty">
+                                    <div class="customer-empty__icon"><i class="fas fa-calendar-alt"></i></div>
+                                    <h5>No upcoming events</h5>
+                                    <p class="mb-0">Your upcoming event bookings will appear here.</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
