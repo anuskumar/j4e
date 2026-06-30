@@ -14,7 +14,7 @@ class CustomerReviewSeeder extends Seeder
                 'customer_name' => 'Shonda Williams',
                 'subtitle' => 'Concert-goer',
                 'rating' => 5,
-                'review_content' => 'I needed last-minute tickets to a sold-out concert and Just 4 Entertainment came through. Checkout was quick, my e-tickets arrived within minutes, and entry at the venue was completely smooth. Highly recommend!',
+                'review_content' => 'I needed last-minute tickets to a sold-out concert and Mastro Tickets came through. Checkout was quick, my e-tickets arrived within minutes, and entry at the venue was completely smooth. Highly recommend!',
                 'sort_order' => 1,
             ],
             [
@@ -42,7 +42,7 @@ class CustomerReviewSeeder extends Seeder
                 'customer_name' => 'Cheryl Bostick',
                 'subtitle' => 'Family Events',
                 'rating' => 5,
-                'review_content' => 'Purchased four tickets for a family day out. The site is easy to navigate, payment felt secure, and we received our tickets right away. Will use Just 4 Entertainment again for our next event.',
+                'review_content' => 'Purchased four tickets for a family day out. The site is easy to navigate, payment felt secure, and we received our tickets right away. Will use Mastro Tickets again for our next event.',
                 'sort_order' => 5,
             ],
             [

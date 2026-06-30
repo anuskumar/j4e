@@ -9,7 +9,7 @@
                             <img src="{{ $appLogoUrl }}" width="220" height="55" alt="Logo">
                         </a>
                         <div class="footer-about-content">
-                            <p>Just 4 Entertainment is a secondary marketplace for live events. All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.</p>
+                            <p>{{ $companySettings?->footerDescription() ?? 'All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.' }}</p>
                             <div class="social-icon">
                                 <ul>
                                     <li><a href="#" class="fabutton" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a></li>
@@ -38,9 +38,18 @@
                     <div class="footer-widget footer-contact">
                         <h2 class="footer-title">Get In Touch</h2>
                         <div class="footer-contact-info">
-                            <p><i class="fas fa-shield-alt"></i> Secure ticket marketplace</p>
-                            <p><i class="fas fa-ticket-alt"></i> Verified sellers &amp; buyers</p>
+                            @if(filled($companySettings?->company_email))
+                            <p><i class="fas fa-envelope"></i> <a href="mailto:{{ $companySettings->company_email }}">{{ $companySettings->company_email }}</a></p>
+                            @endif
+                            @if(filled($companySettings?->contact_number))
+                            <p><i class="fas fa-phone"></i> {{ $companySettings->contact_number }}</p>
+                            @endif
+                            @if(filled($companySettings?->company_website))
+                            <p class="mb-0"><i class="fas fa-globe"></i> <a href="{{ $companySettings->company_website }}" target="_blank" rel="noopener noreferrer">{{ $companySettings->company_website }}</a></p>
+                            @endif
+                            @if(blank($companySettings?->company_email) && blank($companySettings?->contact_number) && blank($companySettings?->company_website))
                             <p class="mb-0"><i class="fas fa-headset"></i> Support available for all orders</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -59,7 +68,7 @@
                     </div>
                     <div class="col-md-6">
                         <div class="copyright-menu text-md-right">
-                            <p class="mb-0">&copy; {{ date('Y') }} Just 4 Entertainment. All rights reserved.</p>
+                            <p class="mb-0">&copy; {{ date('Y') }} {{ $companySettings?->displayName() ?? 'Mastro Tickets' }}. All rights reserved.</p>
                         </div>
                     </div>
                 </div>
@@ -157,6 +166,15 @@
 .site-footer .footer-contact-info i {
     width: 18px;
     color: #c4b5fd;
+}
+
+.site-footer .footer-contact-info a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+}
+
+.site-footer .footer-contact-info a:hover {
+    color: #fff;
 }
 
 .fabutton, .twibutton, .insbutton {

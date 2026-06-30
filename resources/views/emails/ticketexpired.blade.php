@@ -44,7 +44,7 @@
     <img src="https://www.w3schools.com/html/pic_trulli.jpg" alt="Trulli" width="200" height="100">
     <h1>Your Ticket has been Expired</h1>
     <p>Dear {{$resellername}},</p>
-    <p>Your ticket(s) for {{$ticket_name}} are no longer on sale on Just 4 Entertainment</p>
+    <p>Your ticket(s) for {{$ticket_name}} are no longer on sale on Mastro Tickets</p>
     <p>You can download your unsold e-tickets and they can be used to attend the event.</p>
 
     <!--<ul>-->

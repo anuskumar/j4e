@@ -448,7 +448,7 @@
             </div>
             <div class="alert alert-success success-alert d-flex align-items-center mb-4" role="alert">
                 <i class="bi bi-check-circle me-2 fs-5"></i>
-                <span>Unlike other sites, it is always free to list your tickets for sale on Just 4 Entertainment</span>
+                <span>Unlike other sites, it is always free to list your tickets for sale on Mastro Tickets</span>
             </div>
 
             <!-- Enter Face Value Section -->

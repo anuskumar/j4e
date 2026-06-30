@@ -4,7 +4,7 @@
     <div class="customer-site-banner__trust">
         <div class="container text-center">
             <span class="customer-site-banner__trust-track">
-                Just 4 Entertainment is a secondary marketplace for live events. All tickets are 100% guaranteed and secure!
+                {{ $companySettings?->bannerMessage() ?? 'All tickets are 100% guaranteed and secure.' }}
             </span>
         </div>
     </div>

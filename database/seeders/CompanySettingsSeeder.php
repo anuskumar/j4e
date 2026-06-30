@@ -19,10 +19,10 @@ class CompanySettingsSeeder extends Seeder
             ['id' => 1],
             [
                 'user_id' => $admin?->id,
-                'company_name' => 'Just 4 Entertainment',
+                'company_name' => 'Mastro Tickets',
                 'company_email' => 'info@just4entertainment.com',
-                'company_website' => 'https://just4entertainment.com',
-                'company_footer_text' => 'Just 4 Entertainment is a secondary marketplace for live events.',
+                'company_website' => 'https://mastrotickets.com/',
+                'company_footer_text' => 'Mastro Tickets is a secondary marketplace for live events.',
                 'company_about' => 'All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.',
                 'contact_number' => '+1 907 275 0477',
                 'company_logo' => CompanySettings::DEFAULT_LOGO,

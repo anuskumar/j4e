@@ -3,7 +3,7 @@
     <div class="container mt-5">
         <div class="text-center mt-4">
             <h1>Sell Your Tickets</h1>
-            <p>Just 4 Entertainment is the world’s largest secondary marketplace for tickets to live events</p>
+            <p>Mastro Tickets is the world’s largest secondary marketplace for tickets to live events</p>
         </div>
         <div class="text-center mt-5">
             <div class="input-group mx-auto" style="max-width: 768px;">

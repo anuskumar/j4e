@@ -19,6 +19,42 @@ class CompanySettings extends Model
         return static::mediaUrl(null, 'company_logo');
     }
 
+    public static function current(): ?self
+    {
+        try {
+            return static::first();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function displayName(): string
+    {
+        return $this->company_name ?: 'Mastro Tickets';
+    }
+
+    public function bannerMessage(): string
+    {
+        $message = trim(collect([$this->company_footer_text, $this->company_about])
+            ->filter()
+            ->implode(' '));
+
+        return $message !== '' ? $message : 'All tickets are 100% guaranteed and secure.';
+    }
+
+    public function footerDescription(): string
+    {
+        if (filled($this->company_about)) {
+            return $this->company_about;
+        }
+
+        if (filled($this->company_footer_text)) {
+            return $this->company_footer_text;
+        }
+
+        return 'All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.';
+    }
+
     public static function mediaUrl(?self $settings = null, string $field = 'company_logo'): string
     {
         try {

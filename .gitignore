@@ -19,8 +19,6 @@ yarn-error.log
 /.vscode
 .DS_Store
 
-# User-uploaded media (keep folder structure via .gitkeep)
-/storage/uploads/**/*
-!/storage/uploads/**/.gitkeep
-/storage/app/public/uploads/**/*
-!/storage/app/public/uploads/**/.gitkeep
+# User-uploaded media
+/storage/uploads/**
+!/storage/uploads/.gitkeep
