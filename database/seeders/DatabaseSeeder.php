@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ResellerSeeder::class,
             CustomerSeeder::class,
             CompanySettingsSeeder::class,
+            CountrySeeder::class,
             VenueTypeSeeder::class,
             VenueSeeder::class,
             TicketTypeSeeder::class,
