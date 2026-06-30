@@ -27,23 +27,202 @@
     $profileImage = $authdata->profile
         ? asset('storage/uploads/images/' . $authdata->profile)
         : ($isReseller ? asset('assets/img/customers/customer.jpg') : asset('admin_assets/img/faces/6.jpg'));
+    $bankDetailsComplete = $isReseller ? \App\Models\Bankmodel::isCompleteForReseller(Auth::id()) : true;
 @endphp
 
+@if ($isReseller)
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+@endpush
+@endif
+
 <style>
+    .reseller-profile-page {
+        max-width: 1140px;
+        margin: 0 auto;
+    }
+
+    .reseller-profile-page .profile-sidebar {
+        border: 1px solid #e8ebf3;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+    }
+
+    .reseller-profile-page .profile-sidebar__banner {
+        background: linear-gradient(135deg, #7e0982 0%, #5c0660 100%);
+        padding: 2rem 1.5rem 3.5rem;
+        text-align: center;
+    }
+
+    .reseller-profile-page .profile-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        object-fit: cover;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+    .reseller-profile-page .profile-sidebar__body {
+        margin-top: -2rem;
+        padding: 0 1.5rem 1.5rem;
+        text-align: center;
+    }
+
+    .reseller-profile-page .profile-sidebar__name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        color: #1a1a2e;
+    }
+
+    .reseller-profile-page .profile-sidebar__meta {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .reseller-profile-page .profile-info-list {
+        text-align: left;
+        border-top: 1px solid #eef0f4;
+        padding-top: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .reseller-profile-page .profile-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.65rem 0;
+        font-size: 0.9rem;
+        color: #374151;
+    }
+
+    .reseller-profile-page .profile-info-item i {
+        color: #7e0982;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .reseller-profile-page .profile-main-card {
+        border: 1px solid #e8ebf3;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .reseller-profile-page .nav-tabs {
+        border-bottom: 1px solid #e8ebf3;
+        padding: 0 1rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .reseller-profile-page .nav-tabs .nav-link {
+        border: none;
+        color: #6b7280;
+        padding: 1rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.92rem;
+        white-space: nowrap;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -1px;
+        background: transparent;
+    }
+
+    .reseller-profile-page .nav-tabs .nav-link:hover {
+        color: #7e0982;
+    }
+
+    .reseller-profile-page .nav-tabs .nav-link.active {
+        color: #7e0982;
+        border-bottom-color: #7e0982;
+        background: transparent;
+    }
+
+    .reseller-profile-page .tab-content {
+        padding: 1.5rem;
+    }
+
+    .reseller-profile-page .section-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #eef0f4;
+    }
+
+    .reseller-profile-page .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+
+    .reseller-profile-page .form-control:focus,
+    .reseller-profile-page .form-select:focus {
+        border-color: #7e0982;
+        box-shadow: 0 0 0 0.2rem rgba(126, 9, 130, 0.15);
+    }
+
+    .reseller-profile-page .btn-primary {
+        background: #7e0982;
+        border-color: #7e0982;
+        font-weight: 600;
+        padding: 0.55rem 1.5rem;
+    }
+
+    .reseller-profile-page .btn-primary:hover,
+    .reseller-profile-page .btn-primary:focus {
+        background: #6a0770;
+        border-color: #6a0770;
+    }
+
+    .reseller-profile-page .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+    }
+
+    .reseller-profile-page .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+        padding-left: 12px;
+        color: #212529;
+    }
+
+    .reseller-profile-page .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+
+    .reseller-profile-page .select2-container {
+        width: 100% !important;
+    }
+
+    @media (max-width: 991.98px) {
+        .reseller-profile-page .profile-sidebar {
+            margin-bottom: 1.25rem;
+        }
+    }
+
+    /* Admin layout fallback */
     .profile-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #7e0982 0%, #5c0660 100%);
         padding: 2rem;
         border-radius: 10px;
         margin-bottom: 2rem;
         color: white;
     }
-    .profile-avatar {
+    .profile-header .profile-avatar {
         width: 120px;
         height: 120px;
         border-radius: 50%;
         border: 4px solid white;
         object-fit: cover;
-        margin-bottom: 1rem;
     }
     .profile-card {
         border: none;
@@ -57,72 +236,88 @@
         padding: 1rem 1.5rem;
         border-radius: 10px 10px 0 0;
     }
-    .nav-tabs .nav-link {
-        border: none;
-        color: #6c757d;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-    }
-    .nav-tabs .nav-link.active {
-        color: #667eea;
-        border-bottom: 3px solid #667eea;
-        background: transparent;
-    }
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.5rem;
-    }
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        padding: 0.6rem 2rem;
-        font-weight: 500;
-    }
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-    .info-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e9ecef;
-    }
-    .info-item:last-child {
-        border-bottom: none;
-    }
-    .info-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        font-size: 1.2rem;
-    }
-    .info-icon.primary {
-        background: rgba(102, 126, 234, 0.1);
-        color: #667eea;
-    }
-    .info-icon.success {
-        background: rgba(40, 167, 69, 0.1);
-        color: #28a745;
-    }
-    .info-icon.info {
-        background: rgba(23, 162, 184, 0.1);
-        color: #17a2b8;
-    }
 </style>
 
-<div class="container-fluid py-4">
-    <!-- Profile Header -->
+<div class="{{ $isReseller ? 'container py-4 reseller-profile-page' : 'container-fluid py-4' }}">
+    @if ($isReseller)
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="profile-sidebar">
+                <div class="profile-sidebar__banner">
+                    <img src="{{ $profileImage }}" alt="Profile" class="profile-avatar" id="profile-avatar-preview"
+                        onerror="this.src='{{ asset('assets/img/customers/customer.jpg') }}'">
+                </div>
+                <div class="profile-sidebar__body">
+                    <h3 class="profile-sidebar__name">{{ $authdata->name }}</h3>
+                    <p class="profile-sidebar__meta mb-0">{{ $accountLabel }}</p>
+
+                    @if (!$bankDetailsComplete)
+                        <div class="alert alert-warning py-2 px-3 mt-3 mb-0 text-start small">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Bank details incomplete
+                        </div>
+                    @endif
+
+                    <div class="profile-info-list">
+                        <div class="profile-info-item">
+                            <i class="bi bi-envelope"></i>
+                            <span>{{ $authdata->email }}</span>
+                        </div>
+                        @if ($authdata->phone)
+                        <div class="profile-info-item">
+                            <i class="bi bi-telephone"></i>
+                            <span>{{ $authdata->phone }}</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="profile-main-card">
+                @if ($errors->any())
+                    <div class="alert alert-danger m-3 mb-0">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show m-3 mb-0" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="profile-tab" data-bs-toggle="tab" href="#profile" role="tab">
+                            <i class="bi bi-person me-1"></i>Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="password-tab" data-bs-toggle="tab" href="#password" role="tab">
+                            <i class="bi bi-lock me-1"></i>Password
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="bank-tab" data-bs-toggle="tab" href="#bank" role="tab">
+                            <i class="bi bi-bank me-1"></i>Bank Details
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab">
+                            <i class="bi bi-geo-alt me-1"></i>Address
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+    @else
     <div class="profile-header text-center">
         <div class="d-flex justify-content-center mb-3 position-relative">
             <img src="{{ $profileImage }}" alt="Profile" class="profile-avatar" id="profile-avatar-preview"
@@ -132,7 +327,6 @@
         <p class="mb-0 opacity-75">{{ $accountLabel }}</p>
     </div>
 
-    <!-- Tabs Navigation -->
     <div class="card profile-card">
         <div class="card-body p-0">
             <ul class="nav nav-tabs border-bottom" role="tablist">
@@ -146,29 +340,23 @@
                         <i class="fe fe-lock me-2"></i>Change Password
                     </a>
                 </li>
-                @if ($isReseller)
-                <li class="nav-item">
-                    <a class="nav-link" id="bank-tab" data-bs-toggle="tab" href="#bank" role="tab">
-                        <i class="fe fe-credit-card me-2"></i>Bank Details
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab">
-                        <i class="fe fe-map-pin me-2"></i>Address Details
-                    </a>
-                </li>
-                @endif
             </ul>
 
             <div class="tab-content p-4">
+    @endif
                 <!-- Profile Tab -->
                 <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                    @if (!$isReseller)
                     <div class="card profile-card">
                         <div class="card-header">
                             <h5 class="mb-0"><i class="fe fe-user me-2"></i>Personal Information</h5>
                         </div>
                         <div class="card-body">
-                            @if ($errors->any())
+                    @else
+                    <h5 class="section-title"><i class="bi bi-person me-2"></i>Personal Information</h5>
+                    @endif
+
+                            @if (!$isReseller && $errors->any())
                                 <div class="alert alert-danger">
                                     <ul class="mb-0">
                                         @foreach ($errors->all() as $error)
@@ -178,7 +366,7 @@
                                 </div>
                             @endif
 
-                            @if(session('success'))
+                            @if(!$isReseller && session('success'))
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     {{ session('success') }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -189,419 +377,112 @@
                                 @csrf
                                 <input type="hidden" name="authid" value="{{ $authdata->id }}">
 
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                               name="name" placeholder="Enter your full name" 
-                                               value="{{ old('name', $authdata->name) }}" required>
-                                        @error('name')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('name') is-invalid @enderror" 
+                                           name="name" placeholder="Enter your full name" 
+                                           value="{{ old('name', $authdata->name) }}" required>
+                                    @error('name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="email" class="form-control @error('company_email') is-invalid @enderror" 
-                                               name="company_email" placeholder="Enter your email" 
-                                               value="{{ old('company_email', $authdata->email) }}" required>
-                                        @error('company_email')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control @error('company_email') is-invalid @enderror" 
+                                           name="company_email" placeholder="Enter your email" 
+                                           value="{{ old('company_email', $authdata->email) }}" required>
+                                    @error('company_email')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Contact Number @if($phoneRequired)<span class="text-danger">*</span>@endif</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('contact_number') is-invalid @enderror" 
-                                               name="contact_number" placeholder="Enter your phone number" 
-                                               value="{{ old('contact_number', $authdata->phone) }}" {{ $phoneRequired ? 'required' : '' }}>
-                                        @error('contact_number')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contact Number @if($phoneRequired)<span class="text-danger">*</span>@endif</label>
+                                    <input type="text" class="form-control @error('contact_number') is-invalid @enderror" 
+                                           name="contact_number" placeholder="Enter your phone number" 
+                                           value="{{ old('contact_number', $authdata->phone) }}" {{ $phoneRequired ? 'required' : '' }}>
+                                    @error('contact_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Profile Image</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="file" class="form-control @error('profile') is-invalid @enderror" 
-                                               name="profile" id="profile" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                                        <small class="text-muted">Accepted formats: JPG, PNG, GIF, WEBP. Max size: 2MB</small>
-                                        @error('profile')
-                                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                                        @enderror
-                                    </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Profile Image</label>
+                                    <input type="file" class="form-control @error('profile') is-invalid @enderror" 
+                                           name="profile" id="profile" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
+                                    <small class="text-muted">Accepted formats: JPG, PNG, GIF, WEBP. Max size: 2MB</small>
+                                    @error('profile')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-9 offset-md-3">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fe fe-save me-2"></i>Update Profile
-                                        </button>
-                                    </div>
-                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>Update Profile
+                                </button>
                             </form>
+                    @if (!$isReseller)
                         </div>
                     </div>
+                    @endif
                 </div>
 
                 <!-- Password Tab -->
                 <div class="tab-pane fade" id="password" role="tabpanel">
+                    @if (!$isReseller)
                     <div class="card profile-card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fe fe-lock me-2"></i>Change Password</h5>
-                        </div>
+                        <div class="card-header"><h5 class="mb-0"><i class="fe fe-lock me-2"></i>Change Password</h5></div>
                         <div class="card-body">
-                            @if(session('password_success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    {{ session('password_success') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
-
-                            @if(session('password_error'))
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    {{ session('password_error') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
-
-                            <form action="{{ route('reseller.passwordupdate') }}" method="POST" name="passwordForm" onsubmit="return validateForm()">
-                                @csrf
-                                <input type="hidden" name="id" value="{{ $authdata->id }}">
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Current Password <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="password" class="form-control @error('oldpassword') is-invalid @enderror" 
-                                               name="oldpassword" placeholder="Enter your current password" required>
-                                        @error('oldpassword')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">New Password <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="password" class="form-control @error('newpassword') is-invalid @enderror" 
-                                               name="newpassword" placeholder="Enter your new password" required>
-                                        <small class="text-muted">Password must be at least 8 characters long</small>
-                                        @error('newpassword')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="password" class="form-control @error('confirm_password') is-invalid @enderror" 
-                                               name="confirm_password" placeholder="Confirm your new password" required>
-                                        @error('confirm_password')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-9 offset-md-3">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fe fe-key me-2"></i>Change Password
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
+                    @else
+                    <h5 class="section-title"><i class="bi bi-lock me-2"></i>Change Password</h5>
+                    @endif
+                            @include('reseller.partials.profile_password_form')
+                    @if (!$isReseller)
                         </div>
                     </div>
+                    @endif
                 </div>
 
-                <!-- Bank Details Tab -->
                 @if ($isReseller)
+                <!-- Bank Details Tab -->
                 <div class="tab-pane fade" id="bank" role="tabpanel">
-                    <div class="card profile-card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fe fe-credit-card me-2"></i>Bank Details</h5>
+                    <h5 class="section-title"><i class="bi bi-bank me-2"></i>Bank Details</h5>
+                    @if (!$bankDetailsComplete)
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Please complete your bank country, IBAN, and BIC/SWIFT code to receive payouts.
                         </div>
-                        <div class="card-body">
-                            @if(session('bank_success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    {{ session('bank_success') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
-
-                            <form action="{{ route('reseller.bankdataupdate') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="id" value="{{ $authdata->id }}">
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Bank Name</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                               name="name" placeholder="Enter bank name" 
-                                               value="{{ old('name', $bankData->bank_name ?? '') }}">
-                                        @error('name')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Bank Email</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="email" class="form-control @error('bankname') is-invalid @enderror" 
-                                               name="bankname" placeholder="Enter bank email" 
-                                               value="{{ old('bankname', $bankData->bank_email ?? '') }}">
-                                        @error('bankname')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Bank Country <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select name="bank_country" class="form-control select2-select @error('bank_country') is-invalid @enderror" required>
-                                            <option value="">Select Country</option>
-                                            @foreach($country as $loc)
-                                                <option value="{{ $loc->id }}" 
-                                                    {{ old('bank_country', $bankData->bank_country ?? '') == $loc->id ? 'selected' : '' }}>
-                                                    {{ $loc->country_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('bank_country')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Account IBAN <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('bankaccno') is-invalid @enderror" 
-                                               name="bankaccno" placeholder="Enter IBAN number" 
-                                               value="{{ old('bankaccno', $bankData->accnt_no ?? '') }}" required>
-                                        @error('bankaccno')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">BIC/SWIFT Code <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('bankbic') is-invalid @enderror" 
-                                               name="bankbic" placeholder="Enter BIC/SWIFT code" 
-                                               value="{{ old('bankbic', $bankData->bic ?? '') }}" required>
-                                        @error('bankbic')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Comments</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <textarea class="form-control @error('bankcomments') is-invalid @enderror" 
-                                                  name="bankcomments" rows="3" 
-                                                  placeholder="Enter any additional comments">{{ old('bankcomments', $bankData->comments ?? '') }}</textarea>
-                                        @error('bankcomments')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-9 offset-md-3">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fe fe-save me-2"></i>Update Bank Details
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    @endif
+                            @include('reseller.partials.profile_bank_form')
                 </div>
 
                 <!-- Address Tab -->
                 <div class="tab-pane fade" id="address" role="tabpanel">
-                    <div class="card profile-card">
-                        <div class="card-header">
-                            <h5 class="mb-0"><i class="fe fe-map-pin me-2"></i>Address Details</h5>
-                        </div>
-                        <div class="card-body">
-                            @if(session('address_success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    {{ session('address_success') }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            @endif
-
-                            <form action="{{ route('reseller.addressdataupdate') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="id" value="{{ $authdata->id }}">
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Full Name</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                               name="name" placeholder="Enter full name" 
-                                               value="{{ old('name', $adreesdata->name ?? '') }}">
-                                        @error('name')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Address Line 1</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('address_line1') is-invalid @enderror" 
-                                               name="address_line1" placeholder="Street address, P.O. box" 
-                                               value="{{ old('address_line1', $adreesdata->address_line1 ?? '') }}">
-                                        @error('address_line1')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Address Line 2</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('address_line2') is-invalid @enderror" 
-                                               name="address_line2" placeholder="Apartment, suite, unit, building, floor, etc." 
-                                               value="{{ old('address_line2', $adreesdata->address_line2 ?? '') }}">
-                                        @error('address_line2')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Country <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select name="country" id="country" class="form-control select2-select @error('country') is-invalid @enderror" required>
-                                            <option value="">Select Country</option>
-                                            @foreach($country as $loc)
-                                                <option value="{{ $loc->id }}" 
-                                                    {{ old('country', $adreesdata->country ?? '') == $loc->id ? 'selected' : '' }}>
-                                                    {{ $loc->country_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('country')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">City <span class="text-danger">*</span></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select name="city" id="city" class="form-control select2-select @error('city') is-invalid @enderror" required>
-                                            <option value="">Select City</option>
-                                        </select>
-                                        @error('city')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Postal Code</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('postcode') is-invalid @enderror" 
-                                               name="postcode" placeholder="Enter postal code" 
-                                               value="{{ old('postcode', $adreesdata->postcode ?? '') }}">
-                                        @error('postcode')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">Phone Number</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control @error('phone') is-invalid @enderror" 
-                                               name="phone" placeholder="Enter phone number" 
-                                               value="{{ old('phone', $adreesdata->phone ?? '') }}">
-                                        @error('phone')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-9 offset-md-3">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fe fe-save me-2"></i>Update Address
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <h5 class="section-title"><i class="bi bi-geo-alt me-2"></i>Address Details</h5>
+                            @include('reseller.partials.profile_address_form')
                 </div>
                 @endif
             </div>
+    @if ($isReseller)
+            </div>
         </div>
     </div>
+    @else
+        </div>
+    </div>
+    @endif
 </div>
 
 @if ($isReseller)
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+@endpush
 @endif
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const profileInput = document.getElementById('profile');
         const profilePreview = document.getElementById('profile-avatar-preview');
-        const fallbackImage = @json(asset('admin_assets/img/faces/6.jpg'));
+        const fallbackImage = @json($isReseller ? asset('assets/img/customers/customer.jpg') : asset('admin_assets/img/faces/6.jpg'));
 
         if (profileInput && profilePreview) {
             profileInput.addEventListener('change', function () {
@@ -623,19 +504,27 @@
                 reader.readAsDataURL(file);
             });
         }
+
+        @if ($isReseller)
+        const hash = window.location.hash;
+        if (hash) {
+            const tabTrigger = document.querySelector(`a[href="${hash}"]`);
+            if (tabTrigger) {
+                bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+            }
+        }
+        @endif
     });
 
     @if ($isReseller)
     jQuery(document).ready(function ($) {
-        // Initialize Select2
         $('.select2-select').select2({
-            theme: 'bootstrap-5',
-            width: '100%'
+            width: '100%',
+            dropdownParent: $('.reseller-profile-page')
         });
 
         var selectedCityId = {{ $adreesdata->city ?? 0 }};
 
-        // Load cities when country changes
         $('#country').on('change', function () {
             var countryId = $(this).val();
             if (countryId) {
@@ -647,7 +536,6 @@
                     success: function (data) {
                         $('#city').empty().append('<option value="">Select City</option>');
                         if (Array.isArray(data) && data.length > 0) {
-                            // Check if data is array of objects with id and text/name properties
                             if (data[0].id !== undefined) {
                                 $.each(data, function (index, city) {
                                     var cityId = city.id;
@@ -656,7 +544,6 @@
                                     $('#city').append('<option value="' + cityId + '" ' + selected + '>' + cityName + '</option>');
                                 });
                             } else {
-                                // If data is object with id as key
                                 $.each(data, function (id, name) {
                                     var selected = (id == selectedCityId) ? 'selected' : '';
                                     $('#city').append('<option value="' + id + '" ' + selected + '>' + name + '</option>');
@@ -674,7 +561,6 @@
             }
         });
 
-        // Trigger change on page load if country is selected
         if ($('#country').val()) {
             $('#country').trigger('change');
         }

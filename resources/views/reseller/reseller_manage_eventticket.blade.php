@@ -2,199 +2,535 @@
 $val = $data[0];
 ?>
 @extends('layouts.reseller_app')
+
+@push('styles')
+<style>
+    .listing-manage-page {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .listing-manage-page .page-card {
+        background: #fff;
+        border: 1px solid #e8ebf3;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .listing-manage-page .page-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #eef0f4;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .listing-manage-page .listing-id {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #7e0982;
+        margin-bottom: 0.25rem;
+    }
+
+    .listing-manage-page .listing-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+    }
+
+    .listing-manage-page .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+    }
+
+    .listing-manage-page .meta-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin: 1rem 0 0;
+    }
+
+    .listing-manage-page .meta-chip {
+        background: #f8f9fc;
+        border: 1px solid #e8ebf3;
+        border-radius: 8px;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.875rem;
+        color: #4b5563;
+    }
+
+    .listing-manage-page .meta-chip strong {
+        color: #111827;
+        font-weight: 600;
+    }
+
+    .listing-manage-page .section-heading {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 0.35rem;
+    }
+
+    .listing-manage-page .section-subtext {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .listing-manage-page .stats-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .listing-manage-page .stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .listing-manage-page .stat-pill--sold {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #bbf7d0;
+    }
+
+    .listing-manage-page .stat-pill--available {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+    }
+
+    .listing-manage-page .tickets-table-wrap {
+        border: 1px solid #e8ebf3;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .listing-manage-page .tickets-table {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+    }
+
+    .listing-manage-page .tickets-table thead th {
+        background: #f8f9fc;
+        color: #374151;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid #e8ebf3;
+        white-space: nowrap;
+        padding: 0.85rem 0.75rem;
+    }
+
+    .listing-manage-page .tickets-table tbody td {
+        vertical-align: middle;
+        padding: 0.85rem 0.75rem;
+        border-color: #eef0f4;
+        color: #374151;
+    }
+
+    .listing-manage-page .tickets-table tbody tr:hover {
+        background: #fafbff;
+    }
+
+    .listing-manage-page .tickets-table tbody tr.is-sold {
+        background: #f6fffb;
+    }
+
+    .listing-manage-page .sold-details {
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: #4b5563;
+    }
+
+    .listing-manage-page .sold-details strong {
+        color: #111827;
+    }
+
+    .listing-manage-page .action-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .listing-manage-page .btn-brand {
+        background: #7e0982;
+        border-color: #7e0982;
+        color: #fff;
+    }
+
+    .listing-manage-page .btn-brand:hover {
+        background: #6a0770;
+        border-color: #6a0770;
+        color: #fff;
+    }
+
+    .listing-manage-page .sidebar-card {
+        background: #fff;
+        border: 1px solid #e8ebf3;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .listing-manage-page .sidebar-card__header {
+        padding: 0.9rem 1.1rem;
+        background: #f8f9fc;
+        border-bottom: 1px solid #eef0f4;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #1a1a2e;
+    }
+
+    .listing-manage-page .sidebar-card__body {
+        padding: 1rem 1.1rem;
+    }
+
+    .listing-manage-page .sidebar-item {
+        margin-bottom: 0.85rem;
+    }
+
+    .listing-manage-page .sidebar-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .listing-manage-page .sidebar-item__label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #9ca3af;
+        margin-bottom: 0.2rem;
+    }
+
+    .listing-manage-page .sidebar-item__value {
+        font-size: 0.9rem;
+        color: #374151;
+        margin: 0;
+    }
+
+    .listing-manage-page .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eef0f4;
+        font-size: 0.9rem;
+    }
+
+    .listing-manage-page .price-row:last-child {
+        border-bottom: none;
+    }
+
+    .listing-manage-page .price-row strong {
+        color: #111827;
+    }
+
+    @media (max-width: 767.98px) {
+        .listing-manage-page .tickets-table-wrap {
+            overflow-x: auto;
+        }
+
+        .listing-manage-page .tickets-table {
+            min-width: 900px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 
-    <div class="container mt-3">
-        <div class="row">
-            <div class="col-md-3">
-                <h6>Listing ID: {{ $val['unique_id'] }}</h6>
+@php
+    $listingStatus = $val['is_admin_approved'] != 1
+        ? ['label' => 'Waiting for Approval', 'class' => 'text-bg-warning']
+        : ($val['ticket_status'] == 1
+            ? ['label' => 'Active', 'class' => 'text-bg-success']
+            : ['label' => 'Paused', 'class' => 'text-bg-secondary']);
+@endphp
 
+<div class="container listing-manage-page py-2">
+    <div class="page-card mb-4">
+        <div class="page-header">
+            <div>
+                <div class="listing-id">Listing ID: {{ strtoupper($val['unique_id'] ?? '') }}</div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h1 class="listing-title">{{ $val['ticket_type_name'] }}</h1>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openTicketTypechangeModal()" title="Change ticket type">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <span class="status-badge badge {{ $listingStatus['class'] }}">{{ $listingStatus['label'] }}</span>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-chip"><strong>Event:</strong> {{ ucfirst($val['event_name']) }}</div>
+                    <div class="meta-chip"><strong>Seats:</strong> {{ $val['no_of_tickets'] }} tickets</div>
+                    <div class="meta-chip"><strong>Section:</strong> {{ $val['seating_type_name'] }}</div>
+                    <div class="meta-chip"><strong>Row:</strong> {{ $val['row'] ?: '—' }}</div>
+                </div>
             </div>
-            <div class="col-md-3">
-                  @if ($val['is_admin_approved'] == 1)
-                                               @if($val['ticket_status'] == 1)
-                                                <span class="badge text-bg-success">Active</span>
-                                                @else
-                                                    <span class="badge text-bg-primary">Paused</span>
-                                                @endif
-                                            @else
-                                            <span class="badge text-bg-primary">Waiting for Approval</span>
-                                            @endif
-            </div>
-            <div class="col-md-3">
-
-            </div>
-            <div class="col-md-3">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ route('reseller.mylistings') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Listings
+                </a>
                 @if($val['is_admin_approved'] <> 1)
-                <button class="btn btn-danger" onclick="confirmDelete({{ $val['id'] }})">Delete Listing</button>
-                <form id="delete-form-{{ $val['id'] }}" action="{{ route('ticket.listing.destroy', $val['id']) }}" method="POST" style="display: none;">
-                            @csrf
-                            @method('DELETE')
-                        </form>
+                    <button class="btn btn-outline-danger" onclick="confirmDelete({{ $val['id'] }})">
+                        <i class="bi bi-trash me-1"></i> Delete Listing
+                    </button>
+                    <form id="delete-form-{{ $val['id'] }}" action="{{ route('ticket.listing.destroy', $val['id']) }}" method="POST" class="d-none">
+                        @csrf
+                        @method('DELETE')
+                    </form>
                 @endif
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-12 d-flex">
-                <h3>{{ $val['ticket_type_name'] }}</h3>  &nbsp;<button type="button" class="btn btn-light" onclick="openTicketTypechangeModal()">
-           <i class="fa fa-pencil"></i>
-           </button>
+    </div>
 
-            </div>
-
-        </div>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="alert alert-light" role="alert">
-               <h5 class="text-danger"> Important Notification </h5>
-               <div class="text-muted">
-                <h6>There are some corrections needed on your profile that might effect your listing. Please Update your profile </h6>
-               </div>
+    @if (!empty($bankDetailsIncomplete))
+        <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                <div>
+                    <strong>Bank details incomplete</strong>
+                    <p class="mb-2 small">Your bank details are incomplete. This may affect your listing and payouts.</p>
+                    <a href="{{ route('reseller.profile') }}#bank" class="btn btn-sm btn-brand">Update Bank Details</a>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-8">
-               <div class="alert alert-light" role="alert">
-                <b>Numbered Seats:</b> {{ $val['no_of_tickets'].' Ticket[s]' }}
-               </div>
-               <span><h3>
-               <b class="text-primary"> {{ ucfirst($val['event_name']) }}</b>
-            </h3></span>
-            <h6><b>Tickets</b></h6>
-            <p>
-                All Seats need to be next to each other (adjesent). For unconfirmed seats, you need to create  a new listing.Breaking this rule can lead to charge becks of total sale price
-            </p>
-           <b>Section: <span class="text-muted">  {{ $val['seating_type_name'] }}</span></b>
-           &nbsp;
-           &nbsp;
-           &nbsp;
-           <b>Row: <span class="text-muted"> {{ $val['row']  }}</span></b>
-           &nbsp;
-           &nbsp;
-           {{-- <button type="button" class="btn btn-light">
-           <i class="fa fa-pencil"></i>
-           </button> --}}
-           <br>
-           <div class="card border-dark mb-3 mt-3" style="max-width: 50rem;">
-                <div class="card-body">
-                    <h6 class="card-title">Listed Tickets</h6>
-                    <table class="table table-borderd">
-                        <tr>
-                          <td>  <b>TYPE</b></td>
-                            <td><b>SERIAL</b></td>
-                            <td><b>SEAT NO.</b></td>
-                            <td><b>ACTION</b></td>
-                            <td><b>ON SALE</b></td></b>
-                            <td><b>Ticket</b></td></b>
-                        </tr>
-                        @foreach ($data['tickets'] as $tickets)
-                           <tr>
-                            <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
-                            <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
-                            <td><b> <span class="text-muted">{{ $tickets['seat_number'] }}</span></b></td>
-                            <td><button class="btn btn-primary btn-sm" onclick="editTicketData({{ $tickets['id'] }})"><b>Add Seat</b></button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteGeneratedTickets({{ $tickets['id'] }})"><b>Delete</b></button></td>
-                            <td>
-                                  <div class="form-check form-switch">
-                                        <input class="form-check-input"
+    @endif
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="page-card p-3 p-md-4">
+                <h2 class="section-heading">Listed Tickets</h2>
+                <p class="section-subtext">
+                    All seats must be next to each other (adjacent). For unconfirmed seats, create a new listing. Breaking this rule can lead to chargebacks of the total sale price.
+                </p>
+
+                <div class="stats-row">
+                    <span class="stat-pill stat-pill--sold">
+                        <i class="bi bi-check-circle"></i> {{ $data['sold_ticket_count'] ?? 0 }} Sold
+                    </span>
+                    <span class="stat-pill stat-pill--available">
+                        <i class="bi bi-ticket-perforated"></i> {{ $data['available_ticket_count'] ?? 0 }} Available
+                    </span>
+                </div>
+
+                <div class="tickets-table-wrap">
+                    <table class="table tickets-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Serial</th>
+                                <th>Seat</th>
+                                <th>Status</th>
+                                <th>Sold Details</th>
+                                <th>Actions</th>
+                                <th>On Sale</th>
+                                <th>File</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @forelse ($data['tickets'] as $tickets)
+                            @php
+                                $isSold = !empty($tickets['is_sold']);
+                                $outsideSell = $tickets['outside_sell'] ?? null;
+                                $isOutsideSell = !empty($outsideSell);
+                            @endphp
+                            <tr class="{{ $isSold ? 'is-sold' : '' }}">
+                                <td>{{ $tickets['seating_type_name'] ?? '—' }}</td>
+                                <td><span class="fw-semibold">{{ $tickets['ticket_serial_number'] ?? '—' }}</span></td>
+                                <td>{{ $tickets['seat_number'] ?? '—' }}</td>
+                                <td>
+                                    @if ($isOutsideSell)
+                                        <span class="badge rounded-pill text-bg-info">Sold Outside</span>
+                                    @elseif ($isSold)
+                                        <span class="badge rounded-pill text-bg-success">Sold</span>
+                                    @else
+                                        <span class="badge rounded-pill text-bg-light text-dark border">Available</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($isOutsideSell)
+                                        <div class="sold-details">
+                                            <div><strong>{{ $outsideSell['name'] ?? 'N/A' }}</strong></div>
+                                            @if (!empty($outsideSell['phone']))
+                                                <div><i class="bi bi-telephone me-1"></i>{{ $outsideSell['phone'] }}</div>
+                                            @endif
+                                            @if (!empty($outsideSell['payment_mode']))
+                                                <div>Payment: {{ $outsideSell['payment_mode'] }}</div>
+                                            @endif
+                                            @if (!empty($outsideSell['date']))
+                                                <div>{{ date('d M Y', strtotime($outsideSell['date'])) }}</div>
+                                            @endif
+                                        </div>
+                                    @elseif ($isSold)
+                                        <div class="sold-details">
+                                            @if (!empty($tickets['customer_name']))
+                                                <div><strong>{{ $tickets['customer_name'] }}</strong></div>
+                                            @endif
+                                            @if (!empty($tickets['customer_email']))
+                                                <div><i class="bi bi-envelope me-1"></i>{{ $tickets['customer_email'] }}</div>
+                                            @endif
+                                            @if (!empty($tickets['customer_phone']))
+                                                <div><i class="bi bi-telephone me-1"></i>{{ $tickets['customer_phone'] }}</div>
+                                            @endif
+                                            @if (!empty($tickets['purchase_order_id']))
+                                                <div>
+                                                    <a href="{{ url('view_invoice/' . $tickets['purchase_order_id']) }}" target="_blank" class="text-decoration-none">
+                                                        Invoice #{{ str_pad($tickets['purchase_order_id'], 6, '0', STR_PAD_LEFT) }}
+                                                    </a>
+                                                </div>
+                                            @endif
+                                            @php $soldDate = $tickets['purchase_date'] ?? $tickets['payment_date'] ?? null; @endphp
+                                            @if (!empty($soldDate))
+                                                <div class="text-muted">Sold {{ date('d M Y', strtotime($soldDate)) }}</div>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($isSold)
+                                        <span class="text-muted">—</span>
+                                    @else
+                                        <div class="action-group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editTicketData({{ $tickets['id'] }})" title="Edit seat">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteGeneratedTickets({{ $tickets['id'] }})" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($isSold)
+                                        <span class="text-muted small">N/A</span>
+                                    @else
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input"
                                                 type="checkbox"
                                                 role="switch"
                                                 id="switchCheckChecked_{{ $tickets['id'] }}"
                                                 data-id="{{ $tickets['id'] }}"
-                                                data-status="{{ $tickets['on_sale']}}"
+                                                data-status="{{ $tickets['on_sale'] }}"
                                                 onchange="confirmToggleStatus(this)"
-                                                {{ $tickets['on_sale'] == 1 ? 'checked':'' }}
-
-                                                value="{{ $tickets['on_sale'] }}">
-
-                                            </div>
-                            </td>
-                            <td>
-                    @if(@$tickets['file'])
-                                <a href="{{asset('storage/'.@$tickets['file']) }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
-                                View
-                            </a>
-                    @endif
-                            </td>
-                        </tr>
-                        @endforeach
-
+                                                {{ $tickets['on_sale'] == 1 ? 'checked' : '' }}>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if (!empty($tickets['file']))
+                                        <a href="{{ asset('storage/' . $tickets['file']) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-file-earmark-pdf"></i>
+                                        </a>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">No tickets listed yet.</td>
+                            </tr>
+                        @endforelse
+                        </tbody>
                     </table>
                 </div>
 
-                </div>
-
-              <div class="card border-light mb-3" style="max-width: 50rem;">
-                <div class="card-body">
-                <div class="d-grid">
-                    @if($val['ticket_type'] == 2 )
-                <button class="btn btn-primary" type="button" onclick="uploadTicketImages()">Upload Tickets</button>
-                    @endif
-                </div>
-                </div>
-                </div>
-
-
-
-                        <div class="card" style="width: 25rem;">
-                        <div class="card-header">
-                          <b> Price per Ticket </b>
-                            <button type="button" class="btn btn-light float-right" onclick="ticketPriceChange({{ $val['id'] }})">
-           <i class="fa fa-pencil"></i>
-           </button>
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><b>Original Price : {{ $val['face_value'].' '.$val['short_name'] }}</b>
-           </li>
-                            <li class="list-group-item"><b>Your Sale Price :  {{ $val['ticket_amount'].' '.$val['short_name'] }}</b> </li>
-                        </ul>
-                        </div>
-
-            </div>
-            <div class="col-md-4">
-
-                <div class="card border-dark mb-3" style="max-width: 18rem;">
-                <div class="card-header">Event Details</div>
-                <div class="card-body">
-                    <h6 class="card-title">Event Location</h6>
-                    <p class="card-text"> {{ $val['venue_name'] }},{{ $val['city_name'] }},{{ $val['country_name'] }}</p>
-                    @if ($val['google_map_link'])
-                    <a class="text-success" href="{{ $val['google_map_link'] }}" target="_blank">View the venue Map</a>
-
-                    @endif
-
-                </div>
-                <div class="card-body">
-                    <h6 class="card-title">Event Starts at</h6>
-                    <p class="card-text"> {{  date('d M Y',strtotime($val['event_from_date'])) }}  {{  $val['from_time'] }}</p>
-                    <h6 class="card-title">Event Ends at</h6>
-                    <p class="card-text"> {{  date('d M Y',strtotime($val['event_to_date'])) }}  {{  $val['to_time'] }}</p>
-
-                </div>
-                </div>
-                    <div class="card border-dark mb-3" style="max-width: 18rem;">
-                    <div class="card-header">Extra Details</div>
-                    <div class="card-body">
-                        <h6 class="card-title">Consessions</h6>
-                        <p class="card-text">{{ $val['disclaimer_note'] }}</p>
-                         <h6 class="card-title">Decription</h6>
-                        <p class="card-text">{{ $val['description'] }}</p>
-
-                        <h6 class="card-title">{{ $val['ticket_type_name'] }}</h6>
+                @if($val['ticket_type'] == 2)
+                    <div class="mt-3">
+                        <button class="btn btn-brand" type="button" onclick="uploadTicketImages()">
+                            <i class="bi bi-cloud-upload me-1"></i> Upload Tickets
+                        </button>
                     </div>
-                    </div>
-
+                @endif
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-9"></div>
-            <div class="col-md-3">
-                <a type="button" href="{{ route('reseller.mylistings') }}" class="btn btn-primary">Back To Listing</a>
+
+            <div class="sidebar-card mt-4">
+                <div class="sidebar-card__header d-flex justify-content-between align-items-center">
+                    <span>Price per Ticket</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="ticketPriceChange({{ $val['id'] }})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+                <div class="sidebar-card__body">
+                    <div class="price-row">
+                        <span>Original Price</span>
+                        <strong>{{ $val['face_value'] }} {{ $val['short_name'] }}</strong>
+                    </div>
+                    <div class="price-row">
+                        <span>Your Sale Price</span>
+                        <strong class="text-success">{{ $val['ticket_amount'] }} {{ $val['short_name'] }}</strong>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <div class="col-lg-4">
+            <div class="sidebar-card">
+                <div class="sidebar-card__header">Event Details</div>
+                <div class="sidebar-card__body">
+                    <div class="sidebar-item">
+                        <div class="sidebar-item__label">Location</div>
+                        <p class="sidebar-item__value">{{ $val['venue_name'] }}, {{ $val['city_name'] }}, {{ $val['country_name'] }}</p>
+                        @if ($val['google_map_link'])
+                            <a href="{{ $val['google_map_link'] }}" target="_blank" class="small text-decoration-none">
+                                <i class="bi bi-geo-alt me-1"></i> View venue map
+                            </a>
+                        @endif
+                    </div>
+                    <div class="sidebar-item">
+                        <div class="sidebar-item__label">Starts</div>
+                        <p class="sidebar-item__value">{{ date('d M Y', strtotime($val['event_from_date'])) }} · {{ $val['from_time'] }}</p>
+                    </div>
+                    <div class="sidebar-item">
+                        <div class="sidebar-item__label">Ends</div>
+                        <p class="sidebar-item__value">{{ date('d M Y', strtotime($val['event_to_date'])) }} · {{ $val['to_time'] }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <div class="sidebar-card__header">Extra Details</div>
+                <div class="sidebar-card__body">
+                    @if (!empty($val['disclaimer_note']))
+                        <div class="sidebar-item">
+                            <div class="sidebar-item__label">Concessions</div>
+                            <p class="sidebar-item__value">{{ $val['disclaimer_note'] }}</p>
+                        </div>
+                    @endif
+                    @if (!empty($val['description']))
+                        <div class="sidebar-item">
+                            <div class="sidebar-item__label">Description</div>
+                            <p class="sidebar-item__value">{{ $val['description'] }}</p>
+                        </div>
+                    @endif
+                    <div class="sidebar-item">
+                        <div class="sidebar-item__label">Ticket Type</div>
+                        <p class="sidebar-item__value mb-0">{{ $val['ticket_type_name'] }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
 <div class="modal fade" id="tickcet-type-change-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -301,6 +637,7 @@ $val = $data[0];
                     <div class="row">
                 <table class="table table-bordered">
             @foreach ($data['tickets'] as $tickets)
+            @if (empty($tickets['is_sold']))
             <tr>
                 <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
                 <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
@@ -310,6 +647,7 @@ $val = $data[0];
 
 
             </tr>
+            @endif
             @endforeach
             <tr>
       <td colspan="4">
@@ -344,10 +682,12 @@ $val = $data[0];
     <div class="modal-body">
   <table class="table table-bordered">
     @foreach ($data['tickets'] as $tickets)
+      @if (empty($tickets['is_sold']))
       <tr>
         <td><b><span class="text-muted">{{ $tickets['seating_type_name'] }}</span></b></td>
         <td><b><span class="text-muted">{{ $tickets['ticket_serial_number'] }}</span></b></td>
       </tr>
+      @endif
     @endforeach
     <tr>
       <td colspan="2">
@@ -600,7 +940,9 @@ function uploadTicketImagesIndividual(){
       select.style.width = "200px";
       select.innerHTML = `<option value="">Assign Ticket</option>
         @foreach ($data['tickets'] as $tickets)
+          @if (empty($tickets['is_sold']))
           <option value="{{ $tickets['id'] }}">{{ $tickets['ticket_serial_number'] }}</option>
+          @endif
         @endforeach
       `;
       select.addEventListener("change", function() {

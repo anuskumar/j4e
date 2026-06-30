@@ -15,17 +15,57 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $data = User::leftjoin('customers','customers.user_id','users.id')
-        ->select('*','users.id as id','customers.id as customer_id')
-        ->where('users.user_type','customer')
-        ->orderBy('users.created_at', 'desc')
-        ->orderBy('users.id', 'desc')
-        ->get();
-        
-        return view('admin.customer.list',compact('data'));
+        $query = User::leftJoin('customers', 'customers.user_id', 'users.id')
+            ->select('users.*', 'users.id as id', 'customers.id as customer_id')
+            ->where('users.user_type', 'customer');
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('users.is_active', (int) $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('users.email', 'like', '%' . $search . '%')
+                    ->orWhere('users.phone', 'like', '%' . $search . '%')
+                    ->orWhere('users.address', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('registered_from')) {
+            $query->whereDate('users.created_at', '>=', $request->registered_from);
+        }
+
+        if ($request->filled('registered_to')) {
+            $query->whereDate('users.created_at', '<=', $request->registered_to);
+        }
+
+        if ($request->filled('last_login_from')) {
+            $query->whereDate('users.last_login', '>=', $request->last_login_from);
+        }
+
+        if ($request->filled('last_login_to')) {
+            $query->whereDate('users.last_login', '<=', $request->last_login_to);
+        }
+
+        $data = $query
+            ->orderByDesc('users.created_at')
+            ->orderByDesc('users.id')
+            ->get();
+
+        $filters = [
+            'status' => $request->input('status', 'all'),
+            'search' => $request->search,
+            'registered_from' => $request->registered_from,
+            'registered_to' => $request->registered_to,
+            'last_login_from' => $request->last_login_from,
+            'last_login_to' => $request->last_login_to,
+        ];
+
+        return view('admin.customer.list', compact('data', 'filters'));
     }
 
     /**

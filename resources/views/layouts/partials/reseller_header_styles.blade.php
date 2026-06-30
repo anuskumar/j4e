@@ -12,6 +12,8 @@
 
     body > .reseller-page-content {
         flex: 1 0 auto;
+        padding: 1.25rem 0 2rem;
+        background: #f6f7fb;
     }
 
     .reseller-navbar {

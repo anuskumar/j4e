@@ -49,15 +49,62 @@ class ResellerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $data = User::leftjoin('resellers', 'resellers.user_id', 'users.id')
-            ->select('*', 'users.id as id', 'resellers.id as resellers_id')
-            ->where('users.user_type', 'reseller')
-            ->orderBy('users.created_at', 'desc')
-            ->orderBy('users.id', 'desc')
+        $query = User::leftJoin('resellers', 'resellers.user_id', 'users.id')
+            ->select('users.*', 'users.id as id', 'resellers.id as resellers_id', 'resellers.is_admin_approved', 'resellers.is_trusted')
+            ->where('users.user_type', 'reseller');
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('users.is_active', (int) $request->status);
+        }
+
+        if ($request->filled('approval') && $request->approval !== 'all') {
+            $query->where('resellers.is_admin_approved', (int) $request->approval);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('users.email', 'like', '%' . $search . '%')
+                    ->orWhere('users.phone', 'like', '%' . $search . '%')
+                    ->orWhere('users.address', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('registered_from')) {
+            $query->whereDate('users.created_at', '>=', $request->registered_from);
+        }
+
+        if ($request->filled('registered_to')) {
+            $query->whereDate('users.created_at', '<=', $request->registered_to);
+        }
+
+        if ($request->filled('last_login_from')) {
+            $query->whereDate('users.last_login', '>=', $request->last_login_from);
+        }
+
+        if ($request->filled('last_login_to')) {
+            $query->whereDate('users.last_login', '<=', $request->last_login_to);
+        }
+
+        $data = $query
+            ->orderByDesc('users.created_at')
+            ->orderByDesc('users.id')
             ->get();
-        return view('admin.reseller.list', compact('data'));
+
+        $filters = [
+            'status' => $request->input('status', 'all'),
+            'approval' => $request->input('approval', 'all'),
+            'search' => $request->search,
+            'registered_from' => $request->registered_from,
+            'registered_to' => $request->registered_to,
+            'last_login_from' => $request->last_login_from,
+            'last_login_to' => $request->last_login_to,
+        ];
+
+        return view('admin.reseller.list', compact('data', 'filters'));
     }
     public function eventlisting()
     {
@@ -1772,17 +1819,37 @@ class ResellerController extends Controller
 
         $data['waiting_for_approval'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('is_admin_approved',0)->count();
         $data['my_tickets'] = EventTickets::where('event_tickets.event',$data[0]['id'])->where('created_by',Auth::user()->id)->count();
-        $data['tickets'] = TicketsGenerated::where('event_tickets',$data[0]['id'])
-        ->leftjoin('event_timings','event_timings.id','event_ticket_tickets.event_timing')
-        ->leftjoin('venue_seating','venue_seating.id','event_ticket_tickets.event_seating')->select('*','event_ticket_tickets.id as id')
-        ->get()->toArray();
+        $listingTickets = TicketsGenerated::with('outsideSell')
+            ->where('event_tickets', $id)
+            ->leftJoin('event_timings', 'event_timings.id', 'event_ticket_tickets.event_timing')
+            ->leftJoin('venue_seating', 'venue_seating.id', 'event_ticket_tickets.event_seating')
+            ->leftJoin('ticket_purchase', 'ticket_purchase.id', 'event_ticket_tickets.purchase_id')
+            ->leftJoin('users', 'users.id', 'ticket_purchase.user_id')
+            ->select(
+                'event_ticket_tickets.*',
+                'event_ticket_tickets.id as id',
+                'venue_seating.seating_type_name',
+                'users.name as customer_name',
+                'users.email as customer_email',
+                'users.phone as customer_phone',
+                'ticket_purchase.payment_amount',
+                'ticket_purchase.payment_date',
+                'ticket_purchase.id as purchase_order_id'
+            )
+            ->orderBy('event_ticket_tickets.id')
+            ->get();
+
+        $data['tickets'] = $listingTickets->toArray();
+        $data['sold_ticket_count'] = $listingTickets->where('is_sold', 1)->count();
+        $data['available_ticket_count'] = $listingTickets->where('is_sold', 0)->count();
         // $data['restrictions'] = RestrictionModel::where('id',$data[0]['ticket_restrictions'])->get()->toArray();
         // dd($data);
         $ticket_type = TicketType::all();
         $evntTcket = EventTickets::find($id);
+        $bankDetailsIncomplete = !Bankmodel::isCompleteForReseller(Auth::id());
         if($evntTcket->created_by == Auth::user()->id){
 
-            return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
+            return view('reseller.reseller_manage_eventticket',compact('data','ticket_type','bankDetailsIncomplete'));
 
         }else{
             return back()->with('error','User Matching Failed');

@@ -94,7 +94,7 @@
         [
             'extend' => 'excel',
             'exportOptions' => [
-                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 'stripHtml' => true,
             ],
             'title' => $orderExportTitle,
@@ -102,7 +102,7 @@
         [
             'extend' => 'pdf',
             'exportOptions' => [
-                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 'stripHtml' => true,
             ],
             'title' => $orderExportTitle,
@@ -121,8 +121,8 @@
             'zeroRecords' => 'No matching orders found',
         ],
         'columnDefs' => [
-            ['orderable' => false, 'targets' => [9]],
-            ['searchable' => false, 'targets' => [0, 9]],
+            ['orderable' => false, 'targets' => [10]],
+            ['searchable' => false, 'targets' => [0, 10]],
         ],
     ];
 @endphp
@@ -200,6 +200,7 @@
                         <thead>
                             <tr>
                                 <th>SL</th>
+                                <th>Order ID</th>
                                 <th>Event</th>
                                 <th>Event Date</th>
                                 <th>Booking Date</th>
@@ -215,6 +216,11 @@
                             @forelse ($data as $index => $val)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <a href="{{ url('view_invoice', $val->id) }}" class="font-weight-semibold">
+                                            #{{ str_pad($val->id, 6, '0', STR_PAD_LEFT) }}
+                                        </a>
+                                    </td>
                                     <td>
                                         <a href="{{ url('show_details_show', @$val->event_id) }}" class="font-weight-semibold">
                                             {{ @$val->event_name }}
@@ -260,6 +266,7 @@
                             @empty
                                 <tr class="odd">
                                     <td class="text-center text-muted py-4">-</td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
