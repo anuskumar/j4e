@@ -4,6 +4,7 @@
     $recipientIdsField = $recipientIdsField ?? 'recipient_ids';
 @endphp
 
+<script src="{{ asset('admin_assets/plugins/select2/js/select2.min.js') }}"></script>
 <script>
 jQuery(document).ready(function ($) {
     const emailPrefix = @json($prefix);
@@ -14,6 +15,17 @@ jQuery(document).ready(function ($) {
     const messageField = $('#' + emailPrefix + '-email-message');
     const attachmentInput = $('#' + emailPrefix + '-email-attachments');
     const attachmentList = $('#' + emailPrefix + '-email-attachment-list');
+    const recipientSelect = $('#' + emailPrefix + '-email-recipient-select');
+    const recipientsDataEl = document.getElementById(emailPrefix + '-email-recipients-data');
+    const recipientsPool = recipientsDataEl ? JSON.parse(recipientsDataEl.textContent || '[]') : [];
+
+    function escapeHtml(value) {
+        return $('<div>').text(value ?? '').html();
+    }
+
+    function getSelectedRecipientIds() {
+        return (recipientSelect.val() || []).map(String);
+    }
 
     function formatFileSize(bytes) {
         if (bytes < 1024) {
@@ -23,6 +35,24 @@ jQuery(document).ready(function ($) {
             return (bytes / 1024).toFixed(1) + ' KB';
         }
         return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function initRecipientSelect2() {
+        if (!recipientSelect.length || typeof $.fn.select2 !== 'function') {
+            return;
+        }
+
+        if (recipientSelect.hasClass('select2-hidden-accessible')) {
+            recipientSelect.select2('destroy');
+        }
+
+        recipientSelect.select2({
+            width: '100%',
+            placeholder: recipientSelect.data('placeholder') || 'Search and select recipients...',
+            allowClear: true,
+            closeOnSelect: false,
+            dropdownParent: $(emailModalEl)
+        });
     }
 
     function updateAttachmentList() {
@@ -35,34 +65,59 @@ jQuery(document).ready(function ($) {
 
         Array.from(files).forEach(function (file) {
             attachmentList.append(
-                '<li><i class="fe fe-paperclip me-1"></i>' + file.name + ' <span class="text-muted">(' + formatFileSize(file.size) + ')</span></li>'
+                '<li><i class="fe fe-paperclip me-1"></i>' + escapeHtml(file.name) + ' <span class="text-muted">(' + formatFileSize(file.size) + ')</span></li>'
             );
         });
     }
 
     function updateRecipientCount() {
-        const total = $('.' + emailPrefix + '-email-recipient').length;
-        const selected = $('.' + emailPrefix + '-email-recipient:checked').length;
+        const total = recipientsPool.length;
+        const selected = getSelectedRecipientIds().length;
         $('#' + emailPrefix + '-email-recipient-count').text('(' + selected + ' of ' + total + ' selected)');
         $('#' + emailPrefix + '-email-send-btn').prop('disabled', selected === 0);
     }
+
+    function clearRecipients() {
+        recipientSelect.val(null).trigger('change');
+        updateRecipientCount();
+    }
+
+    function selectAllRecipients() {
+        recipientSelect.val(recipientsPool.map(function (recipient) {
+            return String(recipient.id);
+        })).trigger('change');
+        updateRecipientCount();
+    }
+
+    initRecipientSelect2();
 
     openBtn.on('click', function () {
         if (!emailModal) {
             return;
         }
+
         $('#' + emailPrefix + '-email-subject').val('');
         attachmentInput.val('');
         attachmentList.empty();
+
         if (messageField.next('.note-editor').length) {
             messageField.summernote('reset');
         } else {
             messageField.val('');
         }
-        $('.' + emailPrefix + '-email-recipient').prop('checked', true);
-        updateRecipientCount();
+
+        clearRecipients();
         emailModal.show();
     });
+
+    if (emailModalEl) {
+        emailModalEl.addEventListener('shown.bs.modal', function () {
+            initRecipientSelect2();
+            updateRecipientCount();
+        });
+    }
+
+    recipientSelect.on('change', updateRecipientCount);
 
     attachmentInput.on('change', function () {
         if (this.files.length > 5) {
@@ -80,16 +135,12 @@ jQuery(document).ready(function ($) {
     });
 
     $('.' + emailPrefix + '-email-select-all').on('click', function () {
-        $('.' + emailPrefix + '-email-recipient').prop('checked', true);
-        updateRecipientCount();
+        selectAllRecipients();
     });
 
     $('.' + emailPrefix + '-email-deselect-all').on('click', function () {
-        $('.' + emailPrefix + '-email-recipient').prop('checked', false);
-        updateRecipientCount();
+        clearRecipients();
     });
-
-    $(document).on('change', '.' + emailPrefix + '-email-recipient', updateRecipientCount);
 
     if (messageField.length && typeof $.fn.summernote === 'function') {
         messageField.summernote({
@@ -109,9 +160,7 @@ jQuery(document).ready(function ($) {
         const message = messageField.next('.note-editor').length
             ? messageField.summernote('code')
             : messageField.val();
-        const recipientIds = $('.' + emailPrefix + '-email-recipient:checked').map(function () {
-            return $(this).val();
-        }).get();
+        const recipientIds = getSelectedRecipientIds();
 
         if (!subject) {
             swal({ title: 'Subject required', text: 'Please enter an email subject.', icon: 'warning', button: 'OK' });
@@ -194,5 +243,7 @@ jQuery(document).ready(function ($) {
             }
         });
     });
+
+    updateRecipientCount();
 });
 </script>

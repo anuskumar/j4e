@@ -55,6 +55,7 @@
                         <thead>
                             <tr>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Type</th>
                                 <th>Subject</th>
                                 <th>Sent By</th>
@@ -71,6 +72,11 @@
                                     <td>
                                         {{ $log->created_at->format('d M Y') }}
                                         <span class="d-block text-muted tx-12">{{ $log->created_at->format('h:i A') }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ $log->statusBadgeClass() }}">
+                                            {{ $log->statusLabel() }}
+                                        </span>
                                     </td>
                                     <td>
                                         <span class="badge {{ $log->recipient_type === 'customer' ? 'bg-info-transparent' : 'bg-warning-transparent' }}">
@@ -112,7 +118,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">No sent emails found.</td>
+                                    <td colspan="10" class="text-center text-muted py-4">No sent emails found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

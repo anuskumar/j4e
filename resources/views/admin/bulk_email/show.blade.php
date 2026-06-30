@@ -33,6 +33,14 @@
                             </span>
                         </p>
                     </div>
+                    <div class="col-md-2">
+                        <label class="form-label text-muted tx-12 text-uppercase">Status</label>
+                        <p class="mb-0">
+                            <span class="badge {{ $bulkEmailLog->statusBadgeClass() }}">
+                                {{ $bulkEmailLog->statusLabel() }}
+                            </span>
+                        </p>
+                    </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted tx-12 text-uppercase">Sent By</label>
                         <p class="mb-0">{{ $bulkEmailLog->sender?->name ?? 'N/A' }}</p>
@@ -50,6 +58,12 @@
                         <p class="mb-0 {{ $bulkEmailLog->failed_count > 0 ? 'text-danger' : 'text-muted' }}">{{ $bulkEmailLog->failed_count }}</p>
                     </div>
                 </div>
+
+                @if ($bulkEmailLog->isInProgress())
+                    <div class="alert alert-info mb-4">
+                        This bulk email is still being processed. Refresh this page to see updated delivery status.
+                    </div>
+                @endif
 
                 <div class="mb-4">
                     <label class="form-label text-muted tx-12 text-uppercase">Subject</label>
@@ -103,6 +117,8 @@
                                         <td>
                                             @if (($recipient['status'] ?? '') === 'sent')
                                                 <span class="badge bg-success-transparent">Sent</span>
+                                            @elseif (($recipient['status'] ?? '') === 'pending')
+                                                <span class="badge bg-secondary-transparent">Pending</span>
                                             @else
                                                 <span class="badge bg-danger-transparent">Failed</span>
                                             @endif
