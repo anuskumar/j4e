@@ -295,7 +295,7 @@
 @include('admin.partials.bulk_email_modal', [
     'emailPrefix' => 'reseller',
     'modalTitle' => 'Compose Email to Resellers',
-    'modalDescription' => 'Send an email to the currently filtered reseller list. Review the recipients below and uncheck anyone you want to exclude.',
+    'modalDescription' => 'Search and select resellers using the multi-select box, then compose and send your email.',
     'recipientLabel' => 'reseller',
     'recipients' => $data,
 ])
@@ -406,9 +406,5 @@ jQuery(document).ready(function ($) {
 @endphp
 @include('datatable.datatable_js')
 @include('admin.reseller.partials.export_scripts')
-@include('admin.partials.bulk_email_scripts', [
-    'emailPrefix' => 'reseller',
-    'sendRoute' => route('admin.reseller.send-email'),
-    'recipientIdsField' => 'reseller_ids',
-])
+@include('admin.reseller.partials.bulk_email_scripts')
 @endpush

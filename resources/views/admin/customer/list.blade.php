@@ -281,7 +281,7 @@
 @include('admin.partials.bulk_email_modal', [
     'emailPrefix' => 'customer',
     'modalTitle' => 'Compose Email to Customers',
-    'modalDescription' => 'Send an email to the currently filtered customer list. Review the recipients below and uncheck anyone you want to exclude.',
+    'modalDescription' => 'Search and select customers using the multi-select box, then compose and send your email.',
     'recipientLabel' => 'customer',
     'recipients' => $data,
 ])
@@ -401,9 +401,5 @@ jQuery(document).ready(function ($) {
 @endphp
 @include('datatable.datatable_js')
 @include('admin.customer.partials.export_scripts')
-@include('admin.partials.bulk_email_scripts', [
-    'emailPrefix' => 'customer',
-    'sendRoute' => route('admin.customer.send-email'),
-    'recipientIdsField' => 'customer_ids',
-])
+@include('admin.customer.partials.bulk_email_scripts')
 @endpush
