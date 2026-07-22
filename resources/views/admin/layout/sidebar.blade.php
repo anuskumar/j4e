@@ -144,6 +144,7 @@
                         <li><a class="slide-item" href="{{ url('location/list') }}">Location</a></li>
                         <li><a class="slide-item" href="{{ url('city/list') }}">City</a></li>
                         <li><a class="slide-item" href="{{ url('tickettype/list') }}">Ticket Types</a></li>
+                        <li><a class="slide-item" href="{{ route('admin.mobile-applications.index') }}">Mobile Applications</a></li>
                     </ul>
                 </li>
                 @if (Auth::user()->user_type == 'superadmin')

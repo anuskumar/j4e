@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class TicketCheckoutService
 {
@@ -110,6 +111,7 @@ class TicketCheckoutService
             $currencyId = $this->resolveCurrencyId($currency, $eventTicket);
 
             $ticket = new TicketPurchase();
+            $ticket->sales_id = Str::upper(Str::random(16));
             $ticket->event_id = $checkout['event_id'];
             $ticket->event_ticket_id = $checkout['event_ticket_id'];
             $ticket->total_number = $requestedCount;

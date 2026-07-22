@@ -278,9 +278,14 @@ $val = $data[0];
                 </div>
                 <div class="meta-grid">
                     <div class="meta-chip"><strong>Event:</strong> {{ ucfirst($val['event_name']) }}</div>
-                    <div class="meta-chip"><strong>Seats:</strong> {{ $val['no_of_tickets'] }} tickets</div>
+                    <div class="meta-chip"><strong>Number of Tickets:</strong> {{ $val['no_of_tickets'] }} tickets</div>
                     <div class="meta-chip"><strong>Section:</strong> {{ $val['seating_type_name'] }}</div>
-                    <div class="meta-chip"><strong>Row:</strong> {{ $val['row'] ?: '—' }}</div>
+                    <div class="meta-chip d-inline-flex align-items-center gap-2">
+                        <span><strong>Row:</strong> {{ $val['row'] ?: '—' }}</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="openTicketRowChangeModal()" title="Edit row">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
@@ -299,19 +304,6 @@ $val = $data[0];
             </div>
         </div>
     </div>
-
-    @if (!empty($bankDetailsIncomplete))
-        <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert">
-            <div class="d-flex align-items-start gap-2">
-                <i class="bi bi-exclamation-triangle-fill mt-1"></i>
-                <div>
-                    <strong>Bank details incomplete</strong>
-                    <p class="mb-2 small">Your bank details are incomplete. This may affect your listing and payouts.</p>
-                    <a href="{{ route('reseller.profile') }}#bank" class="btn btn-sm btn-brand">Update Bank Details</a>
-                </div>
-            </div>
-        </div>
-    @endif
 
     <div class="row g-4">
         <div class="col-lg-8">
@@ -335,7 +327,7 @@ $val = $data[0];
                         <thead>
                             <tr>
                                 <th>Type</th>
-                                <th>Serial</th>
+                                <th>Row Details</th>
                                 <th>Seat</th>
                                 <th>Status</th>
                                 <th>Sold Details</th>
@@ -350,10 +342,20 @@ $val = $data[0];
                                 $isSold = !empty($tickets['is_sold']);
                                 $outsideSell = $tickets['outside_sell'] ?? null;
                                 $isOutsideSell = !empty($outsideSell);
+                                $isSequenceEnd = in_array((int) $tickets['id'], [
+                                    (int) ($data['sequence_first_ticket_id'] ?? 0),
+                                    (int) ($data['sequence_last_ticket_id'] ?? 0),
+                                ], true);
+                                $rowLabel = $tickets['seat_row'] ?? ($val['row'] ?? null);
                             @endphp
                             <tr class="{{ $isSold ? 'is-sold' : '' }}">
                                 <td>{{ $tickets['seating_type_name'] ?? '—' }}</td>
-                                <td><span class="fw-semibold">{{ $tickets['ticket_serial_number'] ?? '—' }}</span></td>
+                                <td>
+                                    <span class="fw-semibold">{{ $rowLabel ?: '—' }}</span>
+                                    @if (!empty($tickets['seat_number_prefix']))
+                                        <div class="text-muted small">{{ $tickets['seat_number_prefix'] }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $tickets['seat_number'] ?? '—' }}</td>
                                 <td>
                                     @if ($isOutsideSell)
@@ -413,7 +415,7 @@ $val = $data[0];
                                             <button class="btn btn-sm btn-outline-primary" onclick="editTicketData({{ $tickets['id'] }})" title="Edit seat">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteGeneratedTickets({{ $tickets['id'] }})" title="Delete">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteGeneratedTickets({{ $tickets['id'] }}, {{ $isSequenceEnd ? 'true' : 'false' }})" title="Delete">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -430,6 +432,7 @@ $val = $data[0];
                                                 id="switchCheckChecked_{{ $tickets['id'] }}"
                                                 data-id="{{ $tickets['id'] }}"
                                                 data-status="{{ $tickets['on_sale'] }}"
+                                                data-can-change="{{ $isSequenceEnd ? '1' : '0' }}"
                                                 onchange="confirmToggleStatus(this)"
                                                 {{ $tickets['on_sale'] == 1 ? 'checked' : '' }}>
                                         </div>
@@ -549,6 +552,29 @@ $val = $data[0];
             <option {{ $type['id'] == $val['ticket_type'] ? 'selected':'' }} value="{{ $type['id'] }}">{{ $type['ticket_type_name'] }}</option>
             @endforeach
         </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="ticket-row-change-modal" tabindex="-1" aria-labelledby="ticketRowChangeLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="{{ route('update.ticket.row') }}" method="POST">
+        <input type="hidden" name="ticket_id" value="{{ $val['id'] }}">
+        @csrf
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="ticketRowChangeLabel">Edit Row</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="ticket-row-input" class="form-label">Row</label>
+        <input type="text" class="form-control" name="row" id="ticket-row-input" value="{{ $val['row'] }}" maxlength="255" placeholder="Enter row">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -771,6 +797,10 @@ $val = $data[0];
 
     }
 
+    function openTicketRowChangeModal(){
+        $('#ticket-row-change-modal').modal('show');
+    }
+
     function confirmDelete(id) {
     Swal.fire({
         title: 'Are you sure?',
@@ -793,6 +823,18 @@ function confirmToggleStatus(el) {
     const ticketId = el.getAttribute('data-id');
     const currentStatus = el.getAttribute('data-status');
     const newStatus = el.checked ? 1 : 0;
+    const canChange = el.getAttribute('data-can-change') === '1';
+
+    if (!canChange) {
+        el.checked = !el.checked;
+        Swal.fire({
+            title: 'Change not allowed',
+            text: 'This ticket cannot be updated because the continuation of the seat sequence will be lost. You can only change On Sale for the first or last ticket in the sequence.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
 
     Swal.fire({
         title: 'Are you sure?',
@@ -805,7 +847,7 @@ function confirmToggleStatus(el) {
     }).then((result) => {
         if (result.isConfirmed) {
             // Proceed to update status
-            updateTicketStatus(newStatus, ticketId);
+            updateTicketStatus(newStatus, ticketId, el);
         } else {
             // Revert the toggle switch to previous state
             el.checked = !el.checked;
@@ -813,7 +855,7 @@ function confirmToggleStatus(el) {
     });
 }
 
-function updateTicketStatus(newStatus, ticketId) {
+function updateTicketStatus(newStatus, ticketId, el) {
     // Example AJAX
     fetch(`/tickets/update-ticket-sale-status/${ticketId}`, {
         method: 'POST',
@@ -823,23 +865,26 @@ function updateTicketStatus(newStatus, ticketId) {
         },
         body: JSON.stringify({ status: newStatus })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok && data.success) {
             Swal.fire('Updated!', data.message, 'success').then(function(){
             window.location.reload();
 
             });
             // Optionally refresh or update the badge
         } else {
-            Swal.fire('Failed!', data.message, 'error').then(function(){
-            window.location.reload();
-
-            });
+            if (el) {
+                el.checked = !el.checked;
+            }
+            Swal.fire('Failed!', data.message || 'Unable to update ticket.', 'error');
 
         }
     })
     .catch(error => {
+        if (el) {
+            el.checked = !el.checked;
+        }
         Swal.fire('Error!', 'Something went wrong.', 'error');
     });
 }
@@ -1003,7 +1048,17 @@ function uploadTicketImagesIndividual(){
      $('#tickcet-price-change-modal').modal('show');
   }
 
-  function deleteGeneratedTickets(val){
+  function deleteGeneratedTickets(val, canDelete){
+
+    if (!canDelete) {
+        Swal.fire({
+            title: 'Delete not allowed',
+            text: 'This ticket cannot be deleted because the continuation of the seat sequence will be lost. You can only delete the first or last ticket in the sequence.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
 
     Swal.fire({
             title: 'Are you sure?',
@@ -1024,12 +1079,18 @@ function uploadTicketImagesIndividual(){
                id:val,
             },
             success: function(response) {
-            console.log(response);
-window.location.reload();
+            if (response.status === 'success') {
+                window.location.reload();
+            } else {
+                Swal.fire('Failed!', response.message || 'Unable to delete ticket.', 'error');
+            }
 
             },
             error: function(xhr, status, error) {
-                console.error('Error:', xhr.responseText);
+                const message = (xhr.responseJSON && xhr.responseJSON.message)
+                    ? xhr.responseJSON.message
+                    : 'Unable to delete ticket.';
+                Swal.fire('Failed!', message, 'error');
             }
         });
 

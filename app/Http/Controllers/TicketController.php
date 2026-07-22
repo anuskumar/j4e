@@ -984,7 +984,43 @@ public function updatesaleStatus(Request $request, $id)
         ], 404);
     }
 
-    $ticket->on_sale = ! $ticket->on_sale;
+    $listing = EventTickets::find($ticket->event_tickets);
+    if (!$listing || (int) $listing->created_by !== (int) Auth::id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized access.',
+        ], 403);
+    }
+
+    if (!empty($ticket->is_sold)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Sold tickets cannot be updated.',
+        ], 422);
+    }
+
+    $sequence = TicketsGenerated::where('event_tickets', $ticket->event_tickets)
+        ->orderByRaw('CAST(seat_number AS UNSIGNED) ASC')
+        ->orderBy('id')
+        ->get();
+
+    $firstTicket = $sequence->first();
+    $lastTicket = $sequence->last();
+    $isFirst = $firstTicket && (int) $firstTicket->id === (int) $ticket->id;
+    $isLast = $lastTicket && (int) $lastTicket->id === (int) $ticket->id;
+
+    if (!$isFirst && !$isLast) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This ticket cannot be updated because the continuation of the seat sequence will be lost. You can only change On Sale for the first or last ticket in the sequence.',
+        ], 422);
+    }
+
+    if ($request->has('status')) {
+        $ticket->on_sale = ((int) $request->input('status') === 1) ? 1 : 0;
+    } else {
+        $ticket->on_sale = $ticket->on_sale ? 0 : 1;
+    }
 
     $ticket->save();
 

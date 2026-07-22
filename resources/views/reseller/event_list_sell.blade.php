@@ -377,9 +377,9 @@
                 </div>
 
                     <div class="col-md-6">
-                        <label class="form-label required-field">Row (Enter a single letter A-Z)</label>
-                        <input type="text" class="form-control" name="row" placeholder="e.g., A, B, C"
-                            value="{{ old('row') }}" maxlength="1" style="text-transform: uppercase;">
+                        <label class="form-label">Row</label>
+                        <input type="text" class="form-control" name="row" placeholder="e.g., A, AA, 123"
+                            value="{{ old('row') }}">
                     @error('row')
                             <div class="error-message">
                                 <i class="bi bi-exclamation-circle"></i> {{ $message }}
@@ -389,17 +389,17 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label required-field">Seat Number (0 - 99)</label>
-                    <div class="d-flex gap-3 align-items-end">
+                    <div class="d-flex flex-nowrap gap-3 align-items-end">
                         <div class="flex-grow-1">
-                        <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
-                            placeholder="Seat From" maxlength="2">
+                            <label class="form-label">Seat Number From</label>
+                            <input type="text" class="form-control" name="seat_from" value="{{ old('seat_from') }}"
+                                placeholder="From" maxlength="2">
                         </div>
                         <span class="fw-bold text-muted mb-2">to</span>
                         <div class="flex-grow-1">
+                            <label class="form-label">Seat Number To</label>
                             <input type="text" class="form-control" name="seat_to" 
-                                placeholder="Auto-filled" value="{{ old('seat_to') }}" maxlength="2" readonly>
-                            <small class="text-muted">Auto-calculated</small>
+                                placeholder="To" value="{{ old('seat_to') }}" maxlength="2" readonly>
                         </div>
                     </div>
                         @error('seat_to')
