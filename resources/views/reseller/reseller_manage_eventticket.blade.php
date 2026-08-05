@@ -109,9 +109,56 @@ $val = $data[0];
     }
 
     .listing-manage-page .stat-pill--available {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+
+    .listing-manage-page .stat-pill--on-sale {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #bbf7d0;
+    }
+
+    .listing-manage-page .stat-pill--off-sale {
         background: #f3f4f6;
-        color: #374151;
+        color: #4b5563;
         border: 1px solid #e5e7eb;
+    }
+
+    .listing-manage-page .stat-pill--sold-outside {
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .listing-manage-page .stat-pill--pending {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .listing-manage-page .stat-pill--total {
+        background: #f5f3ff;
+        color: #6d28d9;
+        border: 1px solid #ddd6fe;
+    }
+
+    .listing-manage-page .status-summary-card {
+        background: #f8f9fc;
+        border: 1px solid #e8ebf3;
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .listing-manage-page .status-summary-card__title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 0.65rem;
     }
 
     .listing-manage-page .tickets-table-wrap {
@@ -257,11 +304,21 @@ $val = $data[0];
 @section('content')
 
 @php
-    $listingStatus = $val['is_admin_approved'] != 1
-        ? ['label' => 'Waiting for Approval', 'class' => 'text-bg-warning']
-        : ($val['ticket_status'] == 1
-            ? ['label' => 'Active', 'class' => 'text-bg-success']
-            : ['label' => 'Paused', 'class' => 'text-bg-secondary']);
+    $currentListingTicketStatus = match ((int) ($val['ticket_status'] ?? 0)) {
+        \App\Models\EventTickets::STATUS_ACTIVE => 'active',
+        \App\Models\EventTickets::STATUS_POSTED => 'posted',
+        \App\Models\EventTickets::STATUS_SOLD => 'sold',
+        \App\Models\EventTickets::STATUS_PENDING => 'pending',
+        default => 'unapproved',
+    };
+
+    $listingStatus = [
+        'label' => \App\Models\EventTickets::statusLabel($val['ticket_status'] ?? null),
+        'class' => \App\Models\EventTickets::statusBadgeClass($val['ticket_status'] ?? null),
+    ];
+
+    $canChangeListingTicketStatus = (int) ($val['is_admin_approved'] ?? 0) === 1
+        && $currentListingTicketStatus !== 'unapproved';
 @endphp
 
 <div class="container listing-manage-page py-2">
@@ -313,13 +370,52 @@ $val = $data[0];
                     All seats must be next to each other (adjacent). For unconfirmed seats, create a new listing. Breaking this rule can lead to chargebacks of the total sale price.
                 </p>
 
-                <div class="stats-row">
-                    <span class="stat-pill stat-pill--sold">
-                        <i class="bi bi-check-circle"></i> {{ $data['sold_ticket_count'] ?? 0 }} Sold
-                    </span>
-                    <span class="stat-pill stat-pill--available">
-                        <i class="bi bi-ticket-perforated"></i> {{ $data['available_ticket_count'] ?? 0 }} Available
-                    </span>
+                <div class="status-summary-card">
+                    <div class="status-summary-card__title">Ticket Status Summary</div>
+                    <div class="stats-row mb-0">
+                        @if (($data['total_ticket_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--total">
+                                <i class="bi bi-collection"></i> Total: {{ $data['total_ticket_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['available_ticket_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--available">
+                                <i class="bi bi-ticket-perforated"></i> Available: {{ $data['available_ticket_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['on_sale_ticket_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--on-sale">
+                                <i class="bi bi-toggle-on"></i> On Sale: {{ $data['on_sale_ticket_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['off_sale_ticket_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--off-sale">
+                                <i class="bi bi-toggle-off"></i> Off Sale: {{ $data['off_sale_ticket_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['sold_ticket_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--sold">
+                                <i class="bi bi-check-circle"></i> Sold: {{ $data['sold_ticket_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['sold_outside_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--sold-outside">
+                                <i class="bi bi-box-arrow-up-right"></i> Sold Outside: {{ $data['sold_outside_count'] }}
+                            </span>
+                        @endif
+                        @if (($data['pending_upload_count'] ?? 0) > 0)
+                            <span class="stat-pill stat-pill--pending">
+                                <i class="bi bi-hourglass-split"></i> Pending Upload: {{ $data['pending_upload_count'] }}
+                            </span>
+                        @endif
+                        <span class="stat-pill" style="background:#f8f9fc;border:1px solid #e8ebf3;">
+                            <i class="bi bi-tag"></i>
+                            Listing:
+                            <span class="badge {{ $data['listing_ticket_status_badge'] ?? 'text-bg-secondary' }} ms-1">
+                                {{ $data['listing_ticket_status_label'] ?? 'Unknown' }}
+                            </span>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="tickets-table-wrap">
@@ -362,8 +458,10 @@ $val = $data[0];
                                         <span class="badge rounded-pill text-bg-info">Sold Outside</span>
                                     @elseif ($isSold)
                                         <span class="badge rounded-pill text-bg-success">Sold</span>
+                                    @elseif ((int) ($tickets['on_sale'] ?? 0) === 1)
+                                        <span class="badge rounded-pill text-bg-primary">Available · On Sale</span>
                                     @else
-                                        <span class="badge rounded-pill text-bg-light text-dark border">Available</span>
+                                        <span class="badge rounded-pill text-bg-secondary">Available · Off Sale</span>
                                     @endif
                                 </td>
                                 <td>
@@ -412,7 +510,7 @@ $val = $data[0];
                                         <span class="text-muted">—</span>
                                     @else
                                         <div class="action-group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editTicketData({{ $tickets['id'] }})" title="Edit seat">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editTicketData({{ $tickets['id'] }})" title="Edit ticket">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <button class="btn btn-sm btn-outline-danger" onclick="deleteGeneratedTickets({{ $tickets['id'] }}, {{ $isSequenceEnd ? 'true' : 'false' }})" title="Delete">
@@ -586,23 +684,43 @@ $val = $data[0];
 </div>
 
 
-<div class="modal fade" id="tickcet-data-change-modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="tickcet-data-change-modal" tabindex="-1" aria-labelledby="ticketDataChangeLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <form action="{{ route('update.ticket.seating') }}" method="POST" >
-        <input type="hidden" name="generated_ticket_id" id="generated-ticket-id" >
+    <form action="{{ route('update.ticket.seating') }}" method="POST" id="ticket-data-change-form">
+        <input type="hidden" name="generated_ticket_id" id="generated-ticket-id">
         @csrf
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Ticket</h1>
+        <h1 class="modal-title fs-5" id="ticketDataChangeLabel">Edit Ticket</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-
-         <span>Seat Number</span>
-         <input type="number" class="form-control" name="seat_number" id="seat-number">
-        <span>Serial Number</span>
-         <input type="text" class="form-control" name="seat_serial_number" id="seat-serial-number">
-
+        <div class="mb-3">
+            <label for="seat-number" class="form-label">Seat Number</label>
+            <input type="number" class="form-control" name="seat_number" id="seat-number" required>
+        </div>
+        <div class="mb-3">
+            <label for="seat-serial-number" class="form-label">Serial Number</label>
+            <input type="text" class="form-control" name="seat_serial_number" id="seat-serial-number">
+        </div>
+        <div class="mb-0">
+            <label for="listing-ticket-status" class="form-label">Ticket Status</label>
+            <select class="form-select" name="listing_ticket_status" id="listing-ticket-status"
+                @disabled(! $canChangeListingTicketStatus)>
+                <option value="active" @selected($currentListingTicketStatus === 'active')>Active</option>
+                <option value="posted" @selected($currentListingTicketStatus === 'posted')>Posted</option>
+                <option value="sold" @selected($currentListingTicketStatus === 'sold')>Sold</option>
+                <option value="pending" @selected($currentListingTicketStatus === 'pending')>Pending</option>
+                <option value="unapproved" @selected($currentListingTicketStatus === 'unapproved') @disabled(true)>Unapproved</option>
+            </select>
+            <small class="text-muted d-block mt-1" id="ticket-status-hint">
+                @if ($canChangeListingTicketStatus)
+                    You can set this listing to Active, Posted, Sold, or Pending.
+                @else
+                    This listing status cannot be changed until it is approved.
+                @endif
+            </small>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -792,13 +910,11 @@ $val = $data[0];
     });
 
     function openTicketTypechangeModal(){
-
-        $('#tickcet-type-change-modal').modal('show');
-
+        showBootstrapModal('tickcet-type-change-modal');
     }
 
     function openTicketRowChangeModal(){
-        $('#ticket-row-change-modal').modal('show');
+        showBootstrapModal('ticket-row-change-modal');
     }
 
     function confirmDelete(id) {
@@ -889,8 +1005,15 @@ function updateTicketStatus(newStatus, ticketId, el) {
     });
 }
 
-function editTicketData(id){
+function showBootstrapModal(modalId) {
+    const modalEl = document.getElementById(modalId);
+    if (!modalEl || typeof bootstrap === 'undefined') {
+        return;
+    }
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
 
+function editTicketData(id){
      $.ajax({
             url: '/tickets/get-ticket-data',
             type: 'GET',
@@ -898,18 +1021,21 @@ function editTicketData(id){
                id:id,
             },
             success: function(response) {
-            console.log(response);
+                if (!response.success || !response.data) {
+                    Swal.fire('Error!', 'Unable to load ticket details.', 'error');
+                    return;
+                }
 
                  $('#seat-number').val(response.data.seat_number);
                  $('#seat-serial-number').val(response.data.ticket_serial_number);
                  $('#generated-ticket-id').val(response.data.id);
+                 $('#listing-ticket-status').val(@json($currentListingTicketStatus));
 
-                $('#tickcet-data-change-modal').modal('show');
-                // console.log('Success:', response);
-                // alert(response.message);
+                showBootstrapModal('tickcet-data-change-modal');
             },
             error: function(xhr, status, error) {
                 console.error('Error:', xhr.responseText);
+                Swal.fire('Error!', 'Unable to load ticket details.', 'error');
             }
         });
 

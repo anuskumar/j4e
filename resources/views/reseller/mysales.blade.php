@@ -27,7 +27,7 @@
             <select class="form-select" name="ticket_status" aria-label="Ticket Status">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
             <option value="active"  {{ request('ticket_status') == 'active' ? 'selected' : '' }}>Active</option>
-            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Post</option>
+            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Posted</option>
             <option value="unapproved"  {{ request('ticket_status') == 'unapproved' ? 'selected' : '' }}>Unapproved</option>
             <option value="sold"  {{ request('ticket_status') == 'sold' ? 'selected' : '' }}>Sold</option>
             <option value="pending"  {{ request('ticket_status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -59,9 +59,10 @@
                                 <tr>
                                     <th>Sl</th>
                                     <th class="border-bottom-0">ID and Sale Date</th>
+                                    <th class="border-bottom-0">Ticket Status</th>
                                     <th class="border-bottom-0">Event </th>
                                     <th class="border-bottom-0">Ticket Type</th>
-                                    <th class="border-bottom-0">Available Delivery</th>
+                                    <th class="border-bottom-0">Ticket Details</th>
                                     <th class="border-bottom-0">Ticket</th>
                                     <th class="border-bottom-0">Sales Count</th>
                                     <th class="border-bottom-0">Price</th>
@@ -77,9 +78,14 @@
                                 <tr>
                                     <td>{{ $sl++ }}</td>
                                     <td>
-                                        <b>{{ $val['latest_sales_id'] ?? 'N/A' }}</b>
+                                        <b>{{ strtoupper($val['unique_id'] ?? $val['latest_sales_id'] ?? 'N/A') }}</b>
                                         <br>
                                         {{ !empty($val['latest_sale_time']) ? date('d M Y h:i A', strtotime($val['latest_sale_time'])) : 'N/A' }}
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ $val['ticket_status_badge'] ?? 'text-bg-secondary' }}">
+                                            {{ $val['ticket_status_label'] ?? \App\Models\EventTickets::statusLabel($val['ticket_status'] ?? null) }}
+                                        </span>
                                     </td>
                                     <td>
                                        {{ $val['event_name'] }}
@@ -106,7 +112,17 @@
                                     </td>
                                     <td> {{ $val['no_of_tickets'] }}</td>
                                     <td>
-                                        <span class="badge text-bg-success">{{ $val['sales_count'] ?? 0 }} Sold</span>
+                                        <div class="d-flex flex-column gap-1">
+                                            @if ((int) ($val['fulfilled_sales_count'] ?? 0) > 0)
+                                                <span class="badge text-bg-success">{{ $val['fulfilled_sales_count'] }} Sold</span>
+                                            @endif
+                                            @if ((int) ($val['pending_upload_count'] ?? 0) > 0)
+                                                <span class="badge text-bg-warning">{{ $val['pending_upload_count'] }} Pending</span>
+                                            @endif
+                                            @if ((int) ($val['fulfilled_sales_count'] ?? 0) === 0 && (int) ($val['pending_upload_count'] ?? 0) === 0)
+                                                <span class="badge text-bg-secondary">{{ $val['sales_count'] ?? 0 }} Sold</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">

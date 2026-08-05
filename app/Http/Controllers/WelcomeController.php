@@ -261,7 +261,8 @@ class WelcomeController extends Controller
             ->leftjoin('currency','currency.id','event_tickets.amount_currency')
             ->where('event_tickets.event',$event)
             ->where('event_tickets.event_timing',$event_timing)
-            ->where('event_tickets.is_admin_approved',1);
+            ->where('event_tickets.is_admin_approved',1)
+            ->where('event_tickets.ticket_status', \App\Models\EventTickets::STATUS_ACTIVE);
 
            $event_ticket_data = $data_all
         //    ->where('event_tickets.venue_seating',$category)

@@ -2,6 +2,36 @@
 {{-- @extends('admin.layout.app')
 @section('admin_content') --}}
 @extends('layouts.reseller_app')
+
+@push('styles')
+<style>
+    .mylistings-status-counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        max-width: 280px;
+        white-space: normal;
+    }
+    .mylistings-status-counts .count-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .mylistings-status-counts .count-pill--available { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .mylistings-status-counts .count-pill--on-sale { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
+    .mylistings-status-counts .count-pill--off-sale { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .mylistings-status-counts .count-pill--sold { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
+    .mylistings-status-counts .count-pill--sold-outside { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .mylistings-status-counts .count-pill--pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .mylistings-status-counts .count-pill--total { background: #f8f9fc; color: #374151; border: 1px solid #e8ebf3; }
+</style>
+@endpush
+
 @section('content')
     <!-- Row -->
     <div class="row row-sm">
@@ -39,7 +69,7 @@
             <select class="form-select" name="ticket_status" aria-label="Ticket Status">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
             <option value="active"  {{ request('ticket_status') == 'active' ? 'selected' : '' }}>Active</option>
-            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Post</option>
+            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Posted</option>
             <option value="unapproved"  {{ request('ticket_status') == 'unapproved' ? 'selected' : '' }}>Unapproved</option>
             <option value="sold"  {{ request('ticket_status') == 'sold' ? 'selected' : '' }}>Sold</option>
             <option value="pending"  {{ request('ticket_status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -65,7 +95,8 @@
                                     <th>Sl</th>
                                     <th class="border-bottom-0">ID and Creation Time</th>
                                     <th class="border-bottom-0">Status</th>
-                                    <th class="border-bottom-0">Event </th>.
+                                    <th class="border-bottom-0">Ticket Status</th>
+                                    <th class="border-bottom-0">Event</th>
                                     <th class="border-bottom-0">Ticket Type</th>
                                     <th class="border-bottom-0">Ticket Details</th>
                                     <th class="border-bottom-0">Ticket</th>
@@ -87,12 +118,8 @@
                                         {{ date('d M Y',strtotime($val['created_at'])) }}
                                     </td>
                                     <td>
-                                        @php
-                                            $canToggleStatus = empty($val['is_fully_sold'])
-                                                && (int) $val['is_admin_approved'] === 1;
-                                        @endphp
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            @if ($canToggleStatus)
+                                            @if (!empty($val['can_toggle_status']))
                                                 <div class="form-check form-switch mb-0">
                                                     <input class="form-check-input"
                                                             type="checkbox"
@@ -101,24 +128,34 @@
                                                             data-id="{{ $val['id'] }}"
                                                             data-status="{{ $val['ticket_status']}}"
                                                             onchange="confirmToggleStatus(this)"
-                                                            {{ $val['ticket_status'] == 1 ? 'checked':'' }}
+                                                            {{ (int) $val['ticket_status'] === \App\Models\EventTickets::STATUS_ACTIVE ? 'checked':'' }}
                                                             value="{{ $val['ticket_status'] }}">
                                                 </div>
                                             @endif
-
-                                            @if (!empty($val['is_fully_sold']))
-                                                <span class="badge text-bg-success">Sold</span>
-                                            @elseif ($val['is_admin_approved'] == 1)
-                                               @if($val['ticket_status'] == 1)
-                                                <span class="badge text-bg-success">Active</span>
-                                                @else
-                                                    <span class="badge text-bg-primary">Post</span>
+                                            <span class="badge {{ $val['ticket_status_badge'] ?? 'text-bg-secondary' }}">
+                                                {{ $val['ticket_status_label'] ?? \App\Models\EventTickets::statusLabel($val['ticket_status'] ?? null) }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $statusCounts = [
+                                                ['key' => 'total_ticket_count', 'label' => 'Total', 'class' => 'count-pill--total'],
+                                                ['key' => 'on_sale_ticket_count', 'label' => 'On Sale', 'class' => 'count-pill--on-sale'],
+                                                ['key' => 'off_sale_ticket_count', 'label' => 'Off Sale', 'class' => 'count-pill--off-sale'],
+                                                ['key' => 'sold_ticket_count', 'label' => 'Sold', 'class' => 'count-pill--sold'],
+                                                ['key' => 'sold_outside_count', 'label' => 'Sold Outside', 'class' => 'count-pill--sold-outside'],
+                                                ['key' => 'pending_upload_count', 'label' => 'Pending', 'class' => 'count-pill--pending'],
+                                            ];
+                                        @endphp
+                                        <div class="mylistings-status-counts">
+                                            @foreach ($statusCounts as $statusCount)
+                                                @if ((int) ($val[$statusCount['key']] ?? 0) > 0)
+                                                    <span class="count-pill {{ $statusCount['class'] }}">
+                                                        {{ $statusCount['label'] }}: {{ $val[$statusCount['key']] }}
+                                                    </span>
                                                 @endif
-                                            @elseif ($val['is_admin_approved'] == 2)
-                                                <span class="badge text-bg-danger">Unapproved</span>
-                                            @else
-                                                <span class="badge text-bg-warning">Pending</span>
-                                            @endif
+                                            @endforeach
                                         </div>
                                     </td>
                                     <td>

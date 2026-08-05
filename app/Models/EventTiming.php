@@ -23,7 +23,9 @@ class EventTiming extends Model
         ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')
         ->leftjoin('split_types', 'split_types.id', 'event_tickets.split_type')
-        ->where('event',$event)->where('event_timing',$timing_id)->where('event_tickets.is_admin_approved', 1)
+        ->where('event',$event)->where('event_timing',$timing_id)
+        ->where('event_tickets.is_admin_approved', 1)
+        ->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE)
         ->select('*','event_tickets.id as id', 'split_types.split_name as split_type_name')
         ->orderBy('event_tickets.web_price', 'asc')->get();
     }
@@ -43,6 +45,7 @@ class EventTiming extends Model
         ->where('event_ticket_tickets.is_sold', 0)
         ->where('event_ticket_tickets.under_purchase_hold', 0)
         ->where('event_tickets.is_admin_approved',1)
+        ->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE)
         ->count();
 
         return $data;
