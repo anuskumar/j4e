@@ -13,12 +13,55 @@ class TicketsGenerated extends Model
     use SoftDeletes;
     protected $table = 'event_ticket_tickets';
 
-    protected $fillable = ['seat_id', 'file', 'ticket_amount'];
+    public const FULFILLMENT_PENDING = 'pending';
+
+    public const FULFILLMENT_SOLD = 'sold';
+
+    protected $fillable = ['seat_id', 'file', 'ticket_amount', 'fulfillment_status', 'is_sold'];
 
     public static function get_the_number_of_tickets($id){
 
         $data = TicketsGenerated::where('event_tickets',$id)->where('is_sold',0)->where('under_purchase_hold',0)->get();
         return $data;
+    }
+
+    /**
+     * Sold ticket still awaiting fulfillment (pending upload / mark sold).
+     */
+    public function isPendingFulfillment(): bool
+    {
+        if ((int) $this->is_sold !== 1) {
+            return false;
+        }
+
+        if ($this->fulfillment_status === self::FULFILLMENT_SOLD) {
+            return false;
+        }
+
+        if ($this->fulfillment_status === self::FULFILLMENT_PENDING) {
+            return true;
+        }
+
+        // Legacy rows without fulfillment_status.
+        return empty($this->file);
+    }
+
+    public function fulfillmentLabel(): string
+    {
+        if ((int) $this->is_sold !== 1) {
+            return 'Available';
+        }
+
+        return $this->isPendingFulfillment() ? 'Pending' : 'Sold';
+    }
+
+    public function fulfillmentBadgeClass(): string
+    {
+        if ((int) $this->is_sold !== 1) {
+            return 'text-bg-secondary';
+        }
+
+        return $this->isPendingFulfillment() ? 'text-bg-warning' : 'text-bg-success';
     }
 
     /**

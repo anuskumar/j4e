@@ -20,6 +20,7 @@ use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MobileApplicationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaypalSettingsController;
@@ -96,6 +97,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'user.type:superadmi
     Route::get('sent-emails', [AdminBulkEmailController::class, 'index'])->name('admin.bulk-email.index');
     Route::get('sent-emails/{bulkEmailLog}', [AdminBulkEmailController::class, 'show'])->name('admin.bulk-email.show');
     Route::get('sent-emails/{bulkEmailLog}/attachments/{index}', [AdminBulkEmailController::class, 'downloadAttachment'])->name('admin.bulk-email.attachment');
+    Route::resource('mobile-applications', MobileApplicationController::class)
+        ->names('admin.mobile-applications');
 });
 
 Route::group(['prefix' => 'customer', 'middleware' => ['auth', 'user.type:customer', 'verified']], function () {
@@ -215,6 +218,7 @@ Route::group(['prefix' => 'reseller'], function () {
      Route::get('mylistings', [ResellerController::class, 'mylistings'])->name('reseller.mylistings');
      Route::get('mysales', [ResellerController::class, 'mysales'])->name('reseller.mysales');
      Route::get('view-sold-tickets/{id}', [ResellerController::class, 'view_sold_tickets'])->name('reseller.view.soldtickets');
+     Route::post('update-sold-ticket-fulfillment-status', [ResellerController::class, 'update_sold_ticket_fulfillment_status'])->name('reseller.update.sold.ticket.status');
 
      Route::get('reseller-manage-eventticket/{id}', [ResellerController::class, 'reseller_manage_eventticket'])->name('reseller.manage.eventticket');
      Route::post('update-ticket-type', [ResellerController::class, 'update_ticket_type'])->name('update.ticket.type');
@@ -224,6 +228,7 @@ Route::group(['prefix' => 'reseller'], function () {
 
      Route::delete('reseller-delete-listing/{id}', [ResellerController::class, 'destroy_ticket'])->name('ticket.listing.destroy');
      Route::post('update-ticket-pricechange', [ResellerController::class, 'update_ticket_pricechange'])->name('update.ticket.pricechange');
+     Route::post('update-ticket-row', [ResellerController::class, 'update_ticket_row'])->name('update.ticket.row');
 
      Route::get('delete-generated-ticket', [ResellerController::class, 'delete_generated_ticket'])->name('delete.generated.ticket');
 

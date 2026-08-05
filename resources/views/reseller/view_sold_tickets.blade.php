@@ -6,11 +6,18 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3>Sold Tickets - {{ $mainTicket->unique_id ?? 'N/A' }}</h3>
+                    <h3>Sold Tickets - {{ strtoupper($mainTicket->unique_id ?? 'N/A') }}</h3>
                     <a href="{{ route('reseller.mysales') }}" class="btn btn-secondary">Back to My Sales</a>
                 </div>
             </div>
         </div>
+
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
         <!-- Main Ticket Information -->
         <div class="row mb-4">
@@ -74,6 +81,7 @@
                                             <th>Event Date</th>
                                             <th>Event Time</th>
                                             <th>Status</th>
+                                            <th>Change Status</th>
                                             <th>Customer Details</th>
                                             <th>Invoice</th>
                                             <th>Ticket File</th>
@@ -84,6 +92,11 @@
                                             $sl = 1;
                                         @endphp
                                         @foreach($soldTickets as $ticket)
+                                            @php
+                                                $currentFulfillment = $ticket->isPendingFulfillment()
+                                                    ? \App\Models\TicketsGenerated::FULFILLMENT_PENDING
+                                                    : \App\Models\TicketsGenerated::FULFILLMENT_SOLD;
+                                            @endphp
                                             <tr>
                                                 <td>{{ $sl++ }}</td>
                                                 <td><strong>{{ $ticket->ticket_serial_number ?? 'N/A' }}</strong></td>
@@ -107,11 +120,20 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($ticket->is_sold == 1)
-                                                        <span class="badge text-bg-success">Sold</span>
-                                                    @else
-                                                        <span class="badge text-bg-secondary">Available</span>
-                                                    @endif
+                                                    <span class="badge {{ $ticket->fulfillmentBadgeClass() }}">
+                                                        {{ $ticket->fulfillmentLabel() }}
+                                                    </span>
+                                                </td>
+                                                <td style="min-width: 180px;">
+                                                    <form action="{{ route('reseller.update.sold.ticket.status') }}" method="POST" class="d-flex align-items-center gap-2">
+                                                        @csrf
+                                                        <input type="hidden" name="generated_ticket_id" value="{{ $ticket->ticket_id ?? $ticket->id }}">
+                                                        <select name="fulfillment_status" class="form-select form-select-sm" required>
+                                                            <option value="pending" @selected($currentFulfillment === 'pending')>Pending</option>
+                                                            <option value="sold" @selected($currentFulfillment === 'sold')>Sold</option>
+                                                        </select>
+                                                        <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                                    </form>
                                                 </td>
                                                 <td>
                                                     @if(isset($ticket->customer_name) && $ticket->customer_name)
@@ -168,4 +190,3 @@
     </div>
 
 @endsection
-

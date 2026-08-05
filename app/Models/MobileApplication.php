@@ -8,5 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class MobileApplication extends Model
 {
     use HasFactory;
+
     protected $table = 'mobile_applications';
+
+    protected $fillable = [
+        'name',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 }

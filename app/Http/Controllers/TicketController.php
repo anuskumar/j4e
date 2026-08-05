@@ -356,6 +356,7 @@ class TicketController extends Controller
                 ]);
           }
                 $new->is_admin_approved = 2;
+                $new->ticket_status = EventTickets::STATUS_UNAPPROVED;
                 $new->save();
 
                 try {
@@ -433,6 +434,7 @@ class TicketController extends Controller
             if ($existingTickets > 0) {
                 // Ticket already has generated tickets, just update approval status
                 $ticket->is_admin_approved = 1;
+                $ticket->ticket_status = EventTickets::STATUS_ACTIVE;
                 $ticket->save();
                 DB::commit();
 
@@ -496,6 +498,7 @@ class TicketController extends Controller
             
             // Update ticket approval status
             $ticket->is_admin_approved = 1;
+            $ticket->ticket_status = EventTickets::STATUS_ACTIVE;
             $ticket->save();
             
             // Commit transaction
@@ -648,7 +651,7 @@ class TicketController extends Controller
 
 
         $data->is_admin_approved = 0;
-        $data->ticket_status = 1;
+        $data->ticket_status = EventTickets::STATUS_UNAPPROVED;
         $data->created_by = Auth::user()->id;
         $data->save();
 
@@ -930,6 +933,17 @@ class TicketController extends Controller
         $data->payment_mode = $request->payment_mode;
 
         $data->save();
+
+        $generated = TicketsGenerated::find($request->event_ticket_tickets_id);
+        if ($generated) {
+            $generated->is_sold = 1;
+            $generated->fulfillment_status = TicketsGenerated::FULFILLMENT_SOLD;
+            $generated->on_sale = 0;
+            $generated->save();
+
+            EventTickets::markSoldAfterFulfillment((int) $generated->event_tickets);
+        }
+
         return redirect()->back();
 
 
@@ -961,7 +975,16 @@ public function updateStatus(Request $request, $id)
         ], 404);
     }
 
-    $ticket->ticket_status = (int) $ticket->ticket_status === 1 ? 2 : 1;
+    if (! $ticket->canToggleActivePosted()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Only Active or Posted listings can be toggled.',
+        ], 422);
+    }
+
+    $ticket->ticket_status = (int) $ticket->ticket_status === EventTickets::STATUS_ACTIVE
+        ? EventTickets::STATUS_POSTED
+        : EventTickets::STATUS_ACTIVE;
 
     $ticket->save();
 
@@ -984,7 +1007,43 @@ public function updatesaleStatus(Request $request, $id)
         ], 404);
     }
 
-    $ticket->on_sale = ! $ticket->on_sale;
+    $listing = EventTickets::find($ticket->event_tickets);
+    if (!$listing || (int) $listing->created_by !== (int) Auth::id()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized access.',
+        ], 403);
+    }
+
+    if (!empty($ticket->is_sold)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Sold tickets cannot be updated.',
+        ], 422);
+    }
+
+    $sequence = TicketsGenerated::where('event_tickets', $ticket->event_tickets)
+        ->orderByRaw('CAST(seat_number AS UNSIGNED) ASC')
+        ->orderBy('id')
+        ->get();
+
+    $firstTicket = $sequence->first();
+    $lastTicket = $sequence->last();
+    $isFirst = $firstTicket && (int) $firstTicket->id === (int) $ticket->id;
+    $isLast = $lastTicket && (int) $lastTicket->id === (int) $ticket->id;
+
+    if (!$isFirst && !$isLast) {
+        return response()->json([
+            'success' => false,
+            'message' => 'This ticket cannot be updated because the continuation of the seat sequence will be lost. You can only change On Sale for the first or last ticket in the sequence.',
+        ], 422);
+    }
+
+    if ($request->has('status')) {
+        $ticket->on_sale = ((int) $request->input('status') === 1) ? 1 : 0;
+    } else {
+        $ticket->on_sale = $ticket->on_sale ? 0 : 1;
+    }
 
     $ticket->save();
 

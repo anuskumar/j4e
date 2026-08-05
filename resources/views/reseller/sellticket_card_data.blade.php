@@ -36,15 +36,79 @@
                 {{ session('success') }}
             </div>
         @endif
+        @if (session('warning'))
+            <div class="alert alert-warning text-center">
+                {{ session('warning') }}
+            </div>
+        @endif
 
         <div class="row">
             <!-- Left Section - Form -->
             <div class="col-lg-8">
+                <form id="paymentForm" action="{{ route('savePaymentMethod') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="ticket_id" value="{{ request()->route('id') }}">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold">Set Your Price</h5>
+                            <div class="mb-3">
+                                <label for="price-currency" class="form-label">
+                                    Choose the currency in which you would like to be paid
+                                </label>
+                                <select class="form-select" id="price-currency" name="currency" required>
+                                    <option value="">Select</option>
+                                    @foreach ($currencys as $val)
+                                        <option value="{{ $val->id }}"
+                                            data-code="{{ $val->symbol . $val->short_name }}"
+                                            data-rate="{{ $val->currency_rate }}"
+                                            {{ old('currency', $data->amount_currency) == $val->id ? 'selected' : '' }}>
+                                            {{ $val->symbol . $val->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="price-amount" class="form-label">Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text" id="price-currency-code">💱</span>
+                                        <input type="number" class="form-control" id="price-amount" name="amount"
+                                            value="{{ old('amount', floor((float) $data->ticket_amount)) }}"
+                                            placeholder="0" min="0" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="price-cents" class="form-label">Cents</label>
+                                    <input type="number" class="form-control" id="price-cents" name="cents"
+                                        value="{{ old('cents', str_pad((string) round((((float) $data->ticket_amount) - floor((float) $data->ticket_amount)) * 100), 2, '0', STR_PAD_LEFT)) }}"
+                                        placeholder="00" min="0" max="99">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <span class="ms-2">Per Ticket</span>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-3">
+                                * All currency conversions are based on US Dollar (USD) rates *.
+                            </small>
+
+                            <input type="hidden" id="converted_price_per_ticket" name="converted_price_per_ticket">
+                            <input type="hidden" id="converted_website_price" name="converted_website_price">
+                            <input type="hidden" id="converted_seller_fee" name="converted_seller_fee">
+                            <input type="hidden" id="converted_total_receive" name="converted_total_receive">
+                    </div>
+                </div>
+
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="fw-bold text-center">Choose Method for Getting Paid</h5>
-                        <form id="ticketForm" action="{{ route('savePaymentMethod') }}" method="POST">
-                            @csrf
+                            @if ($bankDetails->isEmpty())
+                                <div class="alert alert-warning mt-3 mb-0" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    Payment account details were not found. Please add your account details to continue.
+                                </div>
+                            @endif
                             <!-- Payment Methods -->
                             <div class="row mt-3 row-cols-1 row-cols-md-2 g-3">
                                 @foreach ($bankDetails as $detail)
@@ -90,9 +154,9 @@
                             <div class="mt-4">
                                 <button type="submit" class="btn btn-success w-100">Continue</button>
                             </div>
-                        </form>
                     </div>
                 </div>
+                </form>
             </div>
 
             <!-- Add New Payment Option Modal -->
@@ -304,11 +368,44 @@
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            const priceCurrency = document.getElementById('price-currency');
+            const priceAmount = document.getElementById('price-amount');
+            const priceCents = document.getElementById('price-cents');
+            const ticketCount = parseInt(document.getElementById('num-tickets').textContent) || 0;
+            const sellerFeePercent = parseFloat("{{ $data->seller_fee_percent ?? 10 }}") || 10;
+
+            function updatePriceSummary() {
+                const selectedCurrency = priceCurrency.options[priceCurrency.selectedIndex];
+                const currencyCode = selectedCurrency?.dataset.code || '💱';
+                const rate = parseFloat(selectedCurrency?.dataset.rate) || 1;
+                const enteredPrice = (parseFloat(priceAmount.value) || 0) + ((parseFloat(priceCents.value) || 0) / 100);
+                const pricePerTicket = enteredPrice * rate;
+                const websitePrice = pricePerTicket * ticketCount;
+                const sellerFee = websitePrice * (sellerFeePercent / 100);
+                const totalReceive = websitePrice - sellerFee;
+
+                document.getElementById('price-currency-code').textContent = currencyCode;
+                document.getElementById('price-per-ticket').textContent = `${currencyCode}${pricePerTicket.toFixed(2)}`;
+                document.getElementById('website-price').textContent = `${currencyCode}${websitePrice.toFixed(2)}`;
+                document.getElementById('seller-fee').textContent = `-${currencyCode}${sellerFee.toFixed(2)}`;
+                document.getElementById('total-amount').textContent = `${currencyCode}${totalReceive.toFixed(2)}`;
+
+                document.getElementById('converted_price_per_ticket').value = pricePerTicket.toFixed(2);
+                document.getElementById('converted_website_price').value = websitePrice.toFixed(2);
+                document.getElementById('converted_seller_fee').value = sellerFee.toFixed(2);
+                document.getElementById('converted_total_receive').value = totalReceive.toFixed(2);
+            }
+
+            priceCurrency.addEventListener('change', updatePriceSummary);
+            priceAmount.addEventListener('input', updatePriceSummary);
+            priceCents.addEventListener('input', updatePriceSummary);
+            updatePriceSummary();
+
             // Main Form: Handle Payment Method Selection
             const paymentInputs = document.querySelectorAll(
                 "input[name='payment_method'], input[name='paymentMethod']");
             const paymentTypeInput = document.getElementById("paymentType");
-            const continueButton = document.querySelector("button[type='submit']");
+            const continueButton = document.querySelector("#paymentForm button[type='submit']");
             const addPaymentModal = new bootstrap.Modal(document.getElementById("addPaymentModal"));
             const continueBtn = document.getElementById("continuePaymentBtn");
             const successMessage = document.getElementById("successMessage");

@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 
 class ResellerController extends Controller
@@ -1012,7 +1013,7 @@ class ResellerController extends Controller
         }
 
         $data->is_admin_approved = 0;
-        $data->ticket_status     = 1;
+        $data->ticket_status     = EventTickets::STATUS_UNAPPROVED;
         $data->created_by        = Auth::user()->id;
         $data->save();
 
@@ -1117,7 +1118,9 @@ class ResellerController extends Controller
             $ticket_type = $allTicketTypes;
         }
         
-        $mobile_applications = MobileApplication::get();
+        $mobile_applications = MobileApplication::where('is_active', 1)
+            ->orderBy('name')
+            ->get();
         $event_timing   = EventTiming::where('event', $id)->first();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
@@ -1150,12 +1153,18 @@ class ResellerController extends Controller
             'amount'            => 'required|numeric|min:0',
             'cents'             => 'nullable|numeric|min:0|max:99',
             'ticket_type'       => 'required|exists:ticket_type,id',
-                'mobile_app'        => 'nullable|exists:mobile_applications,id',
+            'mobile_app'        => [
+                'nullable',
+                Rule::exists('mobile_applications', 'id')->where('is_active', 1),
+            ],
             ];
 
             // If mobile ticket transfer, make mobile_app required
             if ($request->ticket_type == 4) {
-            $rules['mobile_app'] = 'required|exists:mobile_applications,id';
+            $rules['mobile_app'] = [
+                'required',
+                Rule::exists('mobile_applications', 'id')->where('is_active', 1),
+            ];
         }
 
         // Validate the form data
@@ -1232,7 +1241,7 @@ class ResellerController extends Controller
 
         // Approval status
         $data->is_admin_approved = 0;
-        $data->ticket_status = 1;
+        $data->ticket_status = EventTickets::STATUS_UNAPPROVED;
         $data->created_by = Auth::user()->id;
 
             // Use database transaction to ensure data integrity
@@ -1313,7 +1322,7 @@ class ResellerController extends Controller
             }
 
             // Redirect to the next step with success message
-            return redirect()->route('reseller.savesecond', ['id' => $data->id])
+            return redirect()->route('reseller.conformation', ['id' => $data->id])
                 ->with('success', 'Ticket created successfully!');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1334,56 +1343,7 @@ class ResellerController extends Controller
 
     public function savesellticketsecond(Request $request)
     {
-
-        $eventid   = $request->id;
-        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
-        //fetching event name
-        $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
-            ->leftjoin('event_timings', 'event_timings.event', 'event.id')
-            ->leftjoin('event_type', 'event_type.id', 'event.event_type')
-            ->leftjoin('event_tags', 'event_tags.id', 'event.event_tag')
-            ->leftjoin('venue', 'venue.id', 'event.venue')
-            ->leftjoin('location', 'location.id', 'venue.location')
-            ->leftjoin('countries', 'countries.id', 'location.country')
-            ->leftjoin('cities', 'cities.id', 'location.city')
-            ->leftjoin('ticket_type', 'ticket_type.id', 'event_tickets.ticket_type')
-            ->leftjoin('split_types', 'split_types.id', 'event_tickets.split_type')
-            ->leftjoin('currency', 'currency.id', 'event_tickets.amount_currency')
-            ->leftjoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
-            ->leftjoin('mobile_applications', 'mobile_applications.id', 'event_tickets.mobile_application_id')
-
-            ->where('event_tickets.id', $eventid)
-            ->select(
-                'event.event_name',
-                'event.event_from_date',
-                'event.event_to_date',
-                'event_type.event_type_name',
-                'event_tags.tag_name',
-                'event_timings.event_date',
-                'event_timings.from_time',
-                'event_timings.to_time',
-                'event_timings.is_active',
-                'venue.name',
-                'location.location_name',
-                'cities.name as cname',
-                'countries.country_name',
-                'ticket_type.ticket_type_name',
-                'event_tickets.split_type',
-                'event_tickets.row',
-                'event_tickets.seat_from',
-                'event_tickets.seat_to',
-                'event_tickets.no_of_tickets',
-                'event_tickets.face_value',
-                'event_tickets.amount_currency',
-                'event_tickets.ticket_amount',
-                'event.seller_fee_percent',
-                'split_types.split_name',
-                'currency.short_name as currency_name',
-                'venue_seating.seating_type_name as venue_seating_name',
-                'mobile_applications.name as mobile_applications_name'
-            )
-            ->first();
-        return view('reseller.event_savesecond', compact('currencys', 'data'));
+        return redirect()->route('reseller.conformation', ['id' => $request->id]);
     }
     public function showsellticketsecond(Request $request)
     {
@@ -1568,10 +1528,12 @@ class ResellerController extends Controller
                 'event_tickets.seat_from',
                 'event_tickets.seat_to',
                 'event_tickets.no_of_tickets',
+                'event_tickets.amount_currency',
                 'event_tickets.ticket_amount',
                 'event_tickets.seller_fee',
                 'event_tickets.web_price',
                 'event_tickets.total_recive',
+                'event.seller_fee_percent',
                 'split_types.split_name',
                 'currency.short_name as currency_name',
                 'currency.symbol',
@@ -1627,6 +1589,7 @@ class ResellerController extends Controller
         ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
         ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
         ;
 
         // if(!Auth::user()->user_type=="superadmin"){
@@ -1636,31 +1599,59 @@ class ResellerController extends Controller
 
         // ✅ filters
         if ($request->filled('ticket_status')) {
-            $data_all->where('event_tickets.ticket_status', $request->ticket_status);
+            $status = $request->ticket_status;
+
+            if ($status === 'active') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
+            } elseif ($status === 'paused' || $status === 'posted') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+            } elseif ($status === 'unapproved') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
+            } elseif ($status === 'pending') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PENDING);
+            } elseif ($status === 'sold') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_SOLD);
+            }
         }
          if ($request->filled('ticket_type')) {
             $data_all->where('event_tickets.ticket_type', $request->ticket_type);
         }
 
         if ($request->filled('start_date')) {
-            $data_all->whereDate('event_tickets.event_from_date', '>=', $request->start_date);
-        }
-
-        if ($request->filled('end_date')) {
-            $data_all->whereDate('event_tickets.event_to_date', '<=', $request->end_date);
+            $data_all->whereDate('event.event_from_date', '>=', $request->start_date);
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $data_all->where(function($q) use ($search) {
                 $q->where('event.event_name', 'like', "%{$search}%")
-                ->orWhere('venue.name', 'like', "%{$search}%")
-                ->orWhere('cities.name', 'like', "%{$search}%");
+                    ->orWhere('event_tickets.unique_id', 'like', "%{$search}%");
+
+                if (is_numeric($search)) {
+                    $q->orWhere('event_tickets.id', (int) $search)
+                        ->orWhere('event.id', (int) $search);
+                }
             });
         }
 
 
-        $data = $data_all->select('*','event_tickets.id as id','event_tickets.is_admin_approved as is_admin_approved','event_tickets.ticket_status as ticket_status','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $data_all->select(
+            '*',
+            'event_tickets.id as id',
+            'event_tickets.is_admin_approved as is_admin_approved',
+            'event_tickets.ticket_status as ticket_status',
+            'event_tickets.event as event_id',
+            'event_tickets.row as row',
+            'event_tickets.seat_from as seat_from',
+            'event_tickets.seat_to as seat_to',
+            'event.event_name as event_name',
+            'event.event_is_active as event_is_active',
+            'country_name',
+            'cities.name as city_name',
+            'location_name',
+            'venue.name as venue_name',
+            'venue_seating.seating_type_name as seating_type_name'
+        )
        ->orderBy('event_tickets.id', 'desc')
        ->paginate(20)->appends(request()->all());
 
@@ -1668,6 +1659,45 @@ class ResellerController extends Controller
 
         $val['waiting_for_approval'] = EventTickets::where('event_tickets.event',$val->id)->where('is_admin_approved',0)->count();
         $val['my_tickets'] = EventTickets::where('event_tickets.event',$val->id)->where('created_by',Auth::user()->id)->count();
+
+        $listingTickets = TicketsGenerated::with('outsideSell')
+            ->where('event_tickets', $val->id)
+            ->get();
+
+        $soldCount = $listingTickets->where('is_sold', 1)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && ! $ticket->isPendingFulfillment();
+        })->count();
+        $soldOutsideCount = $listingTickets->filter(function ($ticket) {
+            return ! empty($ticket->outsideSell);
+        })->count();
+        $availableCount = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell);
+        })->count();
+        $onSaleCount = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && (int) $ticket->on_sale === 1;
+        })->count();
+        $offSaleCount = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && (int) $ticket->on_sale !== 1;
+        })->count();
+        $pendingUploadCount = $listingTickets->where('is_sold', 1)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && $ticket->isPendingFulfillment();
+        })->count();
+
+        $val['is_fully_sold'] = ($soldCount + $soldOutsideCount) > 0 && $availableCount === 0;
+        $val['available_ticket_count'] = $availableCount;
+        $val['on_sale_ticket_count'] = $onSaleCount;
+        $val['off_sale_ticket_count'] = $offSaleCount;
+        $val['sold_ticket_count'] = $soldCount;
+        $val['sold_outside_count'] = $soldOutsideCount;
+        $val['pending_upload_count'] = $pendingUploadCount;
+        $val['total_ticket_count'] = $listingTickets->count();
+        $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
+        $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
+        $val['can_toggle_status'] = (int) $val->is_admin_approved === 1
+            && in_array((int) $val->ticket_status, [EventTickets::STATUS_ACTIVE, EventTickets::STATUS_POSTED], true)
+            && $availableCount > 0;
+        $val['event_status_label'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'Active' : 'Inactive';
+        $val['event_status_badge'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'text-bg-success' : 'text-bg-secondary';
 
        }
 
@@ -1694,6 +1724,7 @@ class ResellerController extends Controller
         ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
         ->leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
         ->leftjoin('currency','currency.id','event_tickets.amount_currency')
+        ->leftjoin('venue_seating','venue_seating.id','event_tickets.venue_seating')
         ;
 
         // if(!Auth::user()->user_type=="superadmin"){
@@ -1703,50 +1734,61 @@ class ResellerController extends Controller
 
         // ✅ filters
         if ($request->filled('ticket_status')) {
-            $data_all->where('event_tickets.ticket_status', $request->ticket_status);
+            $status = $request->ticket_status;
+
+            if ($status === 'active') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
+            } elseif ($status === 'paused' || $status === 'posted') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+            } elseif ($status === 'unapproved') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
+            } elseif ($status === 'pending') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PENDING);
+            } elseif ($status === 'sold') {
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_SOLD);
+            }
         }
          if ($request->filled('ticket_type')) {
             $data_all->where('event_tickets.ticket_type', $request->ticket_type);
         }
 
         if ($request->filled('start_date')) {
-            $data_all->whereDate('event_timings.event_date', '>=', $request->start_date);
-        }
-
-        if ($request->filled('end_date')) {
-            $data_all->whereDate('event_timings.event_date', '<=', $request->end_date);
+            $data_all->whereDate('event.event_from_date', '>=', $request->start_date);
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
             $data_all->where(function($q) use ($search) {
                 $q->where('event.event_name', 'like', "%{$search}%")
-                ->orWhere('venue.name', 'like', "%{$search}%")
-                ->orWhere('cities.name', 'like', "%{$search}%");
+                    ->orWhere('event_tickets.unique_id', 'like', "%{$search}%");
+
+                if (is_numeric($search)) {
+                    $q->orWhere('event_tickets.id', (int) $search)
+                        ->orWhere('event.id', (int) $search);
+                }
             });
         }
 
-        // Apply sales count filters using whereIn with subquery
-        if ($request->filled('sales_status')) {
-            $salesStatus = $request->sales_status;
-            if ($salesStatus == 'has_sales') {
-                $data_all->whereIn('event_tickets.id', function($query) {
-                    $query->select('event_tickets')
-                        ->from('event_ticket_tickets')
-                        ->where('is_sold', 1)
-                        ->whereNull('deleted_at')
-                        ->groupBy('event_tickets')
-                        ->havingRaw('COUNT(*) > 0');
-                });
-            } elseif ($salesStatus == 'no_sales') {
-                $data_all->whereNotIn('event_tickets.id', function($query) {
-                    $query->select('event_tickets')
+        // My Sales: listings with sold/pending tickets, or listing status Pending/Sold.
+        $data_all->where(function ($query) {
+            $query->whereIn('event_tickets.ticket_status', [
+                    EventTickets::STATUS_PENDING,
+                    EventTickets::STATUS_SOLD,
+                ])
+                ->orWhereIn('event_tickets.id', function ($sub) {
+                    $sub->select('event_tickets')
                         ->from('event_ticket_tickets')
                         ->where('is_sold', 1)
                         ->whereNull('deleted_at');
+                })
+                ->orWhereIn('event_tickets.id', function ($sub) {
+                    $sub->select('event_ticket_tickets.event_tickets')
+                        ->from('outsidesell')
+                        ->join('event_ticket_tickets', 'event_ticket_tickets.id', '=', 'outsidesell.event_ticket_tickets_id')
+                        ->whereNull('event_ticket_tickets.deleted_at')
+                        ->whereNull('outsidesell.deleted_at');
                 });
-            }
-        }
+        });
 
         if ($request->filled('min_sales')) {
             $minSales = (int)$request->min_sales;
@@ -1773,8 +1815,27 @@ class ResellerController extends Controller
         }
 
         // Add sales count as subquery for display
-        $data_all->select('*','event_tickets.id as id','event_tickets.event as event_id','event.event_name as event_name','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-            ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL) as sales_count');
+        $data_all->select(
+                '*',
+                'event_tickets.id as id',
+                'event_tickets.ticket_status as ticket_status',
+                'event_tickets.event as event_id',
+                'event_tickets.row as row',
+                'event_tickets.seat_from as seat_from',
+                'event_tickets.seat_to as seat_to',
+                'event_tickets.unique_id as unique_id',
+                'event.event_name as event_name',
+                'currency.short_name as short_name',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'venue.name as venue_name',
+                'venue_seating.seating_type_name as seating_type_name'
+            )
+            ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL) as sales_count')
+            ->selectRaw('(SELECT COUNT(*) FROM event_ticket_tickets WHERE event_ticket_tickets.event_tickets = event_tickets.id AND event_ticket_tickets.is_sold = 1 AND event_ticket_tickets.deleted_at IS NULL AND (event_ticket_tickets.fulfillment_status = "pending" OR ((event_ticket_tickets.fulfillment_status IS NULL OR event_ticket_tickets.fulfillment_status = "") AND (event_ticket_tickets.file IS NULL OR event_ticket_tickets.file = "")))) as pending_upload_count')
+            ->selectRaw('(SELECT ticket_purchase.sales_id FROM ticket_purchase WHERE ticket_purchase.event_ticket_id = event_tickets.id AND ticket_purchase.is_payment_completed = 1 ORDER BY ticket_purchase.payment_date DESC, ticket_purchase.id DESC LIMIT 1) as latest_sales_id')
+            ->selectRaw('(SELECT ticket_purchase.payment_date FROM ticket_purchase WHERE ticket_purchase.event_ticket_id = event_tickets.id AND ticket_purchase.is_payment_completed = 1 ORDER BY ticket_purchase.payment_date DESC, ticket_purchase.id DESC LIMIT 1) as latest_sale_time');
 
         $data = $data_all->orderBy('event_tickets.id', 'desc')
             ->paginate(20)->appends(request()->all());
@@ -1787,6 +1848,16 @@ class ResellerController extends Controller
         if (!isset($val['sales_count']) || $val['sales_count'] === null) {
             $val['sales_count'] = TicketsGenerated::where('event_tickets', $val->id)->where('is_sold', 1)->count();
         }
+        if (!isset($val['pending_upload_count']) || $val['pending_upload_count'] === null) {
+            $val['pending_upload_count'] = TicketsGenerated::where('event_tickets', $val->id)
+                ->where('is_sold', 1)
+                ->get()
+                ->filter(fn ($ticket) => $ticket->isPendingFulfillment())
+                ->count();
+        }
+        $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
+        $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
+        $val['fulfilled_sales_count'] = max(0, (int) $val['sales_count'] - (int) $val['pending_upload_count']);
 
        }
 
@@ -1837,20 +1908,42 @@ class ResellerController extends Controller
                 'ticket_purchase.payment_date',
                 'ticket_purchase.id as purchase_order_id'
             )
+            ->orderByRaw('CAST(event_ticket_tickets.seat_number AS UNSIGNED) ASC')
             ->orderBy('event_ticket_tickets.id')
             ->get();
 
         $data['tickets'] = $listingTickets->toArray();
-        $data['sold_ticket_count'] = $listingTickets->where('is_sold', 1)->count();
-        $data['available_ticket_count'] = $listingTickets->where('is_sold', 0)->count();
+        $data['sold_ticket_count'] = $listingTickets->where('is_sold', 1)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && ! $ticket->isPendingFulfillment();
+        })->count();
+        $data['sold_outside_count'] = $listingTickets->filter(function ($ticket) {
+            return ! empty($ticket->outsideSell);
+        })->count();
+        $data['available_ticket_count'] = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell);
+        })->count();
+        $data['on_sale_ticket_count'] = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && (int) $ticket->on_sale === 1;
+        })->count();
+        $data['off_sale_ticket_count'] = $listingTickets->where('is_sold', 0)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && (int) $ticket->on_sale !== 1;
+        })->count();
+        $data['pending_upload_count'] = $listingTickets->where('is_sold', 1)->filter(function ($ticket) {
+            return empty($ticket->outsideSell) && $ticket->isPendingFulfillment();
+        })->count();
+        $data['total_ticket_count'] = $listingTickets->count();
+        $data['listing_ticket_status'] = (int) ($data[0]['ticket_status'] ?? 0);
+        $data['listing_ticket_status_label'] = EventTickets::statusLabel($data['listing_ticket_status']);
+        $data['listing_ticket_status_badge'] = EventTickets::statusBadgeClass($data['listing_ticket_status']);
+        $data['sequence_first_ticket_id'] = optional($listingTickets->first())->id;
+        $data['sequence_last_ticket_id'] = optional($listingTickets->last())->id;
         // $data['restrictions'] = RestrictionModel::where('id',$data[0]['ticket_restrictions'])->get()->toArray();
         // dd($data);
         $ticket_type = TicketType::all();
         $evntTcket = EventTickets::find($id);
-        $bankDetailsIncomplete = !Bankmodel::isCompleteForReseller(Auth::id());
         if($evntTcket->created_by == Auth::user()->id){
 
-            return view('reseller.reseller_manage_eventticket',compact('data','ticket_type','bankDetailsIncomplete'));
+            return view('reseller.reseller_manage_eventticket',compact('data','ticket_type'));
 
         }else{
             return back()->with('error','User Matching Failed');
@@ -1908,6 +2001,33 @@ class ResellerController extends Controller
         return view('reseller.view_sold_tickets', compact('mainTicket', 'soldTickets'));
     }
 
+    public function update_sold_ticket_fulfillment_status(Request $request)
+    {
+        $request->validate([
+            'generated_ticket_id' => 'required|integer',
+            'fulfillment_status' => 'required|in:pending,sold',
+        ]);
+
+        $ticket = TicketsGenerated::find($request->generated_ticket_id);
+        if (! $ticket || (int) $ticket->is_sold !== 1) {
+            return redirect()->back()->with('error', 'Sold ticket not found.');
+        }
+
+        $listing = EventTickets::find($ticket->event_tickets);
+        if (! $listing || (int) $listing->created_by !== (int) Auth::id()) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        $ticket->fulfillment_status = $request->fulfillment_status === 'sold'
+            ? TicketsGenerated::FULFILLMENT_SOLD
+            : TicketsGenerated::FULFILLMENT_PENDING;
+        $ticket->save();
+
+        EventTickets::syncSalesLifecycleStatus((int) $listing->id, $request->fulfillment_status === 'sold');
+
+        return redirect()->back()->with('success', 'Ticket status updated successfully.');
+    }
+
     public function update_ticket_type(Request $request){
         $id = $request->ticket_id;
         $tickey_type = $request->ticket_type;
@@ -1921,6 +2041,23 @@ class ResellerController extends Controller
 
         }
     }
+
+    public function update_ticket_row(Request $request){
+        $request->validate([
+            'ticket_id' => 'required|integer',
+            'row' => 'nullable|string|max:255',
+        ]);
+
+        $data = EventTickets::find($request->ticket_id);
+        if (!$data || $data->created_by != Auth::user()->id) {
+            return back()->with('error', 'Unauthorized access or ticket not found');
+        }
+
+        $data->row = $request->row;
+        $data->save();
+
+        return back()->with('success', 'Row updated successfully.');
+    }
         public function destroy_ticket($id)
         {
             $item = EventTickets::findOrFail($id);
@@ -1929,20 +2066,56 @@ class ResellerController extends Controller
             return redirect()->route('reseller.mylistings')->with('success', 'Tickets deleted successfully.');
         }
     public function update_ticket_seating(Request $request){
+        $request->validate([
+            'generated_ticket_id' => 'required|integer',
+            'seat_number' => 'required|string|max:255',
+            'seat_serial_number' => 'nullable|string|max:255',
+            'listing_ticket_status' => 'nullable|in:active,posted,sold,pending',
+        ]);
 
         $ticket = TicketsGenerated::find($request->generated_ticket_id);
+        if (!$ticket) {
+            return redirect()->back()->with('error', 'Ticket not found.');
+        }
+
+        $listing = EventTickets::find($ticket->event_tickets);
+        if (!$listing || (int) $listing->created_by !== (int) Auth::id()) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        if (!empty($ticket->is_sold)) {
+            return redirect()->back()->with('error', 'Sold tickets cannot be updated.');
+        }
+
         $ticket->seat_number = $request->seat_number;
         $ticket->ticket_serial_number = $request->seat_serial_number;
         $ticket->save();
 
-        return redirect()->back()->with('success', 'Tickets Updated successfully.');
-        // dd($request->all());
+        if ($request->filled('listing_ticket_status')) {
+            if ((int) $listing->is_admin_approved !== 1
+                || (int) $listing->ticket_status === EventTickets::STATUS_UNAPPROVED) {
+                return redirect()->back()->with('error', 'Ticket status can only be changed for approved listings.');
+            }
+
+            $statusMap = [
+                'active' => EventTickets::STATUS_ACTIVE,
+                'posted' => EventTickets::STATUS_POSTED,
+                'sold' => EventTickets::STATUS_SOLD,
+                'pending' => EventTickets::STATUS_PENDING,
+            ];
+
+            $listing->ticket_status = $statusMap[$request->listing_ticket_status];
+            $listing->save();
+        }
+
+        return redirect()->back()->with('success', 'Ticket updated successfully.');
     }
 
 public function upload_ticket_seating(Request $request){
 
     $files = $request->file('files');
     $tickets = $request->input('tickets');
+    $listingIds = [];
 
     // dd($files,$tickets);
 
@@ -1957,17 +2130,28 @@ public function upload_ticket_seating(Request $request){
                     $file->move(storage_path('uploads/ticket_images'), $imageName);
 
                     // Save in DB
-                    TicketsGenerated::find($ticketNo)->update([
-                        'file' => 'uploads/ticket_images/' . $imageName,
-                    ]);
+                    $generated = TicketsGenerated::find($ticketNo);
+                    if ($generated) {
+                        $generated->update([
+                            'file' => 'uploads/ticket_images/' . $imageName,
+                            'fulfillment_status' => TicketsGenerated::FULFILLMENT_SOLD,
+                        ]);
+                        $listingIds[] = (int) $generated->event_tickets;
+                    }
         }
     }
+
+    foreach (array_unique($listingIds) as $listingId) {
+        EventTickets::markSoldAfterFulfillment($listingId);
+    }
+
         return response()->json(['status' => 'success']);
 
     }
 
     public function upload_ticket_seating_individual(Request $request){
         // dd($request->file('files'));
+        $listingIds = [];
         foreach ($request->file('files') as $seatId => $fileGroup) {
             // dd($fileGroup);
         if (is_array($fileGroup)) {
@@ -1981,12 +2165,21 @@ public function upload_ticket_seating(Request $request){
                     $file->move(storage_path('uploads/ticket_images'), $imageName);
 
                     // Save in DB
-                    TicketsGenerated::find($seatId)->update([
-                        'file' => 'uploads/ticket_images/' . $imageName,
-                    ]);
+                    $generated = TicketsGenerated::find($seatId);
+                    if ($generated) {
+                        $generated->update([
+                            'file' => 'uploads/ticket_images/' . $imageName,
+                            'fulfillment_status' => TicketsGenerated::FULFILLMENT_SOLD,
+                        ]);
+                        $listingIds[] = (int) $generated->event_tickets;
+                    }
                 }
             }
         }
+    }
+
+    foreach (array_unique($listingIds) as $listingId) {
+        EventTickets::markSoldAfterFulfillment($listingId);
     }
 
     return redirect()->back()->with('success', 'Tickets uploaded successfully.');
@@ -2002,6 +2195,10 @@ public function upload_ticket_seating(Request $request){
 
         $data = EventTickets::find($ticket_id);
 
+        if (!$data || (int) $data->created_by !== (int) Auth::id()) {
+            return redirect()->back()->with('error', 'Unauthorized access or ticket not found');
+        }
+
         if($original_price > 0){
 
             $data->face_value = $original_price;
@@ -2010,26 +2207,112 @@ public function upload_ticket_seating(Request $request){
         if($sale_price > 0){
 
             $data->ticket_amount = $sale_price;
+            TicketsGenerated::where('event_tickets', $data->id)
+                ->where('is_sold', 0)
+                ->update(['ticket_amount' => $sale_price]);
         }
 
         $data->save();
 
-    return redirect()->back()->with('success', 'Tickets uploaded successfully.');
+    return redirect()->back()->with('success', 'Ticket amount updated successfully.');
 
     }
 
     public function delete_generated_ticket(Request $request){
-        // dd($request->all());
         $id = $request->id;
-        $generatedTicket =  TicketsGenerated::find($id);
-        $ticket = EventTickets::find($generatedTicket->event_tickets);
-        if($ticket->no_of_tickets > 0){
-           $ticket->no_of_tickets = round($ticket->no_of_tickets) - 1;
-        }
-        $ticket->save();
-        $generatedTicket->delete();
+        $generatedTicket = TicketsGenerated::with('outsideSell')->find($id);
 
-        return response()->json(['status' => 'success']);
+        if (!$generatedTicket) {
+            return response()->json(['status' => 'error', 'message' => 'Ticket not found.'], 404);
+        }
+
+        $ticket = EventTickets::find($generatedTicket->event_tickets);
+        if (!$ticket || (int) $ticket->created_by !== (int) Auth::id()) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized access.'], 403);
+        }
+
+        if (!empty($generatedTicket->is_sold) || $generatedTicket->outsideSell) {
+            return response()->json(['status' => 'error', 'message' => 'Sold tickets cannot be deleted.'], 422);
+        }
+
+        $sequence = TicketsGenerated::where('event_tickets', $ticket->id)
+            ->orderByRaw('CAST(seat_number AS UNSIGNED) ASC')
+            ->orderBy('id')
+            ->get();
+
+        $firstTicket = $sequence->first();
+        $lastTicket = $sequence->last();
+        $isFirst = $firstTicket && (int) $firstTicket->id === (int) $generatedTicket->id;
+        $isLast = $lastTicket && (int) $lastTicket->id === (int) $generatedTicket->id;
+
+        if (!$isFirst && !$isLast) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Only the first or last ticket in the seat sequence can be deleted.',
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Seat to keep the sequence starting from (first seat moves into this number).
+            $sequenceStart = (int) $generatedTicket->seat_number;
+            $generatedTicket->delete();
+
+            $remaining = TicketsGenerated::where('event_tickets', $ticket->id)
+                ->orderByRaw('CAST(seat_number AS UNSIGNED) ASC')
+                ->orderBy('id')
+                ->get();
+
+            // Deleting the first seat: shift every following seat down so 2->1, 3->2, etc.
+            if ($isFirst && $remaining->isNotEmpty()) {
+                $nextSeat = $sequenceStart;
+                foreach ($remaining as $remainingTicket) {
+                    $prefix = $remainingTicket->seat_prefix ?? 'T';
+                    $row = $remainingTicket->seat_row ?? $ticket->row;
+
+                    DB::table('event_ticket_tickets')
+                        ->where('id', $remainingTicket->id)
+                        ->update([
+                            'seat_number' => (string) $nextSeat,
+                            'seat_number_prefix' => $prefix . '-' . $row . '-' . $nextSeat,
+                            'updated_at' => now(),
+                        ]);
+
+                    $nextSeat++;
+                }
+
+                $remaining = TicketsGenerated::where('event_tickets', $ticket->id)
+                    ->orderByRaw('CAST(seat_number AS UNSIGNED) ASC')
+                    ->orderBy('id')
+                    ->get();
+            }
+
+            if ($remaining->isEmpty()) {
+                $ticket->no_of_tickets = 0;
+                $ticket->seat_from = null;
+                $ticket->seat_to = null;
+            } else {
+                $ticket->no_of_tickets = $remaining->count();
+                $ticket->seat_from = (int) $remaining->first()->seat_number;
+                $ticket->seat_to = (int) $remaining->last()->seat_number;
+            }
+
+            $ticket->save();
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Ticket deleted successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unable to delete ticket. Please try again.',
+            ], 500);
+        }
     }
 
     public function updateStatus(Request $request, $id)

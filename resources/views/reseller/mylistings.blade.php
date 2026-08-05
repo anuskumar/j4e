@@ -2,6 +2,36 @@
 {{-- @extends('admin.layout.app')
 @section('admin_content') --}}
 @extends('layouts.reseller_app')
+
+@push('styles')
+<style>
+    .mylistings-status-counts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        max-width: 280px;
+        white-space: normal;
+    }
+    .mylistings-status-counts .count-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .mylistings-status-counts .count-pill--available { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .mylistings-status-counts .count-pill--on-sale { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
+    .mylistings-status-counts .count-pill--off-sale { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .mylistings-status-counts .count-pill--sold { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
+    .mylistings-status-counts .count-pill--sold-outside { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .mylistings-status-counts .count-pill--pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .mylistings-status-counts .count-pill--total { background: #f8f9fc; color: #374151; border: 1px solid #e8ebf3; }
+</style>
+@endpush
+
 @section('content')
     <!-- Row -->
     <div class="row row-sm">
@@ -35,18 +65,21 @@
             @endforeach
 
             </select>
-        </td><td>
-            <select class="form-select" name="ticket_status" aria-label="Default select example">
+        </td>        <td>
+            <select class="form-select" name="ticket_status" aria-label="Ticket Status">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
-            <option value="2"  {{ request('ticket_status') == '2' ? 'selected' : '' }}>Not available</option>
-            <option value="1"  {{ request('ticket_status') == '1' ? 'selected' : '' }}>Available</option>
+            <option value="active"  {{ request('ticket_status') == 'active' ? 'selected' : '' }}>Active</option>
+            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Posted</option>
+            <option value="unapproved"  {{ request('ticket_status') == 'unapproved' ? 'selected' : '' }}>Unapproved</option>
+            <option value="sold"  {{ request('ticket_status') == 'sold' ? 'selected' : '' }}>Sold</option>
+            <option value="pending"  {{ request('ticket_status') == 'pending' ? 'selected' : '' }}>Pending</option>
             </select>
         </td>
-        <td>Event Start Date</td>
+        <td>Event Date</td>
         <td><input class="form-control" name="start_date" type="date"  value="{{ request('start_date') }}"></td>
-        <td>Event End Date</td>
-        <td><input class="form-control" name="end_date" type="date"  value="{{ request('end_date') }}"></td>
-        <td><input type="text" class="form-control"value="{{ request('search') }}" name="search" placeholder="Search"></td>
+        <td>
+            <input type="text" class="form-control" id="mylistings-search" value="{{ request('search') }}" name="search" placeholder="Event name or Listing number">
+        </td>
         <td>
             <button class="btn btn-primary" type="submit">Search</button>
         </td>
@@ -62,9 +95,10 @@
                                     <th>Sl</th>
                                     <th class="border-bottom-0">ID and Creation Time</th>
                                     <th class="border-bottom-0">Status</th>
-                                    <th class="border-bottom-0">Event </th>.
+                                    <th class="border-bottom-0">Ticket Status</th>
+                                    <th class="border-bottom-0">Event</th>
                                     <th class="border-bottom-0">Ticket Type</th>
-                                    <th class="border-bottom-0">Available Delivery</th>
+                                    <th class="border-bottom-0">Ticket Details</th>
                                     <th class="border-bottom-0">Ticket</th>
                                     <th class="border-bottom-0">Price</th>
                                     <th class="border-bottom-0">Action</th>
@@ -84,31 +118,45 @@
                                         {{ date('d M Y',strtotime($val['created_at'])) }}
                                     </td>
                                     <td>
-                                        <div class="form-check form-switch">
-                                        <input class="form-check-input"
-                                                type="checkbox"
-                                                role="switch"
-                                                id="switchCheckChecked_{{ $val['id'] }}"
-                                                data-id="{{ $val['id'] }}"
-                                                data-status="{{ $val['ticket_status']}}"
-                                                onchange="confirmToggleStatus(this)"
-                                                {{ $val['ticket_status'] == 1 ? 'checked':'' }}
-
-                                                value="{{ $val['ticket_status'] }}">
-
-                                            @if ($val['is_admin_approved'] == 1)
-                                               @if($val['ticket_status'] == 1)
-                                                <span class="badge text-bg-success">Active</span>
-                                                @else
-                                                    <span class="badge text-bg-primary">Paused</span>
-                                                @endif
-                                            @else
-                                            <span class="badge text-bg-primary">Waiting for Approval</span>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            @if (!empty($val['can_toggle_status']))
+                                                <div class="form-check form-switch mb-0">
+                                                    <input class="form-check-input"
+                                                            type="checkbox"
+                                                            role="switch"
+                                                            id="switchCheckChecked_{{ $val['id'] }}"
+                                                            data-id="{{ $val['id'] }}"
+                                                            data-status="{{ $val['ticket_status']}}"
+                                                            onchange="confirmToggleStatus(this)"
+                                                            {{ (int) $val['ticket_status'] === \App\Models\EventTickets::STATUS_ACTIVE ? 'checked':'' }}
+                                                            value="{{ $val['ticket_status'] }}">
+                                                </div>
                                             @endif
-
-
-
-                                            </div>
+                                            <span class="badge {{ $val['ticket_status_badge'] ?? 'text-bg-secondary' }}">
+                                                {{ $val['ticket_status_label'] ?? \App\Models\EventTickets::statusLabel($val['ticket_status'] ?? null) }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $statusCounts = [
+                                                ['key' => 'total_ticket_count', 'label' => 'Total', 'class' => 'count-pill--total'],
+                                                ['key' => 'on_sale_ticket_count', 'label' => 'On Sale', 'class' => 'count-pill--on-sale'],
+                                                ['key' => 'off_sale_ticket_count', 'label' => 'Off Sale', 'class' => 'count-pill--off-sale'],
+                                                ['key' => 'sold_ticket_count', 'label' => 'Sold', 'class' => 'count-pill--sold'],
+                                                ['key' => 'sold_outside_count', 'label' => 'Sold Outside', 'class' => 'count-pill--sold-outside'],
+                                                ['key' => 'pending_upload_count', 'label' => 'Pending', 'class' => 'count-pill--pending'],
+                                            ];
+                                        @endphp
+                                        <div class="mylistings-status-counts">
+                                            @foreach ($statusCounts as $statusCount)
+                                                @if ((int) ($val[$statusCount['key']] ?? 0) > 0)
+                                                    <span class="count-pill {{ $statusCount['class'] }}">
+                                                        {{ $statusCount['label'] }}: {{ $val[$statusCount['key']] }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
                                     </td>
                                     <td>
                                        {{ $val['event_name'] }}
@@ -119,17 +167,32 @@
                                         {{ 'Event starts ' . date('d M Y',strtotime($val['event_from_date'])) }}
                                         {{  $val['from_time'] }}
                                        </div>
-                                       <div class="text-muted">
-                                        {{ 'Event ends ' . date('d M Y',strtotime($val['event_to_date'])) }}
-                                        {{  $val['to_time'] }}
-                                       </div>
                                     </td>
                                     <td>{{ $val['ticket_type_name'] }}</td>
-                                    <td>{{ $val['ticket_type_name'] }}</td>
+                                    <td>
+                                        <div><strong>Section:</strong> {{ $val['seating_type_name'] ?: '—' }}</div>
+                                        <div><strong>Row:</strong> {{ $val['row'] ?: '—' }}</div>
+                                        <div>
+                                            <strong>Seat:</strong>
+                                            @if (!empty($val['seat_from']) || !empty($val['seat_to']))
+                                                {{ $val['seat_from'] ?: '—' }}{{ !empty($val['seat_to']) ? ' – ' . $val['seat_to'] : '' }}
+                                            @else
+                                                —
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td> {{ $val['no_of_tickets'] }}</td>
                                     <td>
-                                        Ticket Amount : {{ $val['ticket_amount'].' '.$val['short_name'] }} <br>
-                                        Face Value : {{ $val['face_value'].' '.$val['short_name'] }} <br>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span>{{ $val['ticket_amount'] }} {{ $val['short_name'] }}</span>
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-secondary py-0 px-1"
+                                                title="Edit ticket amount"
+                                                onclick="openTicketAmountModal({{ $val['id'] }}, '{{ $val['ticket_amount'] }}', '{{ $val['face_value'] }}', '{{ $val['short_name'] ?? '' }}')">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+                                        <div class="text-muted small mt-1">Face Value: {{ $val['face_value'] }} {{ $val['short_name'] }}</div>
                                     </td>
                                     <td>
                                         <a href="{{ route('reseller.manage.eventticket',$val['id']) }}" class="btn btn-light btn-sm"> <b> > </b></a>
@@ -152,7 +215,56 @@
     <script src="admin_assets/js/main.js"></script>
     <!-- End Row -->
 
+<div class="modal fade" id="ticket-amount-change-modal" tabindex="-1" aria-labelledby="ticketAmountChangeLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form action="{{ route('update.ticket.pricechange') }}" method="POST" id="ticket-amount-change-form">
+        <input type="hidden" name="ticket_id" id="ticket-amount-ticket-id">
+        <input type="hidden" name="original_price" id="ticket-amount-original-price">
+        @csrf
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="ticketAmountChangeLabel">Update Ticket Amount</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label for="ticket-amount-sale-price" class="form-label">Ticket Amount</label>
+        <div class="input-group">
+            <input type="text" class="form-control" name="sale_price" id="ticket-amount-sale-price" required>
+            <span class="input-group-text" id="ticket-amount-currency">USD</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
 <script>
+function openTicketAmountModal(ticketId, salePrice, originalPrice, currency) {
+    document.getElementById('ticket-amount-ticket-id').value = ticketId;
+    document.getElementById('ticket-amount-sale-price').value = salePrice;
+    document.getElementById('ticket-amount-original-price').value = originalPrice;
+    document.getElementById('ticket-amount-currency').textContent = currency || 'USD';
+    $('#ticket-amount-change-modal').modal('show');
+}
+
+$('#ticket-amount-change-form').on('submit', function(e) {
+    const salePrice = $('#ticket-amount-sale-price').val().trim();
+    const numberPattern = /^[0-9]+(\.[0-9]+)?$/;
+
+    if (!numberPattern.test(salePrice) || parseFloat(salePrice) <= 0) {
+        e.preventDefault();
+        alert('Please enter a valid ticket amount.');
+        $('#ticket-amount-sale-price').focus();
+        return false;
+    }
+
+    return true;
+});
+
 function confirmToggleStatus(el) {
     const ticketId = el.getAttribute('data-id');
     const currentStatus = el.getAttribute('data-status');

@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class TicketCheckoutService
 {
@@ -110,6 +111,7 @@ class TicketCheckoutService
             $currencyId = $this->resolveCurrencyId($currency, $eventTicket);
 
             $ticket = new TicketPurchase();
+            $ticket->sales_id = Str::upper(Str::random(16));
             $ticket->event_id = $checkout['event_id'];
             $ticket->event_ticket_id = $checkout['event_ticket_id'];
             $ticket->total_number = $requestedCount;
@@ -145,11 +147,14 @@ class TicketCheckoutService
                 $generated = TicketsGenerated::find($count->id);
                 $generated->purchase_id = $ticket->id;
                 $generated->is_sold = 1;
+                $generated->fulfillment_status = TicketsGenerated::FULFILLMENT_PENDING;
                 $generated->under_purchase_hold = 0;
                 $generated->purchase_hold_time = null;
                 $generated->purchase_date = date('Y-m-d H:i:s');
                 $generated->save();
             }
+
+            EventTickets::markPendingAfterPurchase((int) $checkout['event_ticket_id']);
 
             foreach ($remainingHeldTickets as $remainingTicket) {
                 $generated = TicketsGenerated::find($remainingTicket->id);
