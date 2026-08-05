@@ -48,7 +48,7 @@
         <td>Event Date</td>
         <td><input class="form-control" name="start_date" type="date"  value="{{ request('start_date') }}"></td>
         <td>
-            <input type="text" class="form-control" id="mylistings-search" value="{{ request('search') }}" name="search" placeholder="Event name or number">
+            <input type="text" class="form-control" id="mylistings-search" value="{{ request('search') }}" name="search" placeholder="Event name or Listing number">
         </td>
         <td>
             <button class="btn btn-primary" type="submit">Search</button>
@@ -67,7 +67,7 @@
                                     <th class="border-bottom-0">Status</th>
                                     <th class="border-bottom-0">Event </th>.
                                     <th class="border-bottom-0">Ticket Type</th>
-                                    <th class="border-bottom-0">Available Delivery</th>
+                                    <th class="border-bottom-0">Ticket Details</th>
                                     <th class="border-bottom-0">Ticket</th>
                                     <th class="border-bottom-0">Price</th>
                                     <th class="border-bottom-0">Action</th>

@@ -36,8 +36,7 @@
         <td>Event Start Date</td>
         <td><input class="form-control" name="start_date" type="date"  value="{{ request('start_date') }}"></td>
         <td>
-            <label for="mysales-search" class="form-label mb-0">Event Name / Event Number</label>
-            <input type="text" class="form-control" id="mysales-search" value="{{ request('search') }}" name="search" placeholder="Event name or number">
+            <input type="text" class="form-control" id="mysales-search" value="{{ request('search') }}" name="search" placeholder="Event Name / Event Number" aria-label="Event Name / Event Number">
         </td>
     </tr>
     <tr>
