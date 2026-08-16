@@ -1604,7 +1604,7 @@ class ResellerController extends Controller
             if ($status === 'active') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
             } elseif ($status === 'paused' || $status === 'posted') {
-                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PAUSED);
             } elseif ($status === 'unapproved') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
             } elseif ($status === 'pending') {
@@ -1694,7 +1694,7 @@ class ResellerController extends Controller
         $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
         $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
         $val['can_toggle_status'] = (int) $val->is_admin_approved === 1
-            && in_array((int) $val->ticket_status, [EventTickets::STATUS_ACTIVE, EventTickets::STATUS_POSTED], true)
+            && in_array((int) $val->ticket_status, [EventTickets::STATUS_ACTIVE, EventTickets::STATUS_PAUSED], true)
             && $availableCount > 0;
         $val['event_status_label'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'Active' : 'Inactive';
         $val['event_status_badge'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'text-bg-success' : 'text-bg-secondary';
@@ -1739,7 +1739,7 @@ class ResellerController extends Controller
             if ($status === 'active') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
             } elseif ($status === 'paused' || $status === 'posted') {
-                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PAUSED);
             } elseif ($status === 'unapproved') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
             } elseif ($status === 'pending') {
@@ -2070,7 +2070,7 @@ class ResellerController extends Controller
             'generated_ticket_id' => 'required|integer',
             'seat_number' => 'required|string|max:255',
             'seat_serial_number' => 'nullable|string|max:255',
-            'listing_ticket_status' => 'nullable|in:active,posted,sold,pending',
+            'listing_ticket_status' => 'nullable|in:active,paused,posted,sold,pending',
         ]);
 
         $ticket = TicketsGenerated::find($request->generated_ticket_id);
@@ -2099,7 +2099,8 @@ class ResellerController extends Controller
 
             $statusMap = [
                 'active' => EventTickets::STATUS_ACTIVE,
-                'posted' => EventTickets::STATUS_POSTED,
+                'paused' => EventTickets::STATUS_PAUSED,
+                'posted' => EventTickets::STATUS_PAUSED,
                 'sold' => EventTickets::STATUS_SOLD,
                 'pending' => EventTickets::STATUS_PENDING,
             ];

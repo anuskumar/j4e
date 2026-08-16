@@ -975,15 +975,15 @@ public function updateStatus(Request $request, $id)
         ], 404);
     }
 
-    if (! $ticket->canToggleActivePosted()) {
+    if (! $ticket->canToggleActivePaused()) {
         return response()->json([
             'success' => false,
-            'message' => 'Only Active or Posted listings can be toggled.',
+            'message' => 'Only Active or Paused listings can be toggled.',
         ], 422);
     }
 
     $ticket->ticket_status = (int) $ticket->ticket_status === EventTickets::STATUS_ACTIVE
-        ? EventTickets::STATUS_POSTED
+        ? EventTickets::STATUS_PAUSED
         : EventTickets::STATUS_ACTIVE;
 
     $ticket->save();

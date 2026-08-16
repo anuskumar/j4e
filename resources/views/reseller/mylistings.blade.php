@@ -69,7 +69,7 @@
             <select class="form-select" name="ticket_status" aria-label="Ticket Status">
             <option value=""  {{ request('ticket_status') == '' ? 'selected' : '' }}>Ticket Status</option>
             <option value="active"  {{ request('ticket_status') == 'active' ? 'selected' : '' }}>Active</option>
-            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Posted</option>
+            <option value="paused"  {{ request('ticket_status') == 'paused' ? 'selected' : '' }}>Paused</option>
             <option value="unapproved"  {{ request('ticket_status') == 'unapproved' ? 'selected' : '' }}>Unapproved</option>
             <option value="sold"  {{ request('ticket_status') == 'sold' ? 'selected' : '' }}>Sold</option>
             <option value="pending"  {{ request('ticket_status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -272,7 +272,7 @@ function confirmToggleStatus(el) {
 
     Swal.fire({
         title: 'Are you sure?',
-        text: `You are about to ${newStatus ? 'activate' : 'deactivate'} this ticket.`,
+        text: `You are about to ${newStatus ? 'activate' : 'pause'} this listing.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, change it!',
