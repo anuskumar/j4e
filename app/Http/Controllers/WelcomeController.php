@@ -112,7 +112,16 @@ class WelcomeController extends Controller
             $query->where('event.event_tag',$event_tag->id);
         }
 
-        $data = $query->select('*','event.id as id','location.id as location_id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $query->select(
+                '*',
+                'event.id as id',
+                'location.id as location_id',
+                'cities.id as city_id',
+                'country_name',
+                'cities.name as city_name',
+                'location_name',
+                'venue.name as venue_name'
+            )
             ->customerDisplayOrder()
             ->get();
 
@@ -172,9 +181,15 @@ class WelcomeController extends Controller
         }
 
         $location = $locationQuery
-        ->groupBy('venue.location')
-        ->select('location.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-        ->get();
+            ->whereNotNull('cities.id')
+            ->groupBy('cities.id', 'cities.name', 'countries.country_name')
+            ->select(
+                'cities.id as id',
+                'country_name',
+                'cities.name as city_name'
+            )
+            ->orderBy('cities.name')
+            ->get();
 
         return view('new_eventlistfrontend',compact('data','event_tag','location','data1','search'));
 

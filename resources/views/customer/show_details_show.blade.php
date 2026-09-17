@@ -18,7 +18,11 @@
     if ($eventTimeLabel) {
         $eventTimeLabel = \Carbon\Carbon::parse($eventTimeLabel)->format('H:i');
     }
-    $locationLabel = trim(($event_datas->venue_name ?? '') . ', ' . ($event_datas->location_name ?? '') . ', ' . ($event_datas->country_name ?? ''));
+    $venueName = trim((string) ($event_datas->venue_name ?? ''));
+    $cityName = trim((string) ($event_datas->city_name ?? ''));
+    $countryName = trim((string) ($event_datas->country_name ?? ''));
+    $cityCountry = implode(', ', array_filter([$cityName, $countryName]));
+    $locationLabel = implode(' · ', array_filter([$venueName, $cityCountry]));
 @endphp
 
 <style>
@@ -629,7 +633,13 @@
                     @endif
                 @endif
             </p>
-            <p class="event-header-bar__venue">{{ $locationLabel }}</p>
+            <p class="event-header-bar__venue">
+                @if($venueName !== '')
+                    <strong>{{ $venueName }}</strong>@if($cityCountry !== '') · {{ $cityCountry }}@endif
+                @elseif($cityCountry !== '')
+                    {{ $cityCountry }}
+                @endif
+            </p>
             @if (!empty($event_datas->tag_name))
                 <p class="event-header-bar__venue mb-0">{{ $event_datas->tag_name }}</p>
             @endif

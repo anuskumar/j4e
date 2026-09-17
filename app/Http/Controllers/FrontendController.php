@@ -725,8 +725,16 @@ class FrontendController extends Controller
 
 
                                 ->where('event.id',$id)
-                                ->select('*','event.id as id','venue.name as venue_name',
-                                'event.id as event_id','venue.image as venue_image')->first();
+                                ->select(
+                                    '*',
+                                    'event.id as id',
+                                    'venue.name as venue_name',
+                                    'event.id as event_id',
+                                    'venue.image as venue_image',
+                                    'cities.name as city_name',
+                                    'countries.country_name as country_name',
+                                    'location.location_name as location_name'
+                                )->first();
 
             // $event_tickets = TicketsGenerated::where()
 

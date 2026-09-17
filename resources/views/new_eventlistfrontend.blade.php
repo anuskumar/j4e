@@ -28,13 +28,13 @@
             @if($location->count())
             <div class="col-lg-4">
                 <div class="customer-site-banner__hero-filter">
-                    <label for="location-select">Filter by location</label>
+                    <label for="location-select">Filter by city</label>
                     <select class="form-control" id="location-select">
-                        <option value="">All Locations</option>
+                        <option value="">All Cities</option>
                         @foreach ($location as $loc)
                             @if($loc->id)
                                 <option value="{{ $loc->id }}">
-                                    {{ trim($loc->location_name . ' ' . $loc->city_name . ', ' . $loc->country_name) }}
+                                    {{ trim(($loc->city_name ?? '') . (!empty($loc->city_name) && !empty($loc->country_name) ? ', ' : '') . ($loc->country_name ?? '')) }}
                                 </option>
                             @endif
                         @endforeach
@@ -79,9 +79,14 @@
                                 }
                             }
 
-                            $locationLabel = trim($val->location_name . ' ' . $val->city_name . ', ' . $val->country_name);
+                            $locationParts = array_filter([
+                                $val->venue_name ?? null,
+                                $val->city_name ?? null,
+                                $val->country_name ?? null,
+                            ]);
+                            $locationLabel = implode(', ', $locationParts);
                         @endphp
-                        <article class="event-list-card" data-location-id="{{ $val->location_id ?? '' }}">
+                        <article class="event-list-card" data-location-id="{{ $val->city_id ?? '' }}">
                             <div class="event-list-card__date">
                                 <span class="event-list-card__date-day">{{ $eventDate ? date('d', strtotime($eventDate)) : '--' }}</span>
                                 <span class="event-list-card__date-month">{{ $eventDate ? date('M', strtotime($eventDate)) : '' }}</span>
@@ -94,9 +99,8 @@
                                     @if(!empty($val->artist_names) && count($val->artist_names) > 0)
                                         <span><i class="fas fa-user"></i> {{ implode(', ', $val->artist_names) }}</span>
                                     @endif
-                                    <span><i class="fas fa-map-marker-alt"></i> {{ $locationLabel }}</span>
-                                    @if($val->venue_name)
-                                        <span><i class="fas fa-building"></i> {{ $val->venue_name }}</span>
+                                    @if($locationLabel !== '')
+                                        <span><i class="fas fa-map-marker-alt"></i> {{ $locationLabel }}</span>
                                     @endif
                                     <span>
                                         <i class="far fa-clock"></i>
@@ -125,9 +129,9 @@
                 </div>
 
                 <div class="event-list-empty d-none" id="event-list-empty-filter">
-                    <h4>No events in this location</h4>
-                    <p>Try selecting a different location or view all events.</p>
-                    <button type="button" class="btn btn-primary" id="clear-location-filter">Show All Locations</button>
+                    <h4>No events in this city</h4>
+                    <p>Try selecting a different city or view all events.</p>
+                    <button type="button" class="btn btn-primary" id="clear-location-filter">Show All Cities</button>
                 </div>
             @else
                 <div class="event-list-empty">

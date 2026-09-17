@@ -54,6 +54,56 @@ public function create(Request $request){
         return redirect('city/list')->with('success', 'City created successfully');
      }
 
+    public function quickStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+        ]);
+
+        $name = trim($validated['name']);
+        $countryId = (int) $validated['country_id'];
+
+        $existing = CityModel::withTrashed()
+            ->where('country_id', $countryId)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first();
+
+        if ($existing) {
+            if ($existing->trashed()) {
+                $existing->restore();
+            }
+
+            $existing->name = $name;
+            $existing->is_active = 1;
+            $existing->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'City created successfully.',
+                'data' => [
+                    'id' => $existing->id,
+                    'text' => $existing->name,
+                ],
+            ]);
+        }
+
+        $city = new CityModel();
+        $city->name = $name;
+        $city->country_id = $countryId;
+        $city->is_active = 1;
+        $city->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'City created successfully.',
+            'data' => [
+                'id' => $city->id,
+                'text' => $city->name,
+            ],
+        ]);
+    }
+
     public function edit(string $id)
     {
         $data = CityModel::find($id);

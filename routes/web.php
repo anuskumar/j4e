@@ -401,6 +401,7 @@ Route::group(['prefix' => 'city'], function () {
     Route::get('list', [CityController::class, 'index']);
     Route::get('create', [CityController::class, 'create']);
     Route::post('store', [CityController::class, 'store']);
+    Route::post('quick-create', [CityController::class, 'quickStore']);
     Route::get('view/{id}', [CityController::class, 'show']);
     Route::get('edit/{id}', [CityController::class, 'edit']);
     Route::post('update', [CityController::class, 'update']);
