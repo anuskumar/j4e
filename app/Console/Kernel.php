@@ -15,8 +15,8 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->command('app:ticket_reload_timer')->everyMinute();
 
-        // New currency rate update command (once a day at 1 AM)
-        $schedule->command('currency:update-rates')->everyMinute();
+        // Update active currency rates against USD once a day at 1 AM
+        $schedule->command('currency:update-rates --fresh')->dailyAt('01:00');
 
         $schedule->command('users:purge-unverified')->hourly();
     }

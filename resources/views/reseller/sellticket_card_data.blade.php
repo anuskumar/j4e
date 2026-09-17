@@ -26,6 +26,72 @@
         .card-input {
             cursor: pointer;
         }
+
+        .event-summary-card {
+            overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .event-summary-card .card-body {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .event-summary-card .summary-text {
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+
+        .event-summary-card .summary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: 100%;
+        }
+
+        .event-summary-card .summary-tags .badge {
+            white-space: normal;
+            text-align: left;
+            line-height: 1.35;
+            max-width: 100%;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .event-summary-card .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+            max-width: 100%;
+        }
+
+        .event-summary-card .summary-row > strong,
+        .event-summary-card .summary-row > span,
+        .event-summary-card .summary-row > h5 {
+            min-width: 0;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .event-summary-card .summary-row > span,
+        .event-summary-card .summary-row > h5 {
+            text-align: right;
+            flex: 0 1 auto;
+        }
+
+        .event-summary-card .summary-row > strong {
+            flex: 1 1 auto;
+        }
+
+        .event-summary-card .receive-row h5 {
+            font-size: 1rem;
+            margin-bottom: 0;
+            line-height: 1.4;
+        }
     </style>
 @endpush
 
@@ -53,16 +119,35 @@
                         <h5 class="fw-bold">Set Your Price</h5>
                             <div class="mb-3">
                                 <label for="price-currency" class="form-label">
-                                    Choose the currency in which you would like to be paid
+                                    Choose the currency in which you would like to be converted
                                 </label>
                                 <select class="form-select" id="price-currency" name="currency" required>
                                     <option value="">Select</option>
+                                    @php
+                                        $activeCurrencies = $currencys->where('is_active', 1)->values();
+                                        $preferredCurrencyId = old('currency', $data->amount_currency);
+                                        $preferredIsActive = $activeCurrencies->contains(function ($currency) use ($preferredCurrencyId) {
+                                            return (string) $currency->id === (string) $preferredCurrencyId;
+                                        });
+                                        $usdCurrency = $activeCurrencies->first(function ($currency) {
+                                            return strtoupper((string) $currency->short_name) === 'USD';
+                                        });
+                                        if (! $preferredIsActive) {
+                                            $preferredCurrencyId = $usdCurrency->id ?? optional($activeCurrencies->first())->id;
+                                        }
+                                    @endphp
                                     @foreach ($currencys as $val)
+                                        @php
+                                            $isCurrencyActive = (int) $val->is_active === 1;
+                                        @endphp
                                         <option value="{{ $val->id }}"
-                                            data-code="{{ $val->symbol . $val->short_name }}"
+                                            data-code="{{ $val->short_name }}"
+                                            data-symbol="{{ $val->symbol }}"
                                             data-rate="{{ $val->currency_rate }}"
-                                            {{ old('currency', $data->amount_currency) == $val->id ? 'selected' : '' }}>
-                                            {{ $val->symbol . $val->name }}
+                                            data-active="{{ $isCurrencyActive ? 1 : 0 }}"
+                                            @disabled(! $isCurrencyActive)
+                                            {{ (string) $preferredCurrencyId === (string) $val->id && $isCurrencyActive ? 'selected' : '' }}>
+                                            {{ $val->symbol }} {{ $val->name }} ({{ $val->short_name }}){{ $isCurrencyActive ? '' : ' — Inactive' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -75,22 +160,29 @@
                                         <span class="input-group-text" id="price-currency-code">💱</span>
                                         <input type="number" class="form-control" id="price-amount" name="amount"
                                             value="{{ old('amount', floor((float) $data->ticket_amount)) }}"
-                                            placeholder="0" min="0" required>
+                                            placeholder="0" min="0" step="1" required>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label for="price-cents" class="form-label">Cents</label>
                                     <input type="number" class="form-control" id="price-cents" name="cents"
                                         value="{{ old('cents', str_pad((string) round((((float) $data->ticket_amount) - floor((float) $data->ticket_amount)) * 100), 2, '0', STR_PAD_LEFT)) }}"
-                                        placeholder="00" min="0" max="99">
+                                        placeholder="00" min="0" max="99" step="1">
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <span class="ms-2">Per Ticket</span>
                                 </div>
                             </div>
 
+                            <div class="alert alert-light border mt-3 mb-0 py-2 px-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Converted Price (USD):</strong>
+                                    <span id="converted-usd-preview" class="fw-bold text-success">$0.00 USD</span>
+                                </div>
+                            </div>
+
                             <small class="text-muted d-block mt-3">
-                                * All currency conversions are based on US Dollar (USD) rates *.
+                                * Amounts below are converted and displayed in US Dollar (USD). Enter price in the selected currency; conversion always prioritizes USD *.
                             </small>
 
                             <input type="hidden" id="converted_price_per_ticket" name="converted_price_per_ticket">
@@ -217,12 +309,15 @@
                                     <select class="form-select" name="currency" id="currency" required>
                                         <option value="" disabled selected>Select a currency</option>
                                         @foreach ($currencys as $val)
-                                            <option {{ $data->amount_currency == $val->id ? 'selected' : '' }}
-                                                value="{{ $val->id }}">
-                                                {{ $val->symbol . $val->name }}
+                                            @php
+                                                $isCurrencyActive = (int) $val->is_active === 1;
+                                            @endphp
+                                            <option value="{{ $val->id }}"
+                                                @disabled(! $isCurrencyActive)
+                                                {{ (string) $data->amount_currency === (string) $val->id && $isCurrencyActive ? 'selected' : '' }}>
+                                                {{ $val->symbol }} {{ $val->name }} ({{ $val->short_name }}){{ $isCurrencyActive ? '' : ' — Inactive' }}
                                             </option>
                                         @endforeach
-                                        <!-- Add more currencies as needed -->
                                     </select>
                                 </div>
 
@@ -293,22 +388,22 @@
 
             <!-- Right Section - Event Summary -->
             <div class="col-lg-4">
-                <div class="card">
+                <div class="card event-summary-card">
                     <div class="card-body">
                         <h5 class="fw-bold">Event Summary</h5>
-                        <p class="mb-1"><strong>Event:</strong> {{ $data->event_name }}</p>
-                        <p class="mb-1">
+                        <p class="summary-text"><strong>Event:</strong> {{ $data->event_name }}</p>
+                        <p class="summary-text">
                             <strong>Date:</strong>
                             {{ strftime('%A, %d %B %Y', strtotime($data->event_date)) }}
                             {{ date('H:i', strtotime($data->from_time)) }}
                         </p>
 
-                        <p class="mb-1"><strong>Venue:</strong> {{ $data->name }}, {{ $data->location_name }},
+                        <p class="summary-text"><strong>Venue:</strong> {{ $data->name }}, {{ $data->location_name }},
                             {{ $data->cname }}, {{ $data->country_name }} </p>
 
                         <!-- Tags Section -->
-                        <div class="mb-2 mt-2">
-                            <span class="badge bg-light text-dark me-1">Ticket Type:
+                        <div class="summary-tags mb-2 mt-2">
+                            <span class="badge bg-light text-dark">Ticket Type:
                                 <span id="ticket-type" class="text-muted">
                                     @if ($data->ticket_type_name === 'Mobile Ticket Transfer')
                                         {{ $data->ticket_type_name }} (via {{ $data->mobile_applications_name }})
@@ -318,43 +413,41 @@
                                 </span>
                             </span>
 
-                            <span class="badge bg-light text-dark me-1">Split Type: <span id="split-type"
+                            <span class="badge bg-light text-dark">Split Type: <span id="split-type"
                                     class="text-muted">{{ $data->split_name }}</span></span>
-                            <span class="badge bg-light text-dark me-1">Section: <span id="section"
+                            <span class="badge bg-light text-dark">Section: <span id="section"
                                     class="text-muted">{{ $data->venue_seating_name }}</span></span>
                             <span class="badge bg-light text-dark">Row: <span id="row" class="text-muted">
                                     {{ $data->row }}</span></span>
-                            <span class="badge bg-light text-dark">Seats: <span id="row" class="text-muted">
+                            <span class="badge bg-light text-dark">Seats: <span id="seats" class="text-muted">
                                     {{ $data->seat_from }} To {{ $data->seat_to }}</span></span>
                         </div>
 
                         <hr>
 
                         <div>
-                            <div class="d-flex justify-content-between">
-                                <strong>Price/Ticket:</strong>
-                                <span id="price-per-ticket">{{ $data->symbol }}{{ $data->ticket_amount }}.00</span>
+                            <div class="summary-row mb-2">
+                                <strong>Price/Ticket (USD):</strong>
+                                <span id="price-per-ticket">$0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between">
+                            <div class="summary-row mb-2">
                                 <strong>Number of Tickets:</strong>
                                 <span id="num-tickets">{{ $data->no_of_tickets }}</span>
                             </div>
                             <hr>
-                            <div class="d-flex justify-content-between">
-                                <strong>Website Price:</strong>
-                                <span id="website-price">{{ $data->symbol }}{{ $data->web_price }}.00</span>
+                            <div class="summary-row mb-2">
+                                <strong>Website Price (USD):</strong>
+                                <span id="website-price">$0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between text-danger">
-                                <strong>Seller Fees:</strong>
-                                <span id="seller-fee">-{{ $data->symbol }}{{ $data->seller_fee }}.00</span>
+                            <div class="summary-row mb-2 text-danger">
+                                <strong>Seller Fees (USD):</strong>
+                                <span id="seller-fee">-$0.00</span>
                             </div>
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between">
-                            <h5 class="fw-bold text-success">YOU'LL RECEIVE: </h5>
-                            <h5 class="fw-bold text-success"><span
-                                    id="total-amount">{{ $data->symbol }}{{ $data->total_recive }}</span>
-                            </h5>
+                        <div class="summary-row receive-row">
+                            <h5 class="fw-bold text-success">YOU'LL RECEIVE (USD):</h5>
+                            <h5 class="fw-bold text-success"><span id="total-amount">$0.00</span></h5>
                         </div>
 
                     </div>
@@ -376,24 +469,60 @@
 
             function updatePriceSummary() {
                 const selectedCurrency = priceCurrency.options[priceCurrency.selectedIndex];
-                const currencyCode = selectedCurrency?.dataset.code || '💱';
-                const rate = parseFloat(selectedCurrency?.dataset.rate) || 1;
-                const enteredPrice = (parseFloat(priceAmount.value) || 0) + ((parseFloat(priceCents.value) || 0) / 100);
-                const pricePerTicket = enteredPrice * rate;
-                const websitePrice = pricePerTicket * ticketCount;
-                const sellerFee = websitePrice * (sellerFeePercent / 100);
-                const totalReceive = websitePrice - sellerFee;
+                if (selectedCurrency && selectedCurrency.dataset.active === '0') {
+                    // Skip inactive currencies if somehow selected.
+                    const activeOption = Array.from(priceCurrency.options).find((option) => option.value && option.dataset.active === '1');
+                    if (activeOption) {
+                        priceCurrency.value = activeOption.value;
+                    }
+                }
+
+                const activeCurrency = priceCurrency.options[priceCurrency.selectedIndex];
+                const currencyCode = activeCurrency?.dataset.code || '💱';
+                const rate = parseFloat(activeCurrency?.dataset.rate) || 0;
+
+                let amount = parseFloat(priceAmount.value);
+                if (Number.isNaN(amount) || amount < 0) {
+                    amount = 0;
+                }
+
+                let cents = parseInt(priceCents.value, 10);
+                if (Number.isNaN(cents) || cents < 0) {
+                    cents = 0;
+                }
+                if (cents > 99) {
+                    cents = 99;
+                    priceCents.value = 99;
+                }
+
+                // Entered price in selected currency (with cents).
+                const enteredPrice = Math.round((amount + (cents / 100)) * 100) / 100;
+
+                // Priority: always convert to USD.
+                // currency_rate = units of selected currency per 1 USD.
+                const safeRate = rate > 0 ? rate : 1;
+                const pricePerTicketUsd = Math.round((enteredPrice / safeRate) * 100) / 100;
+                const websitePriceUsd = Math.round((pricePerTicketUsd * ticketCount) * 100) / 100;
+                const sellerFeeUsd = Math.round((websitePriceUsd * (sellerFeePercent / 100)) * 100) / 100;
+                const totalReceiveUsd = Math.round((websitePriceUsd - sellerFeeUsd) * 100) / 100;
+
+                const formatUsd = (value) => value.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
 
                 document.getElementById('price-currency-code').textContent = currencyCode;
-                document.getElementById('price-per-ticket').textContent = `${currencyCode}${pricePerTicket.toFixed(2)}`;
-                document.getElementById('website-price').textContent = `${currencyCode}${websitePrice.toFixed(2)}`;
-                document.getElementById('seller-fee').textContent = `-${currencyCode}${sellerFee.toFixed(2)}`;
-                document.getElementById('total-amount').textContent = `${currencyCode}${totalReceive.toFixed(2)}`;
+                document.getElementById('converted-usd-preview').textContent = `$${formatUsd(pricePerTicketUsd)} USD`;
+                document.getElementById('price-per-ticket').textContent = `$${formatUsd(pricePerTicketUsd)}`;
+                document.getElementById('website-price').textContent = `$${formatUsd(websitePriceUsd)}`;
+                document.getElementById('seller-fee').textContent = `-$${formatUsd(sellerFeeUsd)}`;
+                document.getElementById('total-amount').textContent = `$${formatUsd(totalReceiveUsd)}`;
 
-                document.getElementById('converted_price_per_ticket').value = pricePerTicket.toFixed(2);
-                document.getElementById('converted_website_price').value = websitePrice.toFixed(2);
-                document.getElementById('converted_seller_fee').value = sellerFee.toFixed(2);
-                document.getElementById('converted_total_receive').value = totalReceive.toFixed(2);
+                // Persist USD values for backend save.
+                document.getElementById('converted_price_per_ticket').value = pricePerTicketUsd.toFixed(2);
+                document.getElementById('converted_website_price').value = websitePriceUsd.toFixed(2);
+                document.getElementById('converted_seller_fee').value = sellerFeeUsd.toFixed(2);
+                document.getElementById('converted_total_receive').value = totalReceiveUsd.toFixed(2);
             }
 
             priceCurrency.addEventListener('change', updatePriceSummary);

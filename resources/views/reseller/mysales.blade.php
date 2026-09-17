@@ -126,15 +126,15 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span>{{ $val['ticket_amount'] }} {{ $val['short_name'] }}</span>
+                                            <span>${{ number_format((float) ($val['usd_ticket_amount'] ?? $val['ticket_amount'] ?? 0), 2) }} USD</span>
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-secondary py-0 px-1"
                                                 title="Edit ticket amount"
-                                                onclick="openTicketAmountModal({{ $val['id'] }}, '{{ $val['ticket_amount'] }}', '{{ $val['face_value'] }}', '{{ $val['short_name'] ?? '' }}')">
+                                                onclick="openTicketAmountModal({{ $val['id'] }}, '{{ number_format((float) ($val['usd_ticket_amount'] ?? $val['ticket_amount'] ?? 0), 2, '.', '') }}', '{{ number_format((float) ($val['usd_face_value'] ?? $val['face_value'] ?? 0), 2, '.', '') }}', 'USD')">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </div>
-                                        <div class="text-muted small mt-1">Face Value: {{ $val['face_value'] }} {{ $val['short_name'] }}</div>
+                                        <div class="text-muted small mt-1">Face Value: ${{ number_format((float) ($val['usd_face_value'] ?? $val['face_value'] ?? 0), 2) }} USD</div>
                                     </td>
                                     <td>
                                         <a href="{{ route('reseller.view.soldtickets',$val['id']) }}" class="btn btn-info btn-sm" title="View Sold Tickets">

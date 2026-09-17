@@ -1125,7 +1125,11 @@ class ResellerController extends Controller
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
         // dd($event->venue);
-        $currency     = Currency::get();
+        $currency = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         $restrictions = RestrictionModel::get();
         $splittypes   = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
         return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
@@ -1149,7 +1153,11 @@ class ResellerController extends Controller
             'seat_to'           => 'nullable|numeric',
             'seat_reason'       => 'nullable|in:not_provided,other',
             'sell_together'     => 'required|numeric',
-            'currency'          => 'required|numeric',
+            'currency'          => [
+                'required',
+                'numeric',
+                Rule::exists('currency', 'id')->where('is_active', 1),
+            ],
             'amount'            => 'required|numeric|min:0',
             'cents'             => 'nullable|numeric|min:0|max:99',
             'ticket_type'       => 'required|exists:ticket_type,id',
@@ -1497,7 +1505,11 @@ class ResellerController extends Controller
     public function savesellconformation(Request $request)
     {
         $eventid   = $request->id;
-        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
+        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         //fetching event name
         $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
             ->leftjoin('event_timings', 'event_timings.event', 'event.id')
@@ -1640,12 +1652,17 @@ class ResellerController extends Controller
             'event_tickets.id as id',
             'event_tickets.is_admin_approved as is_admin_approved',
             'event_tickets.ticket_status as ticket_status',
+            'event_tickets.ticket_amount as ticket_amount',
+            'event_tickets.face_value as face_value',
             'event_tickets.event as event_id',
             'event_tickets.row as row',
             'event_tickets.seat_from as seat_from',
             'event_tickets.seat_to as seat_to',
             'event.event_name as event_name',
             'event.event_is_active as event_is_active',
+            'currency.short_name as short_name',
+            'currency.symbol as currency_symbol',
+            'currency.currency_rate as currency_rate',
             'country_name',
             'cities.name as city_name',
             'location_name',
@@ -1698,6 +1715,31 @@ class ResellerController extends Controller
             && $availableCount > 0;
         $val['event_status_label'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'Active' : 'Inactive';
         $val['event_status_badge'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'text-bg-success' : 'text-bg-secondary';
+
+        // Convert prices to USD for display (rate = selected-currency units per 1 USD).
+        $currencyCode = strtoupper((string) ($val->short_name ?? 'USD'));
+        $currencyRate = (float) ($val->currency_rate ?? 1);
+        $currencyRate = $currencyRate > 0 ? $currencyRate : 1;
+        $ticketAmount = (float) ($val->ticket_amount ?? 0);
+        $faceValue = (float) ($val->face_value ?? 0);
+
+        if ($currencyCode === 'USD') {
+            $usdTicketAmount = round($ticketAmount, 2);
+            $usdFaceValue = round($faceValue, 2);
+        } else {
+            $usdFaceValue = round($faceValue / $currencyRate, 2);
+            // After confirmation flow, ticket_amount is already USD while currency may still be original.
+            // If it still matches face value, convert; otherwise treat as USD.
+            if (abs($ticketAmount - $faceValue) < 0.0001) {
+                $usdTicketAmount = round($ticketAmount / $currencyRate, 2);
+            } else {
+                $usdTicketAmount = round($ticketAmount, 2);
+            }
+        }
+
+        $val['usd_ticket_amount'] = $usdTicketAmount;
+        $val['usd_face_value'] = $usdFaceValue;
+        $val['display_currency_code'] = 'USD';
 
        }
 
@@ -1824,8 +1866,11 @@ class ResellerController extends Controller
                 'event_tickets.seat_from as seat_from',
                 'event_tickets.seat_to as seat_to',
                 'event_tickets.unique_id as unique_id',
+                'event_tickets.ticket_amount as ticket_amount',
+                'event_tickets.face_value as face_value',
                 'event.event_name as event_name',
                 'currency.short_name as short_name',
+                'currency.currency_rate as currency_rate',
                 'country_name',
                 'cities.name as city_name',
                 'location_name',
@@ -1858,6 +1903,27 @@ class ResellerController extends Controller
         $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
         $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
         $val['fulfilled_sales_count'] = max(0, (int) $val['sales_count'] - (int) $val['pending_upload_count']);
+
+        $currencyCode = strtoupper((string) ($val->short_name ?? 'USD'));
+        $currencyRate = (float) ($val->currency_rate ?? 1);
+        $currencyRate = $currencyRate > 0 ? $currencyRate : 1;
+        $ticketAmount = (float) ($val->ticket_amount ?? 0);
+        $faceValue = (float) ($val->face_value ?? 0);
+
+        if ($currencyCode === 'USD') {
+            $usdTicketAmount = round($ticketAmount, 2);
+            $usdFaceValue = round($faceValue, 2);
+        } else {
+            $usdFaceValue = round($faceValue / $currencyRate, 2);
+            if (abs($ticketAmount - $faceValue) < 0.0001) {
+                $usdTicketAmount = round($ticketAmount / $currencyRate, 2);
+            } else {
+                $usdTicketAmount = round($ticketAmount, 2);
+            }
+        }
+
+        $val['usd_ticket_amount'] = $usdTicketAmount;
+        $val['usd_face_value'] = $usdFaceValue;
 
        }
 

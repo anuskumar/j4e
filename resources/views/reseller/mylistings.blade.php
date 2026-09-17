@@ -184,15 +184,22 @@
                                     <td> {{ $val['no_of_tickets'] }}</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <span>{{ $val['ticket_amount'] }} {{ $val['short_name'] }}</span>
+                                            <span>${{ number_format((float) ($val['usd_ticket_amount'] ?? $val['ticket_amount'] ?? 0), 2) }} USD</span>
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-secondary py-0 px-1"
                                                 title="Edit ticket amount"
-                                                onclick="openTicketAmountModal({{ $val['id'] }}, '{{ $val['ticket_amount'] }}', '{{ $val['face_value'] }}', '{{ $val['short_name'] ?? '' }}')">
+                                                onclick="openTicketAmountModal({{ $val['id'] }}, '{{ number_format((float) ($val['usd_ticket_amount'] ?? $val['ticket_amount'] ?? 0), 2, '.', '') }}', '{{ number_format((float) ($val['usd_face_value'] ?? $val['face_value'] ?? 0), 2, '.', '') }}', 'USD')">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </div>
-                                        <div class="text-muted small mt-1">Face Value: {{ $val['face_value'] }} {{ $val['short_name'] }}</div>
+                                        <div class="text-muted small mt-1">
+                                            Face Value: ${{ number_format((float) ($val['usd_face_value'] ?? $val['face_value'] ?? 0), 2) }} USD
+                                        </div>
+                                        @if (!empty($val['short_name']) && strtoupper((string) $val['short_name']) !== 'USD')
+                                            <div class="text-muted small">
+                                                Original: {{ number_format((float) ($val['face_value'] ?? 0), 2) }} {{ $val['short_name'] }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td>
                                         <a href="{{ route('reseller.manage.eventticket',$val['id']) }}" class="btn btn-light btn-sm"> <b> > </b></a>
@@ -227,11 +234,13 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <label for="ticket-amount-sale-price" class="form-label">Ticket Amount</label>
+        <label for="ticket-amount-sale-price" class="form-label">Ticket Amount (USD)</label>
         <div class="input-group">
+            <span class="input-group-text">$</span>
             <input type="text" class="form-control" name="sale_price" id="ticket-amount-sale-price" required>
             <span class="input-group-text" id="ticket-amount-currency">USD</span>
         </div>
+        <small class="text-muted d-block mt-2">Prices are stored and displayed in US Dollar (USD).</small>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

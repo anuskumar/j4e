@@ -468,8 +468,16 @@
                             <select class="form-select" id="currency" name="currency">
                             <option value="">Select Currency</option>
                                 @foreach ($currency as $val)
-                                <option value="{{ $val->id }}" data-code="{{ $val->short_name }}" {{ old('currency') == $val->id ? 'selected' : '' }}>
-                                        {{ $val->symbol . ' ' . $val->name }}
+                                @php
+                                    $isCurrencyActive = (int) $val->is_active === 1;
+                                @endphp
+                                <option value="{{ $val->id }}"
+                                    data-code="{{ $val->short_name }}"
+                                    data-rate="{{ $val->currency_rate }}"
+                                    data-active="{{ $isCurrencyActive ? 1 : 0 }}"
+                                    @disabled(! $isCurrencyActive)
+                                    {{ old('currency') == $val->id && $isCurrencyActive ? 'selected' : '' }}>
+                                        {{ $val->symbol }} {{ $val->name }} ({{ $val->short_name }}){{ $isCurrencyActive ? '' : ' — Inactive' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -485,8 +493,8 @@
                         <label for="amount" class="form-label required-field">Amount (Price per ticket)</label>
                             <div class="input-group">
                                 <span class="input-group-text" id="currency-code">💱</span>
-                            <input type="number" step="0.01" class="form-control" id="amount" name="amount"
-                                placeholder="0.00" value="{{ old('amount') }}">
+                            <input type="number" step="1" min="0" class="form-control" id="amount" name="amount"
+                                placeholder="0" value="{{ old('amount') }}">
                             </div>
                         @error('amount')
                             <div class="error-message">
@@ -495,11 +503,11 @@
                         @enderror
                         </div>
 
-                        {{-- Cents Input --}}
+                        {{-- Cents / decimal Input --}}
                         <div class="col-md-2">
                             <label for="cents" class="form-label">Cents</label>
                         <input type="number" class="form-control" id="cents" name="cents"
-                            placeholder="00" maxlength="2" min="0" max="99" value="{{ old('cents') }}">
+                            placeholder="00" min="0" max="99" step="1" value="{{ old('cents') }}">
                         </div>
 
                         {{-- Converted Value Display --}}
@@ -897,62 +905,128 @@
             });
 
             //currency conversion calculation
+            // currency_rate = how many units of selected currency equal 1 USD.
+            // USD value = (amount + cents/100) / rate
 
-            let currentRate = 0; // Store the current rate
+            let currentRate = 0;
 
-            // When currency changes
+            function getFaceValueTotal() {
+                const amountRaw = document.getElementById('amount').value;
+                const centsRaw = document.getElementById('cents').value;
+
+                let amount = parseFloat(amountRaw);
+                if (Number.isNaN(amount) || amount < 0) {
+                    amount = 0;
+                }
+
+                let cents = parseInt(centsRaw, 10);
+                if (Number.isNaN(cents) || cents < 0) {
+                    cents = 0;
+                }
+                if (cents > 99) {
+                    cents = 99;
+                    document.getElementById('cents').value = 99;
+                }
+
+                // Keep 2-decimal face value precision: major units + cents.
+                return Math.round((amount + (cents / 100)) * 100) / 100;
+            }
+
+            function formatUsd(value) {
+                return value.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            function updateConvertedValue() {
+                const total = getFaceValueTotal();
+                const display = document.getElementById('converted-value');
+
+                if (!currentRate || currentRate <= 0) {
+                    display.textContent = '$0.00 USD';
+                    return;
+                }
+
+                // Convert selected-currency face value into USD, rounded to 2 decimals.
+                const usdValue = Math.round((total / currentRate) * 100) / 100;
+                display.textContent = `$${formatUsd(usdValue)} USD`;
+            }
+
+            function setRateFromOption(option) {
+                const optionRate = parseFloat(option?.getAttribute('data-rate'));
+                if (!Number.isNaN(optionRate) && optionRate > 0) {
+                    currentRate = optionRate;
+                }
+            }
+
             document.getElementById('currency').addEventListener('change', async function() {
                 let selectedOption = this.options[this.selectedIndex];
-                let currencyCode = selectedOption.getAttribute('data-code') || '💱';
-                let currencyId = this.value;
 
-                // Update the currency code display
+                // Do not allow inactive currencies.
+                if (selectedOption && selectedOption.dataset.active === '0') {
+                    const activeOption = Array.from(this.options).find((option) => option.value && option.dataset.active === '1');
+                    if (activeOption) {
+                        this.value = activeOption.value;
+                        selectedOption = activeOption;
+                    } else {
+                        this.value = '';
+                        currentRate = 0;
+                        document.getElementById('currency-code').textContent = '💱';
+                        updateConvertedValue();
+                        return;
+                    }
+                }
+
+                const currencyCode = selectedOption.getAttribute('data-code') || '💱';
+                const currencyId = this.value;
+
                 document.getElementById('currency-code').textContent = currencyCode;
 
-                if (currencyId) {
-                    try {
-                        let response = await fetch(`/get-currency-rate/${currencyId}`);
-                        let data = await response.json();
+                if (!currencyId) {
+                    currentRate = 0;
+                    updateConvertedValue();
+                    return;
+                }
 
-                        if (data.rate) {
-                            currentRate = data.rate; // Store the rate
-                            console.log(`Rate for ${currencyCode}:`, currentRate);
+                // Use stored rate immediately, then refresh from API for latest value.
+                setRateFromOption(selectedOption);
+                updateConvertedValue();
 
-                            // If there's an existing value, calculate the conversion
-                            let amount = parseFloat(document.getElementById('amount').value) || 0;
-                            let cents = parseFloat(document.getElementById('cents').value) || 0;
-                            updateConvertedValue(amount, cents);
-                        } else {
-                            alert('Failed to fetch conversion rate.');
-                        }
-                    } catch (error) {
-                        console.error('Error fetching currency rate:', error);
+                try {
+                    const response = await fetch(`/get-currency-rate/${currencyId}`);
+                    const data = await response.json();
+                    const apiRate = parseFloat(data.rate);
+
+                    if (!Number.isNaN(apiRate) && apiRate > 0) {
+                        currentRate = apiRate;
+                        selectedOption.setAttribute('data-rate', String(apiRate));
+                        updateConvertedValue();
+                    } else if (!currentRate) {
+                        alert('Failed to fetch conversion rate.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching currency rate:', error);
+                    if (!currentRate) {
                         alert('Error fetching conversion rate.');
                     }
                 }
             });
 
-            // When amount or cents change
-            document.getElementById('amount').addEventListener('input', function() {
-                let amount = parseFloat(this.value) || 0;
-                let cents = parseFloat(document.getElementById('cents').value) || 0;
-                updateConvertedValue(amount, cents);
-            });
+            document.getElementById('amount').addEventListener('input', updateConvertedValue);
+            document.getElementById('cents').addEventListener('input', updateConvertedValue);
 
-            document.getElementById('cents').addEventListener('input', function() {
-                let amount = parseFloat(document.getElementById('amount').value) || 0;
-                let cents = parseFloat(this.value) || 0;
-                updateConvertedValue(amount, cents);
-            });
-
-            // Function to calculate and update the converted value
-            function updateConvertedValue(amount, cents) {
-                let total = amount + (cents / 100); // Combine amount + cents
-                if (currentRate) {
-                    let convertedValue = (total * currentRate).toFixed(2);
-                    document.getElementById('converted-value').textContent = `$${convertedValue} USD`;
+            // Recalculate on load if old input values exist.
+            (function initConversion() {
+                const currencySelect = document.getElementById('currency');
+                if (currencySelect.value) {
+                    setRateFromOption(currencySelect.options[currencySelect.selectedIndex]);
+                    const selectedOption = currencySelect.options[currencySelect.selectedIndex];
+                    document.getElementById('currency-code').textContent =
+                        selectedOption.getAttribute('data-code') || '💱';
                 }
-            }
+                updateConvertedValue();
+            })();
         });
     </script>
 @endpush

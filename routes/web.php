@@ -463,10 +463,13 @@ Route::group(['prefix' => 'artistfield'], function () {
 
 
 
-Route::group(['prefix' => 'currency', 'middleware' => 'auth'], function () {
+Route::group(['prefix' => 'currency', 'middleware' => ['auth', 'user.type:superadmin']], function () {
 
     Route::get('create', [CurrencyController::class, 'create']);
     Route::post('store', [CurrencyController::class, 'store']);
+    Route::post('store-from-catalog', [CurrencyController::class, 'storeFromCatalog'])->name('currency.store-from-catalog');
+    Route::get('preview', [CurrencyController::class, 'preview'])->name('currency.preview');
+    Route::post('sync-rates', [CurrencyController::class, 'syncRates'])->name('currency.sync-rates');
     Route::get('list', [CurrencyController::class, 'index']);
     Route::get('view/{id}', [CurrencyController::class, 'show']);
     Route::get('edit/{id}', [CurrencyController::class, 'edit']);

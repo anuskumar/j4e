@@ -16,7 +16,16 @@ class BankTransferController extends Controller
     public function storeBankDetails(Request $request)
     {
         $request->validate([
-            'currency' => 'required|exists:currency,id',
+            'currency' => [
+                'required',
+                'exists:currency,id',
+                function ($attribute, $value, $fail) {
+                    $isActive = Currency::where('id', $value)->where('is_active', 1)->exists();
+                    if (! $isActive) {
+                        $fail('Please choose an active currency.');
+                    }
+                },
+            ],
             'bank_name' => 'required|string|max:255',
             'account_holder_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:255',
@@ -63,6 +72,16 @@ class BankTransferController extends Controller
             'payment_method' => 'required|exists:bank_transfer_details,id',
         ]);
 
+        $selectedCurrency = Currency::where('id', $validated['currency'])
+            ->where('is_active', 1)
+            ->first();
+
+        if (! $selectedCurrency) {
+            return redirect()->back()->withErrors([
+                'currency' => 'Please choose an active currency.',
+            ])->withInput();
+        }
+
         $ownsPaymentMethod = BankTransferDetail::where('id', $request->payment_method)
             ->where('reseller_id', $resellerId)
             ->exists();
@@ -80,13 +99,23 @@ class BankTransferController extends Controller
         $currencyRate = (float) Currency::where('id', $validated['currency'])->value('currency_rate');
         $currencyRate = $currencyRate > 0 ? $currencyRate : 1;
         $enteredPrice = (float) $validated['amount'] + (((float) ($validated['cents'] ?? 0)) / 100);
-        $pricePerTicket = round($enteredPrice * $currencyRate, 2);
+        // Convert entered currency amount to USD (rate = selected-currency units per 1 USD).
+        $pricePerTicket = round($enteredPrice / $currencyRate, 2);
         $websitePrice = round($pricePerTicket * $ticket->no_of_tickets, 2);
         $sellerFeePercent = (float) optional(Events::find($ticket->event))->seller_fee_percent;
         $sellerFeePercent = $sellerFeePercent > 0 ? $sellerFeePercent : 10;
         $sellerFee = round(($websitePrice * $sellerFeePercent) / 100, 2);
         $receivePerTicket = round($pricePerTicket * (100 - $sellerFeePercent) / 100, 2);
         $totalReceive = round($websitePrice - $sellerFee, 2);
+
+        // Prefer submitted USD converted values when present and valid.
+        if ($request->filled('converted_price_per_ticket')) {
+            $pricePerTicket = round((float) $request->converted_price_per_ticket, 2);
+            $websitePrice = round((float) ($request->converted_website_price ?: ($pricePerTicket * $ticket->no_of_tickets)), 2);
+            $sellerFee = round((float) ($request->converted_seller_fee ?: (($websitePrice * $sellerFeePercent) / 100)), 2);
+            $totalReceive = round((float) ($request->converted_total_receive ?: ($websitePrice - $sellerFee)), 2);
+            $receivePerTicket = round($pricePerTicket * (100 - $sellerFeePercent) / 100, 2);
+        }
 
         DB::transaction(function () use (
             $ticket,

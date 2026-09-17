@@ -13,5 +13,18 @@ class Currency extends Model
 
     protected $table = 'currency';
 
-    
+    protected $fillable = [
+        'name',
+        'short_name',
+        'symbol',
+        'currency_rate',
+        'rate_updated_at',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'currency_rate' => 'float',
+        'is_active' => 'integer',
+        'rate_updated_at' => 'datetime',
+    ];
 }
