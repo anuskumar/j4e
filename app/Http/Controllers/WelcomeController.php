@@ -125,11 +125,12 @@ class WelcomeController extends Controller
             ->customerDisplayOrder()
             ->get();
 
-        // Get first event for display (or null if no results)
-        $data1 = $data->isNotEmpty() ? $data->first() : null;
-
         foreach ($data as $key) {
-            $key['timings'] = EventTiming::where('event',$key->id)->get();
+            $key['timings'] = EventTiming::where('event', $key->id)
+                ->where('is_active', 1)
+                ->orderBy('event_date')
+                ->orderBy('from_time')
+                ->get();
 
             $key['tickets_available'] = TicketsGenerated::where('event_id',$key->id)
             ->where('is_sold',0)
@@ -148,6 +149,45 @@ class WelcomeController extends Controller
                 $key['artist_names'] = [];
             }
         }
+
+        // Expand events into one listing row per active timing
+        $listings = collect();
+        foreach ($data as $event) {
+            $timings = collect($event->timings ?? []);
+
+            if ($timings->isEmpty()) {
+                $listings->push((object) [
+                    'event' => $event,
+                    'timing' => null,
+                ]);
+                continue;
+            }
+
+            foreach ($timings as $timing) {
+                $listings->push((object) [
+                    'event' => $event,
+                    'timing' => $timing,
+                ]);
+            }
+        }
+
+        $timingFilters = $listings
+            ->filter(fn ($item) => !empty($item->timing))
+            ->map(function ($item) {
+                $timing = $item->timing;
+                $datePart = $timing->event_date ? date('d M Y', strtotime($timing->event_date)) : '';
+                $timePart = $timing->from_time ? date('g:i A', strtotime($timing->from_time)) : '';
+                $label = trim($datePart . ($datePart && $timePart ? ' · ' : '') . $timePart);
+
+                return [
+                    'id' => $timing->id,
+                    'label' => $label !== '' ? $label : ('Timing #'.$timing->id),
+                    'sort' => ($timing->event_date ?? '9999-99-99').' '.($timing->from_time ?? '99:99:99'),
+                ];
+            })
+            ->unique('id')
+            ->sortBy('sort')
+            ->values();
 
         // Get locations for filter
         $locationQuery = Events::
@@ -191,7 +231,17 @@ class WelcomeController extends Controller
             ->orderBy('cities.name')
             ->get();
 
-        return view('new_eventlistfrontend',compact('data','event_tag','location','data1','search'));
+        $data1 = $data->isNotEmpty() ? $data->first() : null;
+
+        return view('new_eventlistfrontend', compact(
+            'data',
+            'listings',
+            'timingFilters',
+            'event_tag',
+            'location',
+            'data1',
+            'search'
+        ));
 
 
     }

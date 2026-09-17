@@ -131,7 +131,7 @@ class TicketController extends Controller
             $val->total_tickets = (int) (clone $ticketQuery)->sum('no_of_tickets');
         }
 
-        $eventTypes = EventType::orderBy('event_type_name')->get();
+        $eventTypes = EventType::ordered()->get();
 
         $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
             ->leftJoin('cities', 'cities.id', 'location.city')

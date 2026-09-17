@@ -712,7 +712,7 @@ class FrontendController extends Controller
 
            }
 
-           public function show_details_show($id)
+           public function show_details_show(Request $request, $id)
            {
 
             $settings = \App\Models\CompanySettings::first();
@@ -758,24 +758,30 @@ class FrontendController extends Controller
                 }
             }
             
-            $event_timings = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->get();
-            $event_timing = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->first();
+            $event_timings = EventTiming::where('event', $id)
+                ->where('is_active', 1)
+                ->orderBy('event_date')
+                ->orderBy('from_time')
+                ->get();
+
+            $selectedTimingId = $request->query('timing');
+            if ($selectedTimingId && ! $event_timings->contains('id', (int) $selectedTimingId)) {
+                $selectedTimingId = null;
+            }
+
+            $event_timing = $selectedTimingId
+                ? $event_timings->firstWhere('id', (int) $selectedTimingId)
+                : $event_timings->first();
             
             // Get all unique seating types (zones) from tickets that have availability
             $available_zones = [];
-            foreach ($event_timings as $timing_date) {
-                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
-                if ($event_timing_list) {
-                    foreach ($event_timing_list as $event_time) {
-                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $event_time->id);
-                        foreach ($event_ticket_list as $ticket) {
-                            $ticket_availability = EventTiming::get_available_tickets($ticket->id);
-                            if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
-                                // Add zone if not already in array
-                                if (!in_array($ticket->seating_type_name, $available_zones)) {
-                                    $available_zones[] = $ticket->seating_type_name;
-                                }
-                            }
+            foreach ($event_timings as $event_time) {
+                $event_ticket_list = EventTiming::get_ticket_list($id, $event_time->id);
+                foreach ($event_ticket_list as $ticket) {
+                    $ticket_availability = EventTiming::get_available_tickets($ticket->id);
+                    if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
+                        if (!in_array($ticket->seating_type_name, $available_zones)) {
+                            $available_zones[] = $ticket->seating_type_name;
                         }
                     }
                 }
@@ -791,28 +797,22 @@ class FrontendController extends Controller
             }
 
             $allTickets = [];
-            foreach ($event_timings as $timing_date) {
-                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
-                if (!$event_timing_list) {
-                    continue;
-                }
-
-                foreach ($event_timing_list as $event_time) {
-                    $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $event_time->id);
-                    foreach ($event_ticket_list as $ticket) {
-                        $availability = EventTiming::get_available_tickets($ticket->id);
-                        if ($availability <= 0) {
-                            continue;
-                        }
-
-                        $allTickets[] = [
-                            'ticket' => $ticket,
-                            'availability' => $availability,
-                            'event_date' => $event_time->event_date,
-                            'from_time' => $event_time->from_time,
-                            'to_time' => $event_time->to_time,
-                        ];
+            foreach ($event_timings as $event_time) {
+                $event_ticket_list = EventTiming::get_ticket_list($id, $event_time->id);
+                foreach ($event_ticket_list as $ticket) {
+                    $availability = EventTiming::get_available_tickets($ticket->id);
+                    if ($availability <= 0) {
+                        continue;
                     }
+
+                    $allTickets[] = [
+                        'ticket' => $ticket,
+                        'availability' => $availability,
+                        'timing_id' => $event_time->id,
+                        'event_date' => $event_time->event_date,
+                        'from_time' => $event_time->from_time,
+                        'to_time' => $event_time->to_time,
+                    ];
                 }
             }
 
@@ -877,6 +877,7 @@ class FrontendController extends Controller
                 'event_reviews_stars',
                 'event_timing',
                 'event_timings',
+                'selectedTimingId',
                 'venue_seating',
                 'available_zones',
                 'allTickets',

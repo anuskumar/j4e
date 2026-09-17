@@ -266,10 +266,20 @@
                         <p class="card-text text-muted mb-0">{{ $data->venue_name ?? 'Venue Name' }},
                             {{ $data->city_name ?? 'City Name' }}, {{ $data->country_name ?? 'Country Name' }}</p>
                         <p class="card-text mb-0"><small class="text-body-secondary fw-bold">
-                                {{ date('d M', strtotime($event->event_from_date)) }}
-                                &bull;
-                                {{ date('D', strtotime($event->event_from_date)) }} &bull;
-                                {{ $event_timing ? date('H:i', strtotime($event_timing->from_time)) : 'Time is Not available' }}</small> 
+                                @if(($event_timings ?? collect())->count() > 1)
+                                    {{ ($event_timings ?? collect())->count() }} timings available — select one below
+                                @elseif($event_timing)
+                                    {{ date('d M', strtotime($event_timing->event_date ?? $event->event_from_date)) }}
+                                    &bull;
+                                    {{ date('D', strtotime($event_timing->event_date ?? $event->event_from_date)) }} &bull;
+                                    {{ date('H:i', strtotime($event_timing->from_time)) }}
+                                @else
+                                    {{ date('d M', strtotime($event->event_from_date)) }}
+                                    &bull;
+                                    {{ date('D', strtotime($event->event_from_date)) }} &bull;
+                                    Time is Not available
+                                @endif
+                        </small>
                         </p>
                         <p class="mb-0">
                             <span
@@ -311,6 +321,42 @@
         <form method="POST" action="{{ route('reseller.sellticketsave', ['id' => $id]) }}"
             enctype="multipart/form-data" id="ticketForm">
             @csrf
+
+            <div class="card form-section-card p-4">
+                <div class="form-section-header">
+                    <h6><i class="bi bi-calendar-event icon"></i> Select Event Timing <span class="text-danger">*</span></h6>
+                </div>
+                <p class="text-muted mb-4">
+                    <i class="bi bi-info-circle"></i> Choose the date and time these tickets are for.
+                </p>
+                <div class="mb-0">
+                    <label class="form-label required-field" for="event_timing">Event Timing</label>
+                    <select class="form-select" name="event_timing" id="event_timing" required>
+                        <option value="">Please select...</option>
+                        @foreach (($event_timings ?? collect()) as $timing)
+                            <option value="{{ $timing->id }}"
+                                {{ (string) old('event_timing', ($event_timings->count() === 1 ? $timing->id : '')) === (string) $timing->id ? 'selected' : '' }}>
+                                {{ $timing->event_date ? date('d M Y', strtotime($timing->event_date)) : 'Date N/A' }}
+                                &bull;
+                                {{ $timing->from_time ? date('g:i A', strtotime($timing->from_time)) : '--' }}
+                                –
+                                {{ $timing->to_time ? date('g:i A', strtotime($timing->to_time)) : '--' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('event_timing')
+                        <div class="error-message">
+                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                        </div>
+                    @enderror
+                    @if(($event_timings ?? collect())->isEmpty())
+                        <div class="error-message mt-2">
+                            <i class="bi bi-exclamation-circle"></i> No active timings are available for this event.
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Enter Number of Tickets -->
             <div class="card form-section-card p-4">
                 <div class="form-section-header">
@@ -805,6 +851,13 @@
                 form.addEventListener('submit', function(e) {
                     let hasErrors = false;
                     let errorMessages = [];
+
+                    // Check if event timing is selected
+                    const eventTiming = document.getElementById('event_timing');
+                    if (!eventTiming || !eventTiming.value) {
+                        hasErrors = true;
+                        errorMessages.push('Please select an event timing');
+                    }
 
                     // Check if ticket count is selected
                     if (!ticketInput.value) {

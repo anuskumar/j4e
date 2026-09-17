@@ -13,35 +13,52 @@
         </nav>
 
         <div class="row align-items-end">
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <h1 class="customer-site-banner__hero-title">
                     {{ strtoupper($event_tag->tag_name ?? 'Events') }} TICKETS
                 </h1>
                 <p class="customer-site-banner__hero-meta">
                     @if(!empty($search))
-                        {{ count($data) }} {{ Str::plural('result', count($data)) }} for "{{ $search }}"
+                        {{ $listings->count() }} {{ Str::plural('result', $listings->count()) }} for "{{ $search }}"
                     @else
-                        {{ count($data) }} {{ Str::plural('event', count($data)) }} available
+                        {{ $listings->count() }} {{ Str::plural('showtime', $listings->count()) }} available
                     @endif
                 </p>
             </div>
-            @if($location->count())
-            <div class="col-lg-4">
-                <div class="customer-site-banner__hero-filter">
-                    <label for="location-select">Filter by city</label>
-                    <select class="form-control" id="location-select">
-                        <option value="">All Cities</option>
-                        @foreach ($location as $loc)
-                            @if($loc->id)
-                                <option value="{{ $loc->id }}">
-                                    {{ trim(($loc->city_name ?? '') . (!empty($loc->city_name) && !empty($loc->country_name) ? ', ' : '') . ($loc->country_name ?? '')) }}
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
+            <div class="col-lg-6">
+                <div class="row g-2">
+                    @if($location->count())
+                    <div class="col-md-6">
+                        <div class="customer-site-banner__hero-filter">
+                            <label for="location-select">Filter by city</label>
+                            <select class="form-control" id="location-select">
+                                <option value="">All Cities</option>
+                                @foreach ($location as $loc)
+                                    @if($loc->id)
+                                        <option value="{{ $loc->id }}">
+                                            {{ trim(($loc->city_name ?? '') . (!empty($loc->city_name) && !empty($loc->country_name) ? ', ' : '') . ($loc->country_name ?? '')) }}
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @endif
+                    @if($timingFilters->count())
+                    <div class="{{ $location->count() ? 'col-md-6' : 'col-md-12' }}">
+                        <div class="customer-site-banner__hero-filter">
+                            <label for="timing-select">Filter by timing</label>
+                            <select class="form-control" id="timing-select">
+                                <option value="">All Timings</option>
+                                @foreach ($timingFilters as $timingFilter)
+                                    <option value="{{ $timingFilter['id'] }}">{{ $timingFilter['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
-            @endif
         </div>
     </div>
 </div>
@@ -61,17 +78,25 @@
                 </div>
             @endif
 
-            @if(count($data) > 0)
+            @if($listings->count() > 0)
                 <div class="event-list-cards" id="event-list-cards">
-                    @foreach ($data as $val)
+                    @foreach ($listings as $item)
                         @php
+                            $val = $item->event;
+                            $timing = $item->timing;
                             $singleDay = $val->event_from_date == $val->event_to_date;
-                            $eventDate = $singleDay ? $val->event_to_date : $val->event_from_date;
-                            $timeText = isset($val->timings[0]) ? date('g:i A', strtotime($val->timings[0]->from_time)) : '';
+                            $eventDate = $timing->event_date
+                                ?? ($singleDay ? $val->event_to_date : $val->event_from_date);
+                            $timeText = $timing && $timing->from_time
+                                ? date('g:i A', strtotime($timing->from_time))
+                                : '';
+                            $toTimeText = $timing && $timing->to_time
+                                ? date('g:i A', strtotime($timing->to_time))
+                                : '';
 
                             $badge = null;
-                            if ($val->event_to_date) {
-                                $yourDate = \Carbon\Carbon::parse($val->event_to_date);
+                            if ($eventDate) {
+                                $yourDate = \Carbon\Carbon::parse($eventDate);
                                 $startDate = \Carbon\Carbon::now()->startOfWeek();
                                 $endDate = \Carbon\Carbon::now()->endOfWeek();
                                 if ($yourDate->greaterThanOrEqualTo($startDate) && $yourDate->lessThanOrEqualTo($endDate)) {
@@ -85,8 +110,16 @@
                                 $val->country_name ?? null,
                             ]);
                             $locationLabel = implode(', ', $locationParts);
+                            $ticketUrl = url('show_details_show', $val->id);
+                            if (!empty($timing?->id)) {
+                                $ticketUrl .= '?timing=' . $timing->id;
+                            }
                         @endphp
-                        <article class="event-list-card" data-location-id="{{ $val->city_id ?? '' }}">
+                        <article
+                            class="event-list-card"
+                            data-location-id="{{ $val->city_id ?? '' }}"
+                            data-timing-id="{{ $timing->id ?? '' }}"
+                        >
                             <div class="event-list-card__date">
                                 <span class="event-list-card__date-day">{{ $eventDate ? date('d', strtotime($eventDate)) : '--' }}</span>
                                 <span class="event-list-card__date-month">{{ $eventDate ? date('M', strtotime($eventDate)) : '' }}</span>
@@ -104,15 +137,17 @@
                                     @endif
                                     <span>
                                         <i class="far fa-clock"></i>
-                                        @if($singleDay)
+                                        @if($timing)
+                                            {{ $eventDate ? date('d M Y', strtotime($eventDate)) : '' }}
+                                            @if($timeText)
+                                                · {{ $timeText }}@if($toTimeText) – {{ $toTimeText }}@endif
+                                            @endif
+                                        @elseif($singleDay)
                                             {{ $eventDate ? date('d M Y', strtotime($eventDate)) : '' }}
                                         @else
                                             {{ $val->event_from_date ? date('d M Y', strtotime($val->event_from_date)) : '' }}
                                             –
                                             {{ $val->event_to_date ? date('d M Y', strtotime($val->event_to_date)) : '' }}
-                                        @endif
-                                        @if($timeText)
-                                            · {{ $timeText }}
                                         @endif
                                     </span>
                                 </div>
@@ -122,16 +157,16 @@
                             </div>
 
                             <div class="event-list-card__cta">
-                                <a href="{{ url('show_details_show', $val->id) }}" class="event-list-card__btn">See Tickets</a>
+                                <a href="{{ $ticketUrl }}" class="event-list-card__btn">See Tickets</a>
                             </div>
                         </article>
                     @endforeach
                 </div>
 
                 <div class="event-list-empty d-none" id="event-list-empty-filter">
-                    <h4>No events in this city</h4>
-                    <p>Try selecting a different city or view all events.</p>
-                    <button type="button" class="btn btn-primary" id="clear-location-filter">Show All Cities</button>
+                    <h4>No showtimes match these filters</h4>
+                    <p>Try a different city or timing, or clear the filters.</p>
+                    <button type="button" class="btn btn-primary" id="clear-list-filters">Show All</button>
                 </div>
             @else
                 <div class="event-list-empty">
@@ -147,15 +182,20 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var locationSelect = document.getElementById('location-select');
+    var timingSelect = document.getElementById('timing-select');
     var cards = document.querySelectorAll('.event-list-card');
     var emptyFilter = document.getElementById('event-list-empty-filter');
-    var clearBtn = document.getElementById('clear-location-filter');
+    var clearBtn = document.getElementById('clear-list-filters');
 
-    function filterByLocation(locationId) {
+    function applyFilters() {
+        var locationId = locationSelect ? locationSelect.value : '';
+        var timingId = timingSelect ? timingSelect.value : '';
         var visibleCount = 0;
 
         cards.forEach(function (card) {
-            var matches = !locationId || String(card.dataset.locationId) === String(locationId);
+            var matchesLocation = !locationId || String(card.dataset.locationId) === String(locationId);
+            var matchesTiming = !timingId || String(card.dataset.timingId) === String(timingId);
+            var matches = matchesLocation && matchesTiming;
             card.style.display = matches ? '' : 'none';
             if (matches) {
                 visibleCount++;
@@ -168,15 +208,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (locationSelect) {
-        locationSelect.addEventListener('change', function () {
-            filterByLocation(this.value);
-        });
+        locationSelect.addEventListener('change', applyFilters);
     }
 
-    if (clearBtn && locationSelect) {
+    if (timingSelect) {
+        timingSelect.addEventListener('change', applyFilters);
+    }
+
+    if (clearBtn) {
         clearBtn.addEventListener('click', function () {
-            locationSelect.value = '';
-            filterByLocation('');
+            if (locationSelect) {
+                locationSelect.value = '';
+            }
+            if (timingSelect) {
+                timingSelect.value = '';
+            }
+            applyFilters();
         });
     }
 });

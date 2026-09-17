@@ -95,6 +95,25 @@
                     </div>
 
                     <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="sort_order">Display Order</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fe fe-list"></i></span>
+                            <input type="number"
+                                min="0"
+                                max="9999"
+                                class="form-control @error('sort_order') is-invalid @enderror"
+                                name="sort_order"
+                                id="sort_order"
+                                placeholder="Lower numbers appear first"
+                                value="{{ old('sort_order', $data->sort_order ?? 0) }}">
+                        </div>
+                        <p class="form-field-hint mb-0">Lower numbers appear first in lists and header menu. You can also drag rows on the list page.</p>
+                        @error('sort_order')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group form-section-spacer">
                         <label class="form-field-label d-block">Status</label>
                         <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
                             <span class="tx-13 fw-semibold">Active</span>

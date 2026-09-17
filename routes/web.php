@@ -324,6 +324,7 @@ Route::group(['prefix' => 'eventtype'], function () {
     Route::get('view/{id}', [EventTypeController::class, 'show']);
     Route::get('edit/{id}', [EventTypeController::class, 'edit']);
     Route::post('update', [EventTypeController::class, 'update']);
+    Route::post('reorder', [EventTypeController::class, 'reorder']);
     Route::delete('destroy/{id}', [EventTypeController::class, 'delete']);
 });
 

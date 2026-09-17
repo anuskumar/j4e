@@ -79,7 +79,7 @@ class EventsController extends Controller
 
         $data = $query->get();
 
-        $eventTypes = EventType::orderBy('event_type_name')->get();
+        $eventTypes = EventType::ordered()->get();
 
         $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
             ->leftJoin('cities', 'cities.id', 'location.city')
@@ -115,7 +115,7 @@ class EventsController extends Controller
     public function create()
     {
 
-    $event_type = EventType::get();
+    $event_type = EventType::ordered()->get();
     $venue = VenueModel::
      leftjoin('location','location.id','venue.location')
     ->leftjoin('countries','countries.id','location.country')
@@ -280,7 +280,7 @@ class EventsController extends Controller
 
      public function edit(string $id)
      {
-        $event_type = EventType::get();
+        $event_type = EventType::ordered()->get();
         $data = Events::findOrFail($id);
         $venue = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')

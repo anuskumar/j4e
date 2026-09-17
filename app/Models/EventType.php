@@ -16,15 +16,22 @@ class EventType extends Model
         'event_type_name',
         'is_active',
         'is_header_menu',
+        'sort_order',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_header_menu' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function scopeHeaderMenu($query)
     {
         return $query->where('is_active', 1)->where('is_header_menu', 1);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('event_type_name');
     }
 }

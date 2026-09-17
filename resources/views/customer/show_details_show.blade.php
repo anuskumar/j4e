@@ -11,12 +11,19 @@
         ? asset('storage/uploads/venue/' . $event_datas->venue_image)
         : $defaultVenueImg;
     $currencyLabel = $allTickets[0]['ticket']->short_name ?? '';
-    $eventDateLabel = $event_datas->event_from_date
-        ? \Carbon\Carbon::parse($event_datas->event_from_date)->format('d M • D • Y')
-        : '';
-    $eventTimeLabel = $event_timing->from_time ?? ($allTickets[0]['from_time'] ?? '');
+    $selectedTimingId = $selectedTimingId ?? null;
+    $headerTiming = $event_timing ?? null;
+    $eventDateLabel = $headerTiming && $headerTiming->event_date
+        ? \Carbon\Carbon::parse($headerTiming->event_date)->format('d M • D • Y')
+        : ($event_datas->event_from_date
+            ? \Carbon\Carbon::parse($event_datas->event_from_date)->format('d M • D • Y')
+            : '');
+    $eventTimeLabel = $headerTiming?->from_time ?? ($allTickets[0]['from_time'] ?? '');
     if ($eventTimeLabel) {
-        $eventTimeLabel = \Carbon\Carbon::parse($eventTimeLabel)->format('H:i');
+        $eventTimeLabel = \Carbon\Carbon::parse($eventTimeLabel)->format('g:i A');
+        if (!empty($headerTiming?->to_time)) {
+            $eventTimeLabel .= ' – ' . \Carbon\Carbon::parse($headerTiming->to_time)->format('g:i A');
+        }
     }
     $venueName = trim((string) ($event_datas->venue_name ?? ''));
     $cityName = trim((string) ($event_datas->city_name ?? ''));
@@ -647,6 +654,38 @@
     </div>
 
     <div class="filter-bar">
+        @if (($event_timings ?? collect())->count() > 0)
+        <div class="dropdown">
+            <button class="filter-pill dropdown-toggle {{ $selectedTimingId ? 'active' : '' }}" type="button" id="timingDropdown" aria-haspopup="true" aria-expanded="false">
+                @if ($headerTiming)
+                    {{ $headerTiming->event_date ? \Carbon\Carbon::parse($headerTiming->event_date)->format('d M Y') : 'Timing' }}
+                    @if ($headerTiming->from_time)
+                        · {{ \Carbon\Carbon::parse($headerTiming->from_time)->format('g:i A') }}
+                    @endif
+                @else
+                    Timing
+                @endif
+            </button>
+            <ul class="dropdown-menu" id="timingOptions">
+                <li><a class="dropdown-item timing-option" href="#" data-value="all">All Timings</a></li>
+                @foreach ($event_timings as $timingOption)
+                    @php
+                        $timingLabel = trim(
+                            ($timingOption->event_date ? \Carbon\Carbon::parse($timingOption->event_date)->format('d M Y') : '')
+                            . ($timingOption->from_time ? ' · ' . \Carbon\Carbon::parse($timingOption->from_time)->format('g:i A') : '')
+                            . ($timingOption->to_time ? ' – ' . \Carbon\Carbon::parse($timingOption->to_time)->format('g:i A') : '')
+                        );
+                    @endphp
+                    <li>
+                        <a class="dropdown-item timing-option" href="#" data-value="{{ $timingOption->id }}">
+                            {{ $timingLabel !== '' ? $timingLabel : ('Timing #'.$timingOption->id) }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <div class="dropdown">
             <button class="filter-pill dropdown-toggle" type="button" id="zoneDropdown" aria-haspopup="true" aria-expanded="false">
                 Zone
@@ -759,6 +798,7 @@
                             data-availability="{{ $item['availability'] }}"
                             data-zone="{{ $dat->seating_type_name }}"
                             data-price="{{ $ticketPrice }}"
+                            data-timing-id="{{ $item['timing_id'] ?? '' }}"
                             data-split-type="{{ $dat->split_type }}">
                             <div class="ticket-card__top">
                                 <div>
@@ -846,12 +886,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     let currentZone = 'all';
+    let currentTiming = @json($selectedTimingId ? (string) $selectedTimingId : 'all');
     let currentQuantity = 1;
     let quantitySelected = false;
     let customQuantityMode = false;
     let currentMinPrice = 0;
     let currentMaxPrice = Number.MAX_SAFE_INTEGER;
 
+    const timingButton = document.getElementById('timingDropdown');
     const zoneButton = document.getElementById('zoneDropdown');
     const quantityButton = document.getElementById('quantityDropdown');
     const priceButton = document.getElementById('priceDropdown');
@@ -860,6 +902,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const visibleCountEl = document.getElementById('visible-listing-count');
     const noResultsMessage = document.getElementById('no-results-message');
     const filterBar = document.querySelector('.filter-bar');
+    const headerMeta = document.querySelector('.event-header-bar__meta');
+    const timingLabels = @json(
+        ($event_timings ?? collect())->mapWithKeys(function ($timing) {
+            $label = trim(
+                ($timing->event_date ? \Carbon\Carbon::parse($timing->event_date)->format('d M • D • Y') : '')
+                . ($timing->from_time ? ' • ' . \Carbon\Carbon::parse($timing->from_time)->format('g:i A') : '')
+                . ($timing->to_time ? ' – ' . \Carbon\Carbon::parse($timing->to_time)->format('g:i A') : '')
+            );
+
+            return [(string) $timing->id => $label !== '' ? $label : ('Timing #'.$timing->id)];
+        })
+    );
 
     function closeAllFilterDropdowns() {
         if (!filterBar) return;
@@ -906,12 +960,37 @@ document.addEventListener('DOMContentLoaded', function () {
         let maxQty = 0;
         document.querySelectorAll('.ticket-container').forEach(function (ticket) {
             const ticketZone = ticket.getAttribute('data-zone') || '';
+            const ticketTiming = ticket.getAttribute('data-timing-id') || '';
             const availability = parseInt(ticket.getAttribute('data-availability'), 10) || 0;
-            if (zone === 'all' || ticketZone === zone) {
+            const matchesTiming = currentTiming === 'all' || String(ticketTiming) === String(currentTiming);
+            if (matchesTiming && (zone === 'all' || ticketZone === zone)) {
                 maxQty = Math.max(maxQty, availability);
             }
         });
         return maxQty;
+    }
+
+    function updateTimingHeader() {
+        if (!headerMeta) {
+            return;
+        }
+
+        if (currentTiming !== 'all' && timingLabels[currentTiming]) {
+            headerMeta.textContent = timingLabels[currentTiming];
+            return;
+        }
+
+        headerMeta.textContent = @json(trim($eventDateLabel . ($eventTimeLabel ? ' • ' . $eventTimeLabel : '')));
+    }
+
+    function syncTimingQueryParam() {
+        const url = new URL(window.location.href);
+        if (currentTiming && currentTiming !== 'all') {
+            url.searchParams.set('timing', currentTiming);
+        } else {
+            url.searchParams.delete('timing');
+        }
+        window.history.replaceState({}, '', url.toString());
     }
 
     function hideCustomQuantityPanel() {
@@ -1065,6 +1144,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (filterBar) {
         filterBar.addEventListener('click', function (e) {
+            const timingOption = e.target.closest('.timing-option');
+            if (timingOption) {
+                e.preventDefault();
+                currentTiming = timingOption.getAttribute('data-value') || 'all';
+                if (timingButton) {
+                    timingButton.textContent = currentTiming === 'all'
+                        ? 'All Timings'
+                        : timingOption.textContent.trim();
+                    timingButton.classList.toggle('active', currentTiming !== 'all');
+                    closeDropdown(timingButton);
+                }
+                updateTimingHeader();
+                syncTimingQueryParam();
+                rebuildQuantityOptions();
+                applyFilters();
+                return;
+            }
+
             const zoneOption = e.target.closest('.zone-option');
             if (zoneOption) {
                 e.preventDefault();
@@ -1151,11 +1248,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tickets.forEach(function (ticket) {
             const zone = ticket.getAttribute('data-zone');
+            const timingId = ticket.getAttribute('data-timing-id') || '';
             const availability = parseInt(ticket.getAttribute('data-availability'), 10);
             const price = parseFloat(ticket.getAttribute('data-price'));
 
             let shouldShow = true;
-            if (currentZone !== 'all' && zone !== currentZone) shouldShow = false;
+            if (currentTiming !== 'all' && String(timingId) !== String(currentTiming)) shouldShow = false;
+            if (shouldShow && currentZone !== 'all' && zone !== currentZone) shouldShow = false;
             if (shouldShow && quantitySelected && availability < currentQuantity) shouldShow = false;
             if (shouldShow && (price < currentMinPrice || price > currentMaxPrice)) shouldShow = false;
 

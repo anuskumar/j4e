@@ -110,7 +110,7 @@ class ResellerController extends Controller
     }
     public function eventlisting()
     {
-        $eventdatas = EventType::select('event_type_name', 'id')->where('is_active', 1)->get();
+        $eventdatas = EventType::select('event_type_name', 'id')->where('is_active', 1)->ordered()->get();
         foreach ($eventdatas as $val) {
             $val['tags'] = Events::leftjoin('event_tags', 'event_tags.id', 'event.event_tag')->select('event_tags.id', 'event_tags.tag_name')->where('event_type', $val->id)->groupBy('event.event_tag')->whereNotNull('event.event_tag')->get();
         }
@@ -462,7 +462,7 @@ class ResellerController extends Controller
 
         // dd("hello");
 
-        $event_type = EventType::get();
+        $event_type = EventType::ordered()->get();
         $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
             ->leftjoin('cities', 'cities.id', 'location.city')
@@ -526,7 +526,7 @@ class ResellerController extends Controller
 
     public function event_edit(string $id)
     {
-        $event_type = EventType::get();
+        $event_type = EventType::ordered()->get();
         $data       = Events::find($id);
         $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
@@ -1121,7 +1121,12 @@ class ResellerController extends Controller
         $mobile_applications = MobileApplication::where('is_active', 1)
             ->orderBy('name')
             ->get();
-        $event_timing   = EventTiming::where('event', $id)->first();
+        $event_timings = EventTiming::where('event', $id)
+            ->where('is_active', 1)
+            ->orderBy('event_date')
+            ->orderBy('from_time')
+            ->get();
+        $event_timing = $event_timings->first();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
         // dd($event->venue);
@@ -1132,7 +1137,7 @@ class ResellerController extends Controller
             ->get();
         $restrictions = RestrictionModel::get();
         $splittypes   = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
-        return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
+        return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'event_timings', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
     }
 
     public function currencycodelist(Request $request)
@@ -1146,6 +1151,12 @@ class ResellerController extends Controller
         try {
             // Build validation rules
             $rules = [
+            'event_timing'      => [
+                'required',
+                Rule::exists('event_timings', 'id')->where(function ($query) use ($id) {
+                    $query->where('event', $id)->where('is_active', 1)->whereNull('deleted_at');
+                }),
+            ],
             'ticket_count'      => 'required|numeric|min:1|max:30',
             'venue_seating'     => 'required',
             'row'               => 'nullable|string',
@@ -1178,10 +1189,13 @@ class ResellerController extends Controller
         // Validate the form data
         $validated = $request->validate($rules);
 
-        // Retrieve event timing based on event ID
-        $eventTiming = EventTiming::where('event', $id)->first();
+        // Retrieve the selected event timing for this event
+        $eventTiming = EventTiming::where('event', $id)
+            ->where('id', $validated['event_timing'])
+            ->where('is_active', 1)
+            ->first();
         if (!$eventTiming) {
-                return back()->with('error', 'Event timing not found for the given event ID.')->withInput();
+                return back()->with('error', 'Selected event timing is invalid or inactive.')->withInput();
         }
 
         // Create new ticket record
