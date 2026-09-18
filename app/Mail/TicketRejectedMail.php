@@ -14,19 +14,21 @@ class TicketRejectedMail extends Mailable
     public $eventname;
     public $eventdate;
     public $ticketname;
+    public $rejection_reason;
 
-    public function __construct($resellername, $eventname, $eventdate, $ticketname)
+    public function __construct($resellername, $eventname, $eventdate, $ticketname, $rejection_reason = null)
     {
         $this->resellername = $resellername;
         $this->eventname = $eventname;
         $this->eventdate = $eventdate;
         $this->ticketname = $ticketname;
+        $this->rejection_reason = $rejection_reason;
     }
 
     public function build()
     {
         return $this
-            ->subject('Ticket Rejected')
+            ->subject('Ticket Listing Rejected')
             ->view('emails.TicketRejected');
     }
 }

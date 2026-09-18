@@ -459,12 +459,39 @@ class FrontendController extends Controller
                 ? RestrictionModel::whereIn('id', $restrictionIds)->pluck('restrictions')->all()
                 : [];
 
-            $ticket_count = TicketsGenerated::where('event_tickets', $id)
+            $heldTickets = TicketsGenerated::where('event_tickets', $id)
                 ->where('user_id', Auth::user()->id)
                 ->where('is_sold', 0)
                 ->where('under_purchase_hold', 1)
                 ->where('purchase_hold_time', '>=', $validHoldStart)
-                ->count();
+                ->orderBy('seat_number')
+                ->get(['id', 'seat_number', 'seat_row', 'seat_number_prefix']);
+
+            $ticket_count = $heldTickets->count();
+
+            $selectedSeatNumbers = $heldTickets
+                ->pluck('seat_number')
+                ->filter(fn ($seat) => $seat !== null && $seat !== '')
+                ->values()
+                ->all();
+
+            $selectedSeatRows = $heldTickets
+                ->pluck('seat_row')
+                ->filter(fn ($row) => $row !== null && $row !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            $selectedSeatsLabel = '';
+            if (count($selectedSeatNumbers) === 1) {
+                $selectedSeatsLabel = (string) $selectedSeatNumbers[0];
+            } elseif (count($selectedSeatNumbers) > 1) {
+                $selectedSeatsLabel = implode(', ', $selectedSeatNumbers);
+            }
+
+            $selectedRowLabel = count($selectedSeatRows) === 1
+                ? (string) $selectedSeatRows[0]
+                : (count($selectedSeatRows) > 1 ? implode(', ', $selectedSeatRows) : null);
 
             $available_ticket_count = TicketsGenerated::where('event_tickets', $id)
                 ->where('is_sold', 0)
@@ -498,7 +525,10 @@ class FrontendController extends Controller
                 'id',
                 'restrictionLabels',
                 'paypalSettings',
-                'paypalEnabled'
+                'paypalEnabled',
+                'selectedSeatsLabel',
+                'selectedRowLabel',
+                'heldTickets'
             ));
 
            }
@@ -821,14 +851,14 @@ class FrontendController extends Controller
             }
 
             usort($allTickets, function ($a, $b) {
-                $priceA = (float) ($a['ticket']->web_price ?? $a['ticket']->ticket_amount ?? 0);
-                $priceB = (float) ($b['ticket']->web_price ?? $b['ticket']->ticket_amount ?? 0);
+                $priceA = (float) ($a['ticket']->ticket_amount ?? $a['ticket']->web_price ?? 0);
+                $priceB = (float) ($b['ticket']->ticket_amount ?? $b['ticket']->web_price ?? 0);
 
                 return $priceA <=> $priceB;
             });
 
             $prices = array_map(function ($item) {
-                return (float) ($item['ticket']->web_price ?? $item['ticket']->ticket_amount ?? 0);
+                return (float) ($item['ticket']->ticket_amount ?? $item['ticket']->web_price ?? 0);
             }, $allTickets);
 
             $minPrice = $prices ? min($prices) : 0;
@@ -844,7 +874,8 @@ class FrontendController extends Controller
             $restrictionMap = RestrictionModel::pluck('restrictions', 'id')->all();
             foreach ($allTickets as $index => &$item) {
                 $ticket = $item['ticket'];
-                $price = (float) ($ticket->web_price ?? $ticket->ticket_amount ?? 0);
+                // ticket_amount is the per-ticket selling price; web_price may be a listing total.
+                $price = (float) ($ticket->ticket_amount ?? $ticket->web_price ?? 0);
                 $faceValue = (float) ($ticket->face_value ?? 0);
 
                 $restrictionIds = $ticket->ticket_restrictions ? json_decode($ticket->ticket_restrictions, true) : [];

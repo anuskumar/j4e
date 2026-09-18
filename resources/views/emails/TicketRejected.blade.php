@@ -13,6 +13,11 @@
     <p><strong>Date:</strong> {{ $eventdate }}</p>
     <p><strong>Ticket:</strong> {{ $ticketname }}</p>
 
+    @if (!empty($rejection_reason))
+        <p><strong>Rejection Reason:</strong></p>
+        <p>{{ $rejection_reason }}</p>
+    @endif
+
     <p>Please review and update the ticket details, then submit again.</p>
 </body>
 </html>

@@ -50,6 +50,7 @@ class EventTickets extends Model
         'cancellation_policy_notes',
         'map_layout',
         'is_admin_approved',
+        'rejection_reason',
         'ticket_status',
         'split_type',
         'web_price',
@@ -74,6 +75,11 @@ class EventTickets extends Model
     public function event()
     {
         return $this->belongsTo(Events::class, 'event');
+    }
+
+    public function seating()
+    {
+        return $this->belongsTo(VenueSeating::class, 'venue_seating');
     }
 
     public static function statusLabel(?int $status): string

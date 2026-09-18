@@ -98,6 +98,7 @@
                                 <ul>
                                     <li><strong>Completed</strong><span>{{ $outside_sell_count ?? 0 }}</span></li>
                                     <li><strong>On Hold</strong><span>{{ $outside_hold_count ?? 0 }}</span></li>
+                                    <li><strong>Sale Total</strong><span>${{ number_format($outside_sell_total ?? 0, 2) }}</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -282,5 +283,256 @@
                 </div>
             </div>
         </div>
+
+        <div class="row row-sm">
+            <div class="col-12">
+                <div class="card overflow-hidden">
+                    <div class="card-header bg-transparent pd-b-0 pd-t-20 bd-b-0">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h4 class="card-title mg-b-5">Outside Sold Tickets</h4>
+                                <p class="text-muted tx-12 mb-0">
+                                    {{ $outside_sell_count ?? 0 }} sold
+                                    · Cost ${{ number_format($outside_sell_cost_total ?? 0, 2) }}
+                                    · Sale ${{ number_format($outside_sell_total ?? 0, 2) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive mb-0">
+                            <table class="table table-hover table-bordered mb-0 text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Buyer</th>
+                                        <th>Event / Ticket</th>
+                                        <th>Seat</th>
+                                        <th>Cost</th>
+                                        <th>Sale</th>
+                                        <th>Payment</th>
+                                        <th>Remark</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($outside_sell_details ?? [] as $sale)
+                                        @php
+                                            $seatParts = array_filter([
+                                                $sale->seat_row ? 'Row ' . $sale->seat_row : null,
+                                                $sale->seat_number !== null && $sale->seat_number !== '' ? 'Seat ' . $sale->seat_number : null,
+                                            ]);
+                                        @endphp
+                                        <tr>
+                                            <td>
+                                                {{ $sale->date ? \Carbon\Carbon::parse($sale->date)->format('d M Y') : ($sale->created_at ? $sale->created_at->format('d M Y') : '-') }}
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">{{ $sale->name ?? '-' }}</div>
+                                                @if ($sale->email)
+                                                    <div class="text-muted tx-12">{{ $sale->email }}</div>
+                                                @endif
+                                                @if ($sale->phone)
+                                                    <div class="text-muted tx-12">{{ $sale->phone }}</div>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">{{ $sale->event_name ?? '-' }}</div>
+                                                <div class="text-muted tx-12">{{ $sale->ticket_name ?? '-' }}</div>
+                                                @if ($sale->seating_type_name)
+                                                    <div class="text-muted tx-12">{{ $sale->seating_type_name }}</div>
+                                                @endif
+                                            </td>
+                                            <td>{{ $seatParts ? implode(' · ', $seatParts) : '-' }}</td>
+                                            <td>{{ $sale->cost_price !== null ? number_format((float) $sale->cost_price, 2) : '-' }}</td>
+                                            <td class="fw-semibold">{{ $sale->sale_price !== null ? number_format((float) $sale->sale_price, 2) : '-' }}</td>
+                                            <td>{{ $sale->payment_mode ?? '-' }}</td>
+                                            <td class="text-wrap" style="min-width:140px;max-width:220px;">{{ $sale->remark ?: '-' }}</td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-1">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-primary-light upload-outside-proof"
+                                                        data-id="{{ $sale->id }}"
+                                                        data-proofs='@json($sale->proof_urls)'
+                                                        title="{{ count($sale->proof_files_list) ? 'Upload / View Proofs' : 'Upload Proof' }}">
+                                                        <i class="fe fe-upload"></i>
+                                                    </button>
+                                                    @if (count($sale->proof_files_list))
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-success-light view-outside-proofs"
+                                                            data-proofs='@json($sale->proof_urls)'
+                                                            title="View Proofs ({{ count($sale->proof_files_list) }})">
+                                                            <i class="fe fe-eye"></i>
+                                                            <span class="ms-1">{{ count($sale->proof_files_list) }}</span>
+                                                        </button>
+                                                    @endif
+                                                    @if ($sale->event_ticket_id)
+                                                        <a href="{{ url('tickets/manage_individual_tickets', $sale->event_ticket_id) }}" class="btn btn-sm btn-info-light" title="View seats">
+                                                            <i class="fas fa-ticket-alt"></i>
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">No outside sold tickets yet</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="upload-outside-proof-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Upload Outside Sell Proofs</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="upload-outside-proof-form" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="outsidesell_id" id="upload-outsidesell-id" value="">
+                    <div class="modal-body">
+                        <div class="mb-3" id="current-proof-wrap" style="display:none;">
+                            <label class="form-label">Existing Proofs</label>
+                            <div id="current-proof-list" class="d-flex flex-column gap-2"></div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Proof Files <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" name="proof_files[]" id="outside-proof-file" accept=".jpg,.jpeg,.png,.pdf,.webp" multiple required>
+                            <div class="form-text">You can select multiple files. Allowed: JPG, PNG, PDF, WEBP (max 5MB each)</div>
+                            <div class="invalid-feedback d-block" id="outside-proof-error"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="upload-outside-proof-submit">
+                            <i class="fe fe-upload me-1"></i> Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="view-outside-proofs-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Outside Sell Proofs</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="view-outside-proofs-list" class="d-flex flex-column gap-2"></div>
+                    <p id="view-outside-proofs-empty" class="text-muted mb-0 d-none">No proofs uploaded.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+jQuery(function ($) {
+    const csrfToken = @json(csrf_token());
+
+    function renderProofLinks($container, proofUrls) {
+        $container.empty();
+        (proofUrls || []).forEach(function (url, index) {
+            $container.append(
+                '<a href="' + url + '" target="_blank" class="btn btn-sm btn-outline-success">' +
+                '<i class="fe fe-eye me-1"></i> Proof ' + (index + 1) +
+                '</a>'
+            );
+        });
+    }
+
+    function parseProofsData(raw) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    $(document).on('click', '.upload-outside-proof', function () {
+        const id = $(this).data('id');
+        const proofUrls = parseProofsData($(this).attr('data-proofs'));
+        $('#upload-outsidesell-id').val(id);
+        $('#outside-proof-file').val('');
+        $('#outside-proof-error').text('');
+        if (proofUrls.length) {
+            $('#current-proof-wrap').show();
+            renderProofLinks($('#current-proof-list'), proofUrls);
+        } else {
+            $('#current-proof-wrap').hide();
+            $('#current-proof-list').empty();
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('upload-outside-proof-modal')).show();
+    });
+
+    $(document).on('click', '.view-outside-proofs', function () {
+        const proofUrls = parseProofsData($(this).attr('data-proofs'));
+        const $list = $('#view-outside-proofs-list');
+        const $empty = $('#view-outside-proofs-empty');
+        if (proofUrls.length) {
+            renderProofLinks($list, proofUrls);
+            $empty.addClass('d-none');
+        } else {
+            $list.empty();
+            $empty.removeClass('d-none');
+        }
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('view-outside-proofs-modal')).show();
+    });
+
+    $('#upload-outside-proof-form').on('submit', function (e) {
+        e.preventDefault();
+        const $submit = $('#upload-outside-proof-submit');
+        const formData = new FormData(this);
+        $('#outside-proof-error').text('');
+        $submit.prop('disabled', true);
+
+        $.ajax({
+            url: @json(route('tickets.outsidesell.upload-proof')),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        }).done(function (response) {
+            if (typeof toastr !== 'undefined') {
+                toastr.success(response.message || 'Proof uploaded successfully.');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('upload-outside-proof-modal')).hide();
+            location.reload();
+        }).fail(function (xhr) {
+            let message = 'Unable to upload proof. Please try again.';
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                const firstKey = Object.keys(xhr.responseJSON.errors)[0];
+                message = xhr.responseJSON.errors[firstKey][0] || message;
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+            $('#outside-proof-error').text(message);
+        }).always(function () {
+            $submit.prop('disabled', false);
+        });
+    });
+});
+</script>
+@endpush

@@ -1,97 +1,126 @@
-<?php $page="events/request event list";?>
+<?php $page = 'events/requestlist'; ?>
 @extends('admin.layout.app')
+
+@section('page_title', 'Requested Events')
+
+@section('breadcrumbs')
+    <li class="breadcrumb-item"><a href="{{ route('admin.home') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="javascript:void(0);">Events</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Requested Events</li>
+@endsection
+
 @section('admin_content')
+
 @php
     use Illuminate\Support\Str;
+
+    $exportTitle = 'Requested Events (' . now()->format('d M Y') . ')';
+    $exportButtons = [
+        [
+            'extend' => 'excel',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4],
+                'stripHtml' => true,
+            ],
+            'title' => $exportTitle,
+        ],
+        [
+            'extend' => 'pdf',
+            'exportOptions' => [
+                'columns' => [0, 1, 2, 3, 4],
+                'stripHtml' => true,
+            ],
+            'title' => $exportTitle,
+            'orientation' => 'landscape',
+            'pageSize' => 'A4',
+        ],
+    ];
 @endphp
-	<!-- Row -->
-    <div class="row row-sm">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"> Request Events</h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="file-datatable"  class="border-top-0 dataTables  table table-bordered text-nowrap key-buttons border-bottom">
-                            <thead>
-                                <tr>
-                                    <th>Sl</th>
-                                    <th class="border-bottom-0">Name</th>
-                                    <th class="border-bottom-0">Email</th>
-                                    <th class="border-bottom-0">Event Details</th>
-                                    <th class="border-bottom-0"> Phone</th>
 
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $no = 1;
-                                @endphp
-                                @foreach ($data as $val)
-                                <tr>
-                                    <td>{{ $no++ }}</td>
+<link href="{{ asset('admin_assets/plugins/datatable/datatables.min.css') }}" rel="stylesheet">
+<link href="{{ asset('admin_assets/plugins/datatable/responsive.dataTables.min.css') }}" rel="stylesheet">
 
-                                    <td>{{ $val->name }}</td>
-                                    <td>{{ $val->email }}</td>
-
-                                    {{-- <td>{{ $val->event_details }}</td> --}}
-
-                                    <td style="max-height: 100px; overflow-x: auto;">
-                                        {{ $val->event_details }}
-                                        {{-- Add a "Read More" link or button if necessary --}}
-                                    </td>
-
-
-
-
-
-
-                                    <td>{{ $val->phone }}</td>
-
-
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div class="d-flex justify-content-center">
-                        {{-- {!! $data->links() !!} --}}
-                        </div>
+<div class="row row-sm">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header pb-0">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h4 class="card-title mg-b-10">Requested Events</h4>
+                        <p class="text-muted tx-12 mb-0">Event requests submitted by users.</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-transparent tx-13">
+                            {{ count($data) }} {{ Str::plural('request', count($data)) }}
+                        </span>
+                        <button type="button" class="btn btn-sm btn-success" id="request-export-excel">
+                            <i class="fe fe-download me-1"></i> Excel
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" id="request-export-pdf">
+                            <i class="fe fe-file-text me-1"></i> PDF
+                        </button>
                     </div>
                 </div>
-
-                {{-- <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="exampleModalCenterTitle">Modal title</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          ...
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                          <button type="button" class="btn btn-primary">Save changes</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div> --}}
-
-
-
-
-
-
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="file-datatable" class="table table-bordered text-nowrap mb-0 dataTables">
+                        <thead>
+                            <tr>
+                                <th>SL</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Event Details</th>
+                                <th>Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($data as $index => $val)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $val->name ?? '-' }}</td>
+                                    <td>{{ $val->email ?? '-' }}</td>
+                                    <td class="text-wrap" style="min-width:220px;max-width:420px;">{{ $val->event_details ?? '-' }}</td>
+                                    <td>{{ $val->phone ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No requested events found</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-    <script src="admin_assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="admin_assets/js/main.js"></script>
-    <!-- End Row -->
+</div>
 
-
-@include('datatable.datatable_js')
 @endsection
+
+@push('scripts')
+@php
+    $datatableJqueryLoaded = true;
+    $datatableOptions = [
+        'language' => [
+            'search' => 'Search requests:',
+            'searchPlaceholder' => 'Search...',
+            'lengthMenu' => 'Show _MENU_ requests',
+            'info' => 'Showing _START_ to _END_ of _TOTAL_ requests',
+            'infoEmpty' => 'No requests found',
+            'infoFiltered' => '(filtered from _MAX_ total requests)',
+            'zeroRecords' => 'No matching requests found',
+        ],
+        'columnDefs' => [
+            ['orderable' => false, 'targets' => []],
+            ['searchable' => false, 'targets' => [0]],
+        ],
+    ];
+@endphp
+@include('datatable.datatable_js')
+@include('admin.partials.datatable_export_scripts', [
+    'exportButtons' => $exportButtons,
+    'exportExcelId' => 'request-export-excel',
+    'exportPdfId' => 'request-export-pdf',
+])
+@endpush

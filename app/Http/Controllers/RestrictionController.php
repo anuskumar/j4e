@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RestrictionModel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class RestrictionController extends Controller
@@ -37,6 +38,46 @@ class RestrictionController extends Controller
         ]);
 
         return redirect('ticket_restrictions/list')->with('success', 'Ticket restriction created successfully.');
+    }
+
+    public function quickStore(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'restrictions' => 'required|string|max:255',
+        ]);
+
+        $name = trim($validated['restrictions']);
+
+        $existing = RestrictionModel::whereRaw('LOWER(restrictions) = ?', [mb_strtolower($name)])->first();
+        if ($existing) {
+            if (!(int) $existing->is_active) {
+                $existing->is_active = 1;
+                $existing->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Restriction already exists and was selected.',
+                'data' => [
+                    'id' => $existing->id,
+                    'text' => $existing->restrictions,
+                ],
+            ]);
+        }
+
+        $restriction = RestrictionModel::create([
+            'restrictions' => $name,
+            'is_active' => 1,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Restriction created successfully.',
+            'data' => [
+                'id' => $restriction->id,
+                'text' => $restriction->restrictions,
+            ],
+        ]);
     }
 
     public function show($id)

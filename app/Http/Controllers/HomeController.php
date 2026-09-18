@@ -62,6 +62,26 @@ class HomeController extends Controller
         $user_count=User::where('user_type','customer')->count();
         $outside_hold_count=TicketsGenerated::where('under_purchase_hold','1')->count();
         $outside_sell_count=OutsideSellModel::count();
+        $outside_sell_total = (float) OutsideSellModel::sum(DB::raw('COALESCE(sale_price, 0)'));
+        $outside_sell_cost_total = (float) OutsideSellModel::sum(DB::raw('COALESCE(cost_price, 0)'));
+        $outside_sell_details = OutsideSellModel::query()
+            ->leftJoin('event_ticket_tickets', 'event_ticket_tickets.id', '=', 'outsidesell.event_ticket_tickets_id')
+            ->leftJoin('event_tickets', 'event_tickets.id', '=', 'event_ticket_tickets.event_tickets')
+            ->leftJoin('event', 'event.id', '=', 'event_tickets.event')
+            ->leftJoin('venue_seating', 'venue_seating.id', '=', 'event_tickets.venue_seating')
+            ->select(
+                'outsidesell.*',
+                'outsidesell.id as id',
+                'event.event_name',
+                'event_tickets.ticket_name',
+                'event_tickets.id as event_ticket_id',
+                'venue_seating.seating_type_name',
+                'event_ticket_tickets.seat_row',
+                'event_ticket_tickets.seat_number'
+            )
+            ->latest('outsidesell.created_at')
+            ->limit(15)
+            ->get();
         $sold_ticket_sum=TicketsGenerated::where('is_sold','1')->sum('ticket_amount');
         $current_date = now()->toDateString();
         $upcoming_events = Events::leftjoin('event_type','event_type.id','event.event_type')
@@ -91,6 +111,9 @@ class HomeController extends Controller
             'user_count',
             'outside_hold_count',
             'outside_sell_count',
+            'outside_sell_total',
+            'outside_sell_cost_total',
+            'outside_sell_details',
             'sold_ticket_sum',
             'upcoming_events'
         ));

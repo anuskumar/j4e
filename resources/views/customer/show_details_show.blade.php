@@ -971,8 +971,7 @@
                             data-availability="{{ $item['availability'] }}"
                             data-zone="{{ $dat->seating_type_name }}"
                             data-price="{{ $ticketPrice }}"
-                            data-timing-id="{{ $item['timing_id'] ?? '' }}"
-                            data-split-type="{{ $dat->split_type }}">
+                            data-timing-id="{{ $item['timing_id'] ?? '' }}">
                             <div class="ticket-card__top">
                                 <div>
                                     <h3 class="ticket-card__section">{{ $item['section_label'] }}</h3>
@@ -993,9 +992,6 @@
                                 @if ($dat->ticket_type_name)
                                     <span class="ticket-tag"><i class="fas fa-ticket-alt"></i> {{ $dat->ticket_type_name }}</span>
                                 @endif
-                                @if (!empty($dat->split_type_name))
-                                    <span class="ticket-tag"><i class="fas fa-layer-group"></i> {{ $dat->split_type_name }}</span>
-                                @endif
                                 @if ($item['has_eticket'])
                                     <span class="ticket-tag"><i class="fas fa-bolt"></i> Instant download</span>
                                 @endif
@@ -1009,19 +1005,6 @@
 
                             <div class="ticket-card__footer">
                                 <div class="ticket-card__notes">
-                                    <p class="ticket-card__note-line">
-                                        <i class="far fa-calendar-alt"></i>
-                                        {{ isset($item['event_date']) ? date('D, d M Y', strtotime($item['event_date'])) : '-' }}
-                                        @if (!empty($item['from_time']))
-                                            · {{ date('g:i A', strtotime($item['from_time'])) }}
-                                            @if (!empty($item['to_time']))
-                                                – {{ date('g:i A', strtotime($item['to_time'])) }}
-                                            @endif
-                                        @endif
-                                    </p>
-                                    <p class="ticket-card__note-line">
-                                        <i class="fas fa-map-marker-alt"></i> {{ $dat->seating_type_name ?? 'Venue seating' }}
-                                    </p>
                                     @if ($item['availability'] <= 3)
                                         <p class="ticket-card__note-line" style="color:#9d174d;font-weight:600;">
                                             <i class="fas fa-fire"></i>

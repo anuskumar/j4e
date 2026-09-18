@@ -368,7 +368,8 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::get('manage_tickets/{id}', [TicketController::class, 'manage_tickets']);
     Route::get('check_availability', [TicketController::class, 'check_availability']);
     Route::get('approve_tickets', [TicketController::class, 'approve_tickets']);
-    Route::get('reject_tickets', [TicketController::class, 'reject_tickets']);
+    Route::post('reject_tickets', [TicketController::class, 'reject_tickets']);
+    Route::get('reject_tickets', [TicketController::class, 'reject_tickets']); // legacy
     Route::post('store_ticket', [TicketController::class, 'store']);
     Route::get('ticket_view/{id}', [TicketController::class, 'show']);
     Route::delete('delete_main_ticket/{id}', [TicketController::class, 'delete_main_ticket']);
@@ -378,6 +379,7 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::post('update', [TicketController::class, 'update']);
     Route::post('update-hold-status', [TicketController::class, 'updateHoldStatus']);
     Route::post('outsidesell.store', [TicketController::class, 'outsidesell'])->name('tickets.outsidesell.store');
+    Route::post('outsidesell.upload-proof', [TicketController::class, 'uploadOutsideSellProof'])->name('tickets.outsidesell.upload-proof');
     Route::get('get-outsidesell_data/{outsidesell_id}', [TicketController::class, 'get_outsidesell_data']);
     Route::post('update-ticket-status/{id}', [TicketController::class, 'updateStatus']);
     Route::post('update-ticket-sale-status/{id}', [TicketController::class, 'updatesaleStatus']);
@@ -485,6 +487,7 @@ Route::group(['prefix' => 'ticket_restrictions', 'middleware' => 'auth'], functi
     Route::get('/', [RestrictionController::class, 'index']);
     Route::get('create', [RestrictionController::class, 'create']);
     Route::post('store', [RestrictionController::class, 'store']);
+    Route::post('quick-create', [RestrictionController::class, 'quickStore'])->name('ticket_restrictions.quick-create');
     Route::get('list', [RestrictionController::class, 'index'])->name('ticket_restrictions.list');
     Route::get('view/{id}', [RestrictionController::class, 'show']);
     Route::get('edit/{id}', [RestrictionController::class, 'edit']);

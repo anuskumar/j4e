@@ -344,8 +344,12 @@
                                     </div> --}}
                                     <div class="clinic-details">
                                         <p class="doc-location"><i class="fas fa-map-marker-alt"></i>
-                                            {{ Str::ucfirst($data->venue_name) }},{{ Str::ucfirst($data->location_name) }}
-                                        ,{{ Str::ucfirst($data->country_name) }}</p>
+                                            {{ collect([
+                                                Str::ucfirst($data->venue_name),
+                                                !empty($data->city_name) ? Str::ucfirst($data->city_name) : null,
+                                                !empty($data->country_name) ? Str::ucfirst($data->country_name) : null,
+                                            ])->filter()->implode(', ') }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -371,21 +375,19 @@
                                         <li>Time <span>{{ date('H:i A',strtotime($data->event_time)) }}</span></li>
                                     </ul>
                                     <ul class="booking-fee">
-                                        <li>Ticket Name <span>{{ Str::ucfirst($data->ticket_name) }}</span></li>
                                         @if (!empty($data->seating_type_name))
                                             <li>Zone <span>{{ $data->seating_type_name }}</span></li>
                                         @endif
-                                        @if (!empty($data->row))
+                                        @if (!empty($selectedRowLabel))
+                                            <li>Row <span>{{ $selectedRowLabel }}</span></li>
+                                        @elseif (!empty($data->row))
                                             <li>Row <span>{{ $data->row }}</span></li>
                                         @endif
-                                        @if (!empty($data->seat_from) && !empty($data->seat_to))
-                                            <li>Seats <span>{{ $data->seat_from }} – {{ $data->seat_to }}</span></li>
+                                        @if (!empty($selectedSeatsLabel))
+                                            <li>Seats <span>{{ $selectedSeatsLabel }}</span></li>
                                         @endif
                                         @if (!empty($data->ticket_type_name))
                                             <li>Ticket Type <span>{{ $data->ticket_type_name }}</span></li>
-                                        @endif
-                                        @if (!empty($data->split_type_name))
-                                            <li>Split Type <span>{{ $data->split_type_name }}</span></li>
                                         @endif
                                         <li>Number of Tickets <span id="selected-qty-display">{{ $initial_ticket_count }}</span></li>
                                     </ul>
@@ -527,8 +529,8 @@
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Address Line 1 <span class="text-danger">*</span></label>
-                                               <textarea class="form-control @error('shipping_address1') is-invalid @enderror" name="shipping_address1" required>{{ old('shipping_address1', Auth::user()->address) }}</textarea>
+                                               <label>Address Line 1</label>
+                                               <textarea class="form-control @error('shipping_address1') is-invalid @enderror" name="shipping_address1">{{ old('shipping_address1', Auth::user()->address) }}</textarea>
                                                @error('shipping_address1')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -545,8 +547,8 @@
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Country <span class="text-danger">*</span></label>
-                                              <select class="form-control @error('shipping_country') is-invalid @enderror" name="shipping_country" id="shipping_country" required>
+                                               <label>Country</label>
+                                              <select class="form-control @error('shipping_country') is-invalid @enderror" name="shipping_country" id="shipping_country">
                                                <option value="">Select Country</option>
                                                @foreach ($countries as $country )
                                                <option value="{{ $country->id }}" {{ (string) old('shipping_country', Auth::user()->shipping_country) === (string) $country->id ? 'selected' : '' }}>{{ $country->country_name }}</option>
@@ -559,8 +561,8 @@
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>City <span class="text-danger">*</span></label>
-                                               <input class="form-control @error('shipping_city') is-invalid @enderror" type="text" name="shipping_city" value="{{ old('shipping_city', Auth::user()->shipping_city) }}" required>
+                                               <label>City</label>
+                                               <input class="form-control @error('shipping_city') is-invalid @enderror" type="text" name="shipping_city" value="{{ old('shipping_city', Auth::user()->shipping_city) }}">
                                                @error('shipping_city')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -568,8 +570,8 @@
                                        </div>
                                        <div class="col-md-6 col-sm-12">
                                            <div class="form-group card-label">
-                                               <label>Pincode <span class="text-danger">*</span></label>
-                                               <input class="form-control @error('shipping_pincode') is-invalid @enderror" type="text" name="shipping_pincode" value="{{ old('shipping_pincode', Auth::user()->shipping_pincode) }}" required>
+                                               <label>Pincode</label>
+                                               <input class="form-control @error('shipping_pincode') is-invalid @enderror" type="text" name="shipping_pincode" value="{{ old('shipping_pincode', Auth::user()->shipping_pincode) }}">
                                                @error('shipping_pincode')
                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                @enderror
@@ -584,10 +586,10 @@
                                 <!-- /Personal Information -->
 
                                 <div class="info-widget ticket-pricing-summary">
-                                    <h4 class="card-title">Ticket Pricing</h4>
+                                    <h4 class="card-title">Price Details</h4>
                                     <ul class="ticket-pricing-list">
                                         <li>
-                                            <span>Single Ticket Amount</span>
+                                            <span>Per Ticket</span>
                                             <span id="ticket-amount-display">{{ number_format($ticket_price_form, 2) . ' ' . $data->short_name }} each</span>
                                         </li>
                                         <li>
@@ -967,38 +969,6 @@
                 isValid = false;
             } else {
                 $('input[name="shipping_name"]').removeClass('is-invalid');
-            }
-            
-            // Validate shipping address
-            if ($('textarea[name="shipping_address1"]').val().trim() === '') {
-                $('textarea[name="shipping_address1"]').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('textarea[name="shipping_address1"]').removeClass('is-invalid');
-            }
-            
-            // Validate country
-            if ($('select[name="shipping_country"]').val() === '' || $('select[name="shipping_country"]').val() === null) {
-                $('select[name="shipping_country"]').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('select[name="shipping_country"]').removeClass('is-invalid');
-            }
-            
-            // Validate city
-            if ($('input[name="shipping_city"]').val().trim() === '') {
-                $('input[name="shipping_city"]').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('input[name="shipping_city"]').removeClass('is-invalid');
-            }
-            
-            // Validate pincode
-            if ($('input[name="shipping_pincode"]').val().trim() === '') {
-                $('input[name="shipping_pincode"]').addClass('is-invalid');
-                isValid = false;
-            } else {
-                $('input[name="shipping_pincode"]').removeClass('is-invalid');
             }
             
             if (!isValid) {
