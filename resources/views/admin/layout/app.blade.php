@@ -668,7 +668,7 @@
 
                 var moduleRoots = [
                     'eventtype', 'eventtags', 'currency', 'venue', 'slide',
-                    'artistfield', 'venuetype', 'location', 'city',
+                    'artistfield', 'venuetype', 'city',
                     'ticket_restrictions', 'artist'
                 ];
 

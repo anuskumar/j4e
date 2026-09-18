@@ -49,6 +49,7 @@ class EventsController extends Controller
                 'venue.id as venue_id',
                 'venue.name as venue_name'
             )
+            ->orderBy('event.priority')
             ->orderByDesc('event.id');
 
         if ($request->filled('event_type')) {
@@ -120,10 +121,10 @@ class EventsController extends Controller
      leftjoin('location','location.id','venue.location')
     ->leftjoin('countries','countries.id','location.country')
     ->leftjoin('cities','cities.id','location.city')
-    ->select('venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+    ->select('venue.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name','venue.image as venue_image')
     ->get();
     $artists = ArtistModel::leftjoin('artist_field','artist_field.id','artist.field')->select('*','artist.id as id')->get();
-    $eventTags = EventTags::where('is_active',1)->get();
+    $eventTags = EventTags::where('is_active',1)->ordered()->get();
     $ticketTypes = TicketType::where('is_active', 1)->get();
     $venueTypes = VenueType::orderBy('venue_type_name')->get();
     $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
@@ -132,6 +133,7 @@ class EventsController extends Controller
         ->orderBy('location_name')
         ->get();
     $artistFields = ArtistField::orderBy('field_name')->get();
+    $nextPriority = ((int) Events::max('priority')) + 1;
 
     return view('admin.events.create', compact(
         'event_type',
@@ -141,7 +143,8 @@ class EventsController extends Controller
         'ticketTypes',
         'venueTypes',
         'locations',
-        'artistFields'
+        'artistFields',
+        'nextPriority'
     ));
 
      }
@@ -199,6 +202,7 @@ class EventsController extends Controller
             'event_tag' => 'required',
             'event_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'temp_event_image' => 'nullable|string',
+            'venue_map' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
             'priority' => 'required|integer|min:0|max:9999',
@@ -256,12 +260,18 @@ class EventsController extends Controller
         $event->event_tag = $request->event_tag;
         $event->seller_fee_percent = $request->seller_fee_percent;
         $event->customer_fee_percent = $request->customer_fee_percent;
-        $event->priority = $request->priority ?? 0;
+        $event->priority = $request->filled('priority')
+            ? (int) $request->priority
+            : (((int) Events::max('priority')) + 1);
         $event->event_to_date = $request->event_to_date;
         $event->event_desc = $request->event_desc;
         $event->event_added_by =Auth::user()->id;
         $event->event_image = $this->resolveEventImageForStore($request, $existingTempImage);
         $event->event_is_active = $request->event_is_active;
+
+        if ($request->hasFile('venue_map')) {
+            $event->venue_map = $this->storeVenueMapFile($request->file('venue_map'));
+        }
 
         $event->save();
 
@@ -285,10 +295,10 @@ class EventsController extends Controller
         $venue = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
             ->leftjoin('cities', 'cities.id', 'location.city')
-            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name')
+            ->select('venue.id as id', 'country_name', 'cities.name as city_name', 'location_name', 'venue.name as venue_name', 'venue.image as venue_image')
             ->get();
         $artists = ArtistModel::leftjoin('artist_field', 'artist_field.id', 'artist.field')->select('*', 'artist.id as id')->get();
-        $eventTags = EventTags::where('is_active', 1)->get();
+        $eventTags = EventTags::where('is_active', 1)->ordered()->get();
         $ticketTypes = TicketType::where('is_active', 1)->get();
         $venueTypes = VenueType::orderBy('venue_type_name')->get();
         $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
@@ -326,6 +336,7 @@ class EventsController extends Controller
                 'mimes:jpeg,png,jpg,webp',
                 'max:5120',
             ],
+            'venue_map' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'seller_fee_percent' => 'required|numeric|min:0|max:100',
             'customer_fee_percent' => 'required|numeric|min:0|max:100',
             'priority' => 'required|integer|min:0|max:9999',
@@ -382,13 +393,23 @@ class EventsController extends Controller
         $data->event_tag = $request->event_tag;
         $data->seller_fee_percent = $request->seller_fee_percent;
         $data->customer_fee_percent = $request->customer_fee_percent;
-        $data->priority = $request->priority ?? 0;
+        $data->priority = $request->filled('priority')
+            ? (int) $request->priority
+            : ($data->priority ?? 0);
         $data->event_is_active = $request->event_is_active;
 
         if($request->hasFile('event_image')){
             $imageName = time().'.'.$request->event_image->extension();
             $request->event_image->move(storage_path('uploads/events'), $imageName);
             $data->event_image =  $imageName;
+        }
+
+        if ($request->hasFile('venue_map')) {
+            $this->deleteVenueMapFile($data->venue_map);
+            $data->venue_map = $this->storeVenueMapFile($request->file('venue_map'));
+        } elseif ($request->boolean('remove_venue_map')) {
+            $this->deleteVenueMapFile($data->venue_map);
+            $data->venue_map = null;
         }
 
         $data->save();
@@ -690,5 +711,30 @@ class EventsController extends Controller
         session()->forget('temp_event_image');
 
         return $imageName;
+    }
+
+    private function storeVenueMapFile($file): string
+    {
+        $uploadDir = storage_path('uploads/venue_maps');
+        if (! is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $imageName = 'map_' . time() . '_' . Str::random(6) . '.' . $file->extension();
+        $file->move($uploadDir, $imageName);
+
+        return $imageName;
+    }
+
+    private function deleteVenueMapFile(?string $filename): void
+    {
+        if (! $filename) {
+            return;
+        }
+
+        $path = storage_path('uploads/venue_maps/' . $filename);
+        if (is_file($path)) {
+            @unlink($path);
+        }
     }
 }

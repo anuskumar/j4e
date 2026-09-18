@@ -76,7 +76,7 @@ class WelcomeController extends Controller
         if($request->get('tag')){
             $event_tag = EventTags::find($request->get('tag'));
         }else{
-            $event_tag = EventTags::first();
+            $event_tag = EventTags::ordered()->first();
         }
 
         // Build the base query
@@ -115,6 +115,7 @@ class WelcomeController extends Controller
         $data = $query->select(
                 '*',
                 'event.id as id',
+                'event.priority as priority',
                 'location.id as location_id',
                 'cities.id as city_id',
                 'country_name',
@@ -359,12 +360,14 @@ class WelcomeController extends Controller
                 'event_tags.id',
                 'event_tags.tag_name',
                 'event_tags.tag_image',
+                'event_tags.sort_order',
                 DB::raw('MAX(event.event_image) as event_image')
             )
             ->join('event', 'event.event_tag', '=', 'event_tags.id')
             ->where('event_tags.is_active', 1)
             ->whereNull('event.deleted_at')
-            ->groupBy('event_tags.id', 'event_tags.tag_name', 'event_tags.tag_image')
+            ->groupBy('event_tags.id', 'event_tags.tag_name', 'event_tags.tag_image', 'event_tags.sort_order')
+            ->orderBy('event_tags.sort_order')
             ->orderBy('event_tags.tag_name');
     }
 

@@ -501,6 +501,7 @@ Route::group(['prefix' => 'eventtags'], function () {
     Route::get('view/{id}', [TagController::class, 'show']);
     Route::get('edit/{id}', [TagController::class, 'edit']);
     Route::post('update', [TagController::class, 'update']);
+    Route::post('reorder', [TagController::class, 'reorder']);
     Route::delete('destroy/{id}', [TagController::class, 'delete']);
 });
 

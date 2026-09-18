@@ -189,17 +189,16 @@ class VenueController extends Controller
         $validated = $request->validate([
             'venue' => 'required',
             'seating_type_name' => 'required',
-            'number_of_seats' => 'required',
-            'seat_serial_prefix' => 'required',
+            'number_of_seats' => 'nullable|integer|min:0',
         ]);
 
         $data = new VenueSeating();
         $data->venue = $request->venue;
         $data->seating_type_name = $request->seating_type_name;
-        $data->number_of_seats = $request->number_of_seats;
-        $data->seat_serial_prefix = $request->seat_serial_prefix;
-        $data->seat_serial_start = $request->seat_serial_start;
-        $data->seat_serial_end = $request->seat_serial_end;
+        $data->number_of_seats = $request->filled('number_of_seats') ? (int) $request->number_of_seats : null;
+        $data->seat_serial_prefix = null;
+        $data->seat_serial_start = null;
+        $data->seat_serial_end = null;
         $data->seating_type_desc = $request->seating_type_desc;
         $data->is_active = $request->is_active;
 
@@ -225,17 +224,17 @@ class VenueController extends Controller
     public function update_Seating(Request $request)
     {
         $validated = $request->validate([
-            'number_of_seats' => 'required',
-            'seat_serial_prefix' => 'required',
+            'seating_type_name' => 'required',
+            'number_of_seats' => 'nullable|integer|min:0',
         ]);
 
         $data = VenueSeating::find($request->id);
         $data->id = $request->id;
         $data->seating_type_name = $request->seating_type_name;
-        $data->number_of_seats = $request->number_of_seats;
-        $data->seat_serial_prefix = $request->seat_serial_prefix;
-        $data->seat_serial_start = $request->seat_serial_start;
-        $data->seat_serial_end = $request->seat_serial_end;
+        $data->number_of_seats = $request->filled('number_of_seats') ? (int) $request->number_of_seats : null;
+        $data->seat_serial_prefix = null;
+        $data->seat_serial_start = null;
+        $data->seat_serial_end = null;
         $data->seating_type_desc = $request->seating_type_desc;
         $data->is_active = $request->is_active;
 

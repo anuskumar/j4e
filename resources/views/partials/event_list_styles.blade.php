@@ -39,7 +39,7 @@
 
 .event-list-card {
     display: grid;
-    grid-template-columns: 88px 1fr auto;
+    grid-template-columns: 120px 88px 1fr auto;
     gap: 20px;
     align-items: center;
     padding: 20px 24px;
@@ -57,6 +57,22 @@
     border-color: rgba(103, 29, 207, 0.25);
     text-decoration: none;
     color: inherit;
+}
+
+.event-list-card__media {
+    width: 120px;
+    height: 88px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f3f0ff;
+    flex-shrink: 0;
+}
+
+.event-list-card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .event-list-card__date {
@@ -198,20 +214,36 @@
     }
 
     .event-list-card {
-        grid-template-columns: 72px 1fr;
-        grid-template-rows: auto auto;
-        gap: 14px;
+        grid-template-columns: 72px 64px 1fr;
+        grid-template-areas:
+            "media date body"
+            "media date cta";
+        gap: 12px 14px;
         padding: 16px;
+        align-items: start;
+    }
+
+    .event-list-card__media {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        grid-area: media;
+        align-self: center;
     }
 
     .event-list-card__date {
-        min-width: 72px;
+        min-width: 64px;
         min-height: 72px;
-        grid-row: span 2;
+        grid-area: date;
+        align-self: center;
     }
 
     .event-list-card__date-day {
         font-size: 18px;
+    }
+
+    .event-list-card__body {
+        grid-area: body;
     }
 
     .event-list-card__title {
@@ -224,7 +256,8 @@
     }
 
     .event-list-card__cta {
-        grid-column: 2;
+        grid-area: cta;
+        width: 100%;
     }
 
     .event-list-card__btn {

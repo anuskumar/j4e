@@ -120,6 +120,14 @@
                             data-location-id="{{ $val->city_id ?? '' }}"
                             data-timing-id="{{ $timing->id ?? '' }}"
                         >
+                            <div class="event-list-card__media">
+                                <img
+                                    src="{{ !empty($val->event_image) ? asset('storage/uploads/events/' . $val->event_image) : asset('assets/img/events/event-01.jpg') }}"
+                                    alt="{{ $val->event_name }}"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
+                            </div>
+
                             <div class="event-list-card__date">
                                 <span class="event-list-card__date-day">{{ $eventDate ? date('d', strtotime($eventDate)) : '--' }}</span>
                                 <span class="event-list-card__date-month">{{ $eventDate ? date('M', strtotime($eventDate)) : '' }}</span>

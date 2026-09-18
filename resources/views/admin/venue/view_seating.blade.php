@@ -52,22 +52,13 @@ $seatingImage = $data->seating_image
                             <div>{{ $data->seating_type_name }}</div>
                         </div>
                     </div>
-                    <div class="media">
+                    <div class="media mb-0">
                         <div class="media-icon bg-success-transparent text-success">
                             <i class="fe fe-users"></i>
                         </div>
                         <div class="media-body">
                             <span>Total Seats</span>
-                            <div>{{ $data->number_of_seats }}</div>
-                        </div>
-                    </div>
-                    <div class="media mb-0">
-                        <div class="media-icon bg-info-transparent text-info">
-                            <i class="fe fe-hash"></i>
-                        </div>
-                        <div class="media-body">
-                            <span>Serial Range</span>
-                            <div>{{ $data->seat_serial_prefix }}{{ $data->seat_serial_start }} - {{ $data->seat_serial_prefix }}{{ $data->seat_serial_end }}</div>
+                            <div>{{ $data->number_of_seats !== null && $data->number_of_seats !== '' ? $data->number_of_seats : '-' }}</div>
                         </div>
                     </div>
                 </div>
@@ -88,31 +79,11 @@ $seatingImage = $data->seating_image
                     </div>
                 </div>
 
-                <div class="row g-3 form-section-spacer">
-                    <div class="col-md-6">
-                        <label class="form-field-label">Total Seats</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fe fe-users"></i></span>
-                            <input type="text" class="form-control view-field" value="{{ $data->number_of_seats }}" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-field-label">Seat Serial Prefix</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fe fe-hash"></i></span>
-                            <input type="text" class="form-control view-field" value="{{ $data->seat_serial_prefix }}" readonly>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-3 form-section-spacer">
-                    <div class="col-md-6">
-                        <label class="form-field-label">Serial Start</label>
-                        <input type="text" class="form-control view-field" value="{{ $data->seat_serial_start }}" readonly>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-field-label">Serial End</label>
-                        <input type="text" class="form-control view-field" value="{{ $data->seat_serial_end }}" readonly>
+                <div class="form-group form-section-spacer">
+                    <label class="form-field-label">Total Seats</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fe fe-users"></i></span>
+                        <input type="text" class="form-control view-field" value="{{ $data->number_of_seats !== null && $data->number_of_seats !== '' ? $data->number_of_seats : '-' }}" readonly>
                     </div>
                 </div>
 

@@ -7,9 +7,11 @@
     $eventImageUrl = !empty($event_datas->event_image)
         ? asset('storage/uploads/events/' . $event_datas->event_image)
         : $defaultEventImg;
-    $venueImageUrl = !empty($event_datas->venue_image)
-        ? asset('storage/uploads/venue/' . $event_datas->venue_image)
-        : $defaultVenueImg;
+    $venueImageUrl = !empty($event_datas->venue_map)
+        ? asset('storage/uploads/venue_maps/' . $event_datas->venue_map)
+        : (!empty($event_datas->venue_image)
+            ? asset('storage/uploads/venue/' . $event_datas->venue_image)
+            : $defaultVenueImg);
     $currencyLabel = $allTickets[0]['ticket']->short_name ?? '';
     $selectedTimingId = $selectedTimingId ?? null;
     $headerTiming = $event_timing ?? null;
@@ -95,6 +97,11 @@
         border: 1px solid #e8ebf3;
     }
 
+    .event-header-bar__content {
+        flex: 1;
+        min-width: 0;
+    }
+
     .event-header-bar__title {
         font-size: 22px;
         font-weight: 700;
@@ -113,6 +120,159 @@
         font-size: 13px;
         color: #6b7280;
         margin: 2px 0 0;
+    }
+
+    .event-photos-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e8d0ea;
+        background: #faf5fb;
+        color: #7e0982;
+        border-radius: 999px;
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .event-photos-btn:hover,
+    .event-photos-btn:focus {
+        background: #7e0982;
+        border-color: #7e0982;
+        color: #fff;
+        text-decoration: none;
+        box-shadow: 0 6px 16px rgba(126, 9, 130, 0.22);
+        outline: none;
+    }
+
+    .event-photos-btn__count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: rgba(126, 9, 130, 0.12);
+        color: inherit;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .event-photos-btn:hover .event-photos-btn__count,
+    .event-photos-btn:focus .event-photos-btn__count {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .event-photos-modal .modal-dialog {
+        max-width: 860px;
+    }
+
+    .event-photos-modal .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    }
+
+    .event-photos-modal .modal-header {
+        border-bottom: 1px solid #eef1f7;
+        padding: 16px 20px;
+        background: #fff;
+    }
+
+    .event-photos-modal .modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .event-photos-modal .modal-title i {
+        color: #7e0982;
+    }
+
+    .event-photos-modal .modal-body {
+        padding: 16px;
+        background: #f8f9fc;
+        max-height: min(72vh, 640px);
+        overflow-y: auto;
+    }
+
+    .event-photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .event-photos-grid__item a {
+        display: block;
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #111827;
+        aspect-ratio: 4 / 3;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .event-photos-grid__item a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    }
+
+    .event-photos-grid__item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .event-photos-grid__item a::after {
+        content: '\f00e';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.35);
+        color: #fff;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 18px;
+    }
+
+    .event-photos-grid__item a:hover::after {
+        opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+        .event-header-bar {
+            flex-wrap: wrap;
+        }
+
+        .event-photos-btn {
+            width: 100%;
+            justify-content: center;
+            margin-top: 4px;
+        }
+
+        .event-photos-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
     }
 
     .filter-bar {
@@ -627,10 +787,13 @@
     <input type="hidden" id="event-id" value="{{ $id }}">
 
     <div class="ticket-picker-page__top">
+    @php
+        $galleryImages = ($event_images ?? collect())->filter(fn ($img) => !empty($img->image))->values();
+    @endphp
     <div class="event-header-bar">
         <img src="{{ $eventImageUrl }}" alt="{{ $event_datas->event_name }}" class="event-header-bar__thumb"
             onerror="this.onerror=null;this.src='{{ $defaultEventImg }}';">
-        <div>
+        <div class="event-header-bar__content">
             <h1 class="event-header-bar__title">{{ Str::ucfirst($event_datas->event_name ?? '') }}</h1>
             <p class="event-header-bar__meta">
                 @if ($eventDateLabel)
@@ -651,6 +814,16 @@
                 <p class="event-header-bar__venue mb-0">{{ $event_datas->tag_name }}</p>
             @endif
         </div>
+        @if ($galleryImages->count())
+            <button type="button"
+                class="event-photos-btn"
+                data-toggle="modal"
+                data-target="#eventPhotosModal">
+                <i class="far fa-images"></i>
+                See event photos
+                <span class="event-photos-btn__count">{{ $galleryImages->count() }}</span>
+            </button>
+        @endif
     </div>
 
     <div class="filter-bar">
@@ -881,7 +1054,44 @@
             </div>
         </div>
     </div>
+
 </div>
+
+@if (($galleryImages ?? collect())->count())
+<div class="modal fade event-photos-modal" id="eventPhotosModal" tabindex="-1" role="dialog" aria-labelledby="eventPhotosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventPhotosModalLabel">
+                    <i class="far fa-images"></i>
+                    Event Photos
+                    <span class="event-photos-btn__count ml-1">{{ $galleryImages->count() }}</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="event-photos-grid">
+                    @foreach ($galleryImages as $index => $img)
+                        <li class="event-photos-grid__item">
+                            <a href="{{ asset('storage/uploads/events/' . $img->image) }}"
+                                data-fancybox="event-photos"
+                                data-caption="{{ ($event_datas->event_name ?? 'Event photo') . ' (' . ($index + 1) . '/' . $galleryImages->count() . ')' }}">
+                                <img
+                                    src="{{ asset('storage/uploads/events/' . $img->image) }}"
+                                    alt="{{ ($event_datas->event_name ?? 'Event') . ' photo ' . ($index + 1) }}"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

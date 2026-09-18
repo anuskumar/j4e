@@ -730,6 +730,7 @@ class FrontendController extends Controller
                                     'event.id as id',
                                     'venue.name as venue_name',
                                     'event.id as event_id',
+                                    'event.venue_map as venue_map',
                                     'venue.image as venue_image',
                                     'cities.name as city_name',
                                     'countries.country_name as country_name',
@@ -738,7 +739,10 @@ class FrontendController extends Controller
 
             // $event_tickets = TicketsGenerated::where()
 
-            $event_images = EventImages::where('event',$id)->get();
+            $event_images = EventImages::where('event', $id)
+                ->where('is_active', 1)
+                ->orderBy('id', 'desc')
+                ->get();
 
             $event_reviews = EventReviews::where('event_id',$id)->get();
             $event_reviews_stars = EventReviews::where('event_id',$id)->sum('number_of_stars');

@@ -19,7 +19,7 @@ class Events extends Model
 
     public function scopeCustomerDisplayOrder($query)
     {
-        return $query->orderByDesc('event.priority')->orderBy('event.event_from_date');
+        return $query->orderBy('event.priority')->orderBy('event.event_from_date')->orderBy('event.id');
     }
 
     public function venue()

@@ -46,22 +46,13 @@
                             <div id="preview-name">Not set yet</div>
                         </div>
                     </div>
-                    <div class="media">
+                    <div class="media mb-0">
                         <div class="media-icon bg-success-transparent text-success">
                             <i class="fe fe-users"></i>
                         </div>
                         <div class="media-body">
                             <span>Total Seats</span>
-                            <div id="preview-seats">Not set yet</div>
-                        </div>
-                    </div>
-                    <div class="media mb-0">
-                        <div class="media-icon bg-info-transparent text-info">
-                            <i class="fe fe-hash"></i>
-                        </div>
-                        <div class="media-body">
-                            <span>Serial Range</span>
-                            <div id="preview-serial">Not set yet</div>
+                            <div id="preview-seats">Optional</div>
                         </div>
                     </div>
                 </div>
@@ -107,71 +98,22 @@
                         @enderror
                     </div>
 
-                    <div class="row g-3 form-section-spacer">
-                        <div class="col-md-6">
-                            <label class="form-field-label" for="number_of_seats">Total Seats <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fe fe-users"></i></span>
-                                <input type="number"
-                                    min="1"
-                                    class="form-control @error('number_of_seats') is-invalid @enderror"
-                                    name="number_of_seats"
-                                    id="number_of_seats"
-                                    placeholder="Enter total seats"
-                                    value="{{ old('number_of_seats') }}"
-                                    required>
-                            </div>
-                            @error('number_of_seats')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-field-label" for="seat_serial_prefix">Seat Serial Prefix <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fe fe-hash"></i></span>
-                                <input type="text"
-                                    class="form-control @error('seat_serial_prefix') is-invalid @enderror"
-                                    name="seat_serial_prefix"
-                                    id="seat_serial_prefix"
-                                    placeholder="e.g. A, VIP"
-                                    value="{{ old('seat_serial_prefix') }}"
-                                    required>
-                            </div>
-                            @error('seat_serial_prefix')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="row g-3 form-section-spacer">
-                        <div class="col-md-6">
-                            <label class="form-field-label" for="seat_serial_start">Serial Start <span class="text-danger">*</span></label>
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="number_of_seats">Total Seats</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fe fe-users"></i></span>
                             <input type="number"
-                                min="1"
-                                class="form-control @error('seat_serial_start') is-invalid @enderror"
-                                name="seat_serial_start"
-                                id="seat_serial_start"
-                                placeholder="Starting number"
-                                value="{{ old('seat_serial_start', 1) }}"
-                                required>
-                            @error('seat_serial_start')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
+                                min="0"
+                                class="form-control @error('number_of_seats') is-invalid @enderror"
+                                name="number_of_seats"
+                                id="number_of_seats"
+                                placeholder="Optional"
+                                value="{{ old('number_of_seats') }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-field-label" for="seat_serial_end">Serial End <span class="text-danger">*</span></label>
-                            <input type="number"
-                                min="1"
-                                class="form-control @error('seat_serial_end') is-invalid @enderror"
-                                name="seat_serial_end"
-                                id="seat_serial_end"
-                                placeholder="Ending number"
-                                value="{{ old('seat_serial_end') }}"
-                                required>
-                            @error('seat_serial_end')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <p class="form-field-hint mb-0">Optional. Leave blank if seat count is not fixed.</p>
+                        @error('number_of_seats')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="form-group form-section-spacer">
@@ -219,28 +161,15 @@ jQuery(document).ready(function ($) {
     function updatePreview() {
         const name = $('#seating_type_name').val().trim();
         const seats = $('#number_of_seats').val();
-        const prefix = $('#seat_serial_prefix').val().trim();
-        const start = $('#seat_serial_start').val();
-        const end = $('#seat_serial_end').val();
         const isActive = $('#is_active_switch').is(':checked');
 
         $('#preview-seating-name').text(name || 'New Seating');
         $('#preview-name').text(name || 'Not set yet');
-        $('#preview-seats').text(seats || 'Not set yet');
-        $('#preview-serial').text(prefix && start && end ? prefix + start + ' - ' + prefix + end : 'Not set yet');
+        $('#preview-seats').text(seats !== '' ? seats : 'Optional');
         $('#preview-status-badge')
             .text(isActive ? 'Active' : 'Inactive')
             .toggleClass('bg-success-transparent', isActive)
             .toggleClass('bg-warning-transparent', !isActive);
-    }
-
-    function autoCalculateEnd() {
-        const start = parseInt($('#seat_serial_start').val(), 10);
-        const total = parseInt($('#number_of_seats').val(), 10);
-
-        if (start > 0 && total > 0) {
-            $('#seat_serial_end').val(start + total - 1);
-        }
     }
 
     function handleImageFile(file) {
@@ -273,13 +202,7 @@ jQuery(document).ready(function ($) {
         handleImageFile(this.files[0]);
     });
 
-    $('#number_of_seats, #seat_serial_start').on('input', function () {
-        autoCalculateEnd();
-        updatePreview();
-    });
-
-    $('#seating_type_name, #seat_serial_prefix, #seat_serial_end').on('input', updatePreview);
-    autoCalculateEnd();
+    $('#seating_type_name, #number_of_seats').on('input', updatePreview);
     updatePreview();
 });
 </script>

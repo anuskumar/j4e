@@ -69,9 +69,6 @@
                                 <th>Seating Type</th>
                                 <th>Image</th>
                                 <th>Total Seats</th>
-                                <th>Serial Prefix</th>
-                                <th>Serial Start</th>
-                                <th>Serial End</th>
                                 <th>Description</th>
                                 <th>Status</th>
                                 <th class="text-end">Action</th>
@@ -91,10 +88,7 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ $val->number_of_seats }}</td>
-                                    <td>{{ $val->seat_serial_prefix }}</td>
-                                    <td>{{ $val->seat_serial_start }}</td>
-                                    <td>{{ $val->seat_serial_end }}</td>
+                                    <td>{{ $val->number_of_seats !== null && $val->number_of_seats !== '' ? $val->number_of_seats : '-' }}</td>
                                     <td>{{ $val->seating_type_desc ? Str::limit($val->seating_type_desc, 40) : '-' }}</td>
                                     <td>
                                         @if ($val->is_active == 1)
@@ -123,16 +117,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td class="text-center text-muted py-4">No seating types found</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td colspan="7" class="text-center text-muted py-4">No seating types found</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -160,8 +145,8 @@
             'zeroRecords' => 'No matching seating found',
         ],
         'columnDefs' => [
-            ['orderable' => false, 'targets' => [2, 9]],
-            ['searchable' => false, 'targets' => [0, 2, 9]],
+            ['orderable' => false, 'targets' => [2, 6]],
+            ['searchable' => false, 'targets' => [0, 2, 6]],
         ],
     ];
 @endphp
