@@ -200,6 +200,7 @@
                             <div class="col-md-3"><label class="form-label">Ticket Features</label></div>
                             <div class="col-md-6">
                                 @foreach ([
+                                    'clearView' => 'Clear view',
                                     'limitedView' => 'Limited or restricted view',
                                     'vipPass' => 'Includes VIP pass',
                                     'mealPackage' => 'Ticket and meal package',
@@ -208,7 +209,7 @@
                                     'aisleSeat' => 'Aisle seat',
                                 ] as $featureKey => $featureLabel)
                                     <div class="form-check mb-1">
-                                        <input type="checkbox" class="form-check-input" id="edit_{{ $featureKey }}" name="{{ $featureKey }}" {{ in_array($featureKey, $selectedFeatures) ? 'checked' : '' }}>
+                                        <input type="checkbox" class="form-check-input{{ in_array($featureKey, ['clearView', 'limitedView'], true) ? ' view-feature-checkbox' : '' }}" id="edit_{{ $featureKey }}" name="{{ $featureKey }}" {{ in_array($featureKey, $selectedFeatures) ? 'checked' : '' }}>
                                         <label class="form-check-label" for="edit_{{ $featureKey }}">{{ $featureLabel }}</label>
                                     </div>
                                 @endforeach
@@ -297,6 +298,13 @@ jQuery(document).ready(function ($) {
     $('#edit-ticket-type').on('change', toggleMobileApp);
     $('#no-of-tickets, #seat-from').on('input change', syncSeatTo);
     toggleMobileApp();
+
+    $(document).on('change', '.view-feature-checkbox', function () {
+        if (!this.checked) {
+            return;
+        }
+        $('.view-feature-checkbox').not(this).prop('checked', false);
+    });
 });
 
 function get_available_tickets(val) {

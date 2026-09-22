@@ -1025,8 +1025,10 @@
                                 @foreach ($item['restrictions'] as $restriction)
                                     <span class="ticket-tag ticket-tag--warning"><i class="fas fa-exclamation-circle"></i> {{ $restriction }}</span>
                                 @endforeach
-                                @if (empty($item['restrictions']))
+                                @if (!empty($item['has_clear_view']))
                                     <span class="ticket-tag"><i class="fas fa-eye"></i> Clear view</span>
+                                @elseif (!empty($item['has_limited_view']))
+                                    <span class="ticket-tag ticket-tag--warning"><i class="fas fa-eye-slash"></i> Limited view</span>
                                 @endif
                             </div>
 

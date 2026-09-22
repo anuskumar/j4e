@@ -918,6 +918,13 @@ class FrontendController extends Controller
                     ? array_values(array_filter(array_map(fn ($rid) => $restrictionMap[$rid] ?? null, $restrictionIds)))
                     : [];
 
+                $featurePayload = $ticket->features ? json_decode($ticket->features, true) : [];
+                $featureList = is_array($featurePayload['features'] ?? null)
+                    ? $featurePayload['features']
+                    : (is_array($featurePayload) ? $featurePayload : []);
+                $item['has_clear_view'] = in_array('clearView', $featureList, true);
+                $item['has_limited_view'] = in_array('limitedView', $featureList, true);
+
                 $sectionParts = array_filter([
                     $ticket->seating_type_name ?? null,
                     $ticket->row ? 'Row ' . $ticket->row : null,

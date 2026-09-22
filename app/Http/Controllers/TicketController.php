@@ -719,12 +719,15 @@ class TicketController extends Controller
         }
 
         $features = [];
-        foreach (['limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat'] as $field) {
+        foreach (['clearView', 'limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat'] as $field) {
             if ($request->has($field)) {
                 $features[] = $field;
             }
         }
-        if ($isCreate || $request->hasAny(['limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat', 'features_submitted'])) {
+        if (in_array('clearView', $features, true) && in_array('limitedView', $features, true)) {
+            $features = array_values(array_filter($features, fn ($feature) => $feature !== 'limitedView'));
+        }
+        if ($isCreate || $request->hasAny(['clearView', 'limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat', 'features_submitted'])) {
             $data->features = json_encode(['features' => $features]);
         }
 

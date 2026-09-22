@@ -1230,6 +1230,7 @@ class ResellerController extends Controller
         // Process features (checkboxes)
         $features = [];
         $featureFields = [
+            'clearView',
             'limitedView',
             'vipPass',
             'mealPackage',
@@ -1242,6 +1243,11 @@ class ResellerController extends Controller
             if ($request->has($field)) {
                 $features[] = $field;
             }
+        }
+
+        // Clear view and limited view cannot both apply.
+        if (in_array('clearView', $features, true) && in_array('limitedView', $features, true)) {
+            $features = array_values(array_filter($features, fn ($feature) => $feature !== 'limitedView'));
         }
 
         // Combine restrictions and features into a single JSON field

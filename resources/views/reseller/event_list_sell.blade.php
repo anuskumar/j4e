@@ -651,7 +651,13 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                         <div class="form-check">
-                            <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input" {{ old('limitedView') ? 'checked' : '' }}>
+                            <input type="checkbox" id="clearView" name="clearView" class="form-check-input view-feature-checkbox" {{ old('clearView') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="clearView">Clear view</label>
+                        </div>
+                        </div>
+                        <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input view-feature-checkbox" {{ old('limitedView') ? 'checked' : '' }}>
                             <label class="form-check-label" for="limitedView">Limited or restricted view</label>
                         </div>
                         </div>
@@ -1068,6 +1074,20 @@
 
             document.getElementById('amount').addEventListener('input', updateConvertedValue);
             document.getElementById('cents').addEventListener('input', updateConvertedValue);
+
+            // Clear view and limited view are mutually exclusive.
+            document.querySelectorAll('.view-feature-checkbox').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    if (!this.checked) {
+                        return;
+                    }
+                    document.querySelectorAll('.view-feature-checkbox').forEach(function (other) {
+                        if (other !== checkbox) {
+                            other.checked = false;
+                        }
+                    });
+                });
+            });
 
             // Recalculate on load if old input values exist.
             (function initConversion() {

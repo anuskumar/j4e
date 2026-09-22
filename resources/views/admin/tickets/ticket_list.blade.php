@@ -527,7 +527,13 @@
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="form-check">
-                                        <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input" {{ old('limitedView') ? 'checked' : '' }}>
+                                        <input type="checkbox" id="clearView" name="clearView" class="form-check-input view-feature-checkbox" {{ old('clearView') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="clearView">Clear view</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input view-feature-checkbox" {{ old('limitedView') ? 'checked' : '' }}>
                                         <label class="form-check-label" for="limitedView">Limited or restricted view</label>
                                     </div>
                                 </div>
@@ -648,6 +654,13 @@
 jQuery(document).ready(function ($) {
     const $restrictionsSelect = $('#ticket-restrictions-select');
     $restrictionsSelect.select2({ width: '100%', placeholder: 'Select restrictions', dropdownParent: $('#create-ticket-modal') });
+
+    $(document).on('change', '.view-feature-checkbox', function () {
+        if (!this.checked) {
+            return;
+        }
+        $('.view-feature-checkbox').not(this).prop('checked', false);
+    });
 
     $('#toggle-new-restriction').on('click', function () {
         const $wrap = $('#new-restriction-wrap');
