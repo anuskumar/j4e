@@ -200,8 +200,17 @@ class NotificationService
             ->map(fn (AdminNotification $notification) => $this->formatNotificationItem($notification));
 
         if ($user->user_type === 'superadmin') {
+            $legacyRequestIds = AdminNotification::query()
+                ->where('user_id', $user->id)
+                ->where('type', self::TYPE_EVENT_REQUEST)
+                ->where('reference_type', 'event_request')
+                ->whereNotNull('reference_id')
+                ->pluck('reference_id')
+                ->all();
+
             $legacyRequests = RequestEventModel::query()
                 ->where('markas_read', 0)
+                ->when(!empty($legacyRequestIds), fn ($query) => $query->whereNotIn('id', $legacyRequestIds))
                 ->latest()
                 ->get()
                 ->map(fn (RequestEventModel $request) => $this->formatLegacyEventRequestItem($request));
@@ -229,7 +238,20 @@ class NotificationService
             ->count();
 
         if ($user->user_type === 'superadmin') {
-            $count += RequestEventModel::query()->where('markas_read', 0)->count();
+            $legacyRequestIds = AdminNotification::query()
+                ->where('user_id', $user->id)
+                ->where('type', self::TYPE_EVENT_REQUEST)
+                ->where('reference_type', 'event_request')
+                ->whereNotNull('reference_id')
+                ->pluck('reference_id')
+                ->all();
+
+            $legacyCount = RequestEventModel::query()
+                ->where('markas_read', 0)
+                ->when(!empty($legacyRequestIds), fn ($query) => $query->whereNotIn('id', $legacyRequestIds))
+                ->count();
+
+            $count += $legacyCount;
         }
 
         return $count;
