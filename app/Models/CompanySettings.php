@@ -35,21 +35,21 @@ class CompanySettings extends Model
 
     public function bannerMessage(): string
     {
-        $message = trim(collect([$this->company_footer_text, $this->company_about])
-            ->filter()
-            ->implode(' '));
-
-        return $message !== '' ? $message : 'All tickets are 100% guaranteed and secure.';
-    }
-
-    public function footerDescription(): string
-    {
         if (filled($this->company_about)) {
             return $this->company_about;
         }
 
+        return 'All tickets are 100% guaranteed and secure.';
+    }
+
+    public function footerDescription(): string
+    {
         if (filled($this->company_footer_text)) {
             return $this->company_footer_text;
+        }
+
+        if (filled($this->company_about)) {
+            return $this->company_about;
         }
 
         return 'All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.';

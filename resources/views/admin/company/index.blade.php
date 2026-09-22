@@ -234,13 +234,13 @@
                     </div>
 
                     <div class="form-group form-section-spacer">
-                        <label class="form-field-label" for="company_footer_text">Footer / Banner Text</label>
+                        <label class="form-field-label" for="company_footer_text">Footer Text</label>
                         <div class="input-group">
                             <span class="input-group-text align-items-start pt-2"><i class="fe fe-align-left"></i></span>
-                            <textarea class="form-control" name="company_footer_text" id="company_footer_text" rows="2"
-                                placeholder="Shown in the homepage marquee and footer">{{ $settings->company_footer_text }}</textarea>
+                            <textarea class="form-control" name="company_footer_text" id="company_footer_text" rows="3"
+                                placeholder="Shown under the footer logo">{{ $settings->company_footer_text }}</textarea>
                         </div>
-                        <p class="form-field-hint mb-0">Displayed in the top homepage banner marquee together with the about text.</p>
+                        <p class="form-field-hint mb-0">Displayed under the company logo in the site footer.</p>
                     </div>
 
                     <div class="form-group form-section-spacer">
@@ -248,9 +248,9 @@
                         <div class="input-group">
                             <span class="input-group-text align-items-start pt-2"><i class="fe fe-file-text"></i></span>
                             <textarea class="form-control" name="company_about" id="company_about" rows="4"
-                                placeholder="Shown in the footer about section">{{ $settings->company_about }}</textarea>
+                                placeholder="Shown in the top site banner">{{ $settings->company_about }}</textarea>
                         </div>
-                        <p class="form-field-hint mb-0">Main footer description shown on the customer-facing site.</p>
+                        <p class="form-field-hint mb-0">Displayed in the top homepage banner marquee.</p>
                     </div>
 
                     <div class="mb-4 main-content-label">Brand Images</div>
