@@ -14,14 +14,28 @@
     overflow: hidden;
 }
 
+.customer-site-banner__trust-viewport {
+    width: 100%;
+    overflow: hidden;
+}
+
 .customer-site-banner__trust-track {
     display: inline-block;
     white-space: nowrap;
     animation: customerBannerMarquee 22s linear infinite;
 }
 
+.customer-site-banner__trust-track:hover {
+    animation-play-state: paused;
+}
+
+.customer-site-banner__trust-item {
+    display: inline-block;
+    padding: 0 1rem;
+}
+
 @keyframes customerBannerMarquee {
-    0% { transform: translateX(100%); }
+    0% { transform: translateX(100vw); }
     100% { transform: translateX(-100%); }
 }
 

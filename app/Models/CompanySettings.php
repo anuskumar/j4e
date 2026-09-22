@@ -48,10 +48,6 @@ class CompanySettings extends Model
             return $this->company_footer_text;
         }
 
-        if (filled($this->company_about)) {
-            return $this->company_about;
-        }
-
         return 'All tickets are 100% guaranteed and secure. Prices are set by sellers and may be above or below face value.';
     }
 
