@@ -91,7 +91,10 @@ class NotificationService
     public function notifyEventRequest(RequestEventModel $request): void
     {
         $title = $request->name . ' requested a new event';
-        $message = $request->event_details;
+        $message = $request->summaryLabel();
+        if ($request->artistNamesLabel() !== '-') {
+            $message .= ' | Artists: ' . $request->artistNamesLabel();
+        }
         $link = route('events.requestlist');
 
         $this->sendToSuperadmins(
@@ -339,7 +342,7 @@ class NotificationService
             'source' => 'legacy_event_request',
             'type' => self::TYPE_EVENT_REQUEST,
             'title' => $request->name . ' added new event',
-            'message' => $request->event_details,
+            'message' => $request->summaryLabel(),
             'link' => route('events.requestlist'),
             'created_at' => $request->created_at,
             'time_ago' => Carbon::parse($request->created_at)->diffForHumans(),

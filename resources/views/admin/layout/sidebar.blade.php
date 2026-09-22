@@ -160,6 +160,12 @@
                         </a>
                     </li>
                     <li class="slide">
+                        <a class="side-menu__item" href="{{ route('admin.cms-pages.index') }}">
+                            <i class="side-menu__icon fe fe-file-text"></i>
+                            <span class="side-menu__label">Terms &amp; CMS Pages</span>
+                        </a>
+                    </li>
+                    <li class="slide">
                         <a class="side-menu__item" href="{{ route('admin.paypal.settings') }}">
                             <i class="side-menu__icon fe fe-credit-card"></i>
                             <span class="side-menu__label">PayPal Integration</span>

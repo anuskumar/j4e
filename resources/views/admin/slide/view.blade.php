@@ -55,6 +55,26 @@
                                     <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
+												<label class="form-label">Description Position</label>
+											</div>
+											<div class="col-md-6">
+                                                <input type="text" class="form-control" value="{{ $data->descriptionPositionLabel() }}" readonly>
+											</div>
+										</div>
+									</div>
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
+												<label class="form-label">Button</label>
+											</div>
+											<div class="col-md-6">
+                                                <input type="text" class="form-control" value="{{ $data->shouldShowButton() ? ($data->buttonLabel() . ' · ' . $data->buttonPositionLabel() . ' · ' . $data->buttonSizeLabel()) : 'Hidden' }}" readonly>
+											</div>
+										</div>
+									</div>
+                                    <div class="form-group ">
+										<div class="row">
+											<div class="col-md-3">
 												<label class="form-label">Status</label>
 											</div>
 											<div class="col-md-6">

@@ -160,6 +160,24 @@
                         </div>
                     </div>
                     <div class="media mb-0">
+                        <div class="media-icon bg-purple-transparent text-purple">
+                            <i class="fe fe-move"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Description Position</span>
+                            <div id="preview-description-position">Left Center</div>
+                        </div>
+                    </div>
+                    <div class="media mb-0">
+                        <div class="media-icon bg-danger-transparent text-danger">
+                            <i class="fe fe-mouse-pointer"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Button</span>
+                            <div id="preview-button">Hidden</div>
+                        </div>
+                    </div>
+                    <div class="media mb-0">
                         <div class="media-icon bg-info-transparent text-info">
                             <i class="fe fe-check-circle"></i>
                         </div>
@@ -257,6 +275,102 @@
                         </div>
                     </div>
 
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="description_position">Description Position <span class="text-danger">*</span></label>
+                        <select name="description_position" id="description_position" class="form-control @error('description_position') is-invalid @enderror">
+                            @foreach (\App\Models\SliderModel::DESCRIPTION_POSITIONS as $positionValue => $positionLabel)
+                                <option value="{{ $positionValue }}" {{ old('description_position', 'left-center') === $positionValue ? 'selected' : '' }}>
+                                    {{ $positionLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="form-field-hint mb-0">Choose where the slide description appears on the homepage banner.</p>
+                        @error('description_position')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-4 main-content-label">Call-to-Action Button</div>
+
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label d-block">Show Button</label>
+                        <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
+                            <span class="tx-13 fw-semibold">Display button on slide</span>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    id="show_button_switch"
+                                    {{ old('show_button', '0') == '1' ? 'checked' : '' }}>
+                                <input type="hidden" name="show_button" id="show_button" value="{{ old('show_button', '0') }}">
+                            </div>
+                        </div>
+                        <p class="form-field-hint mb-0">Requires a linked event. Clicking opens that event page.</p>
+                        @error('show_button')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div id="button-settings-wrap" class="{{ old('show_button', '0') == '1' ? '' : 'd-none' }}">
+                        <div class="row g-3 form-section-spacer">
+                            <div class="col-md-6">
+                                <label class="form-field-label" for="button_text">Button Text</label>
+                                <input type="text" class="form-control @error('button_text') is-invalid @enderror"
+                                    name="button_text" id="button_text"
+                                    value="{{ old('button_text', 'Book Now') }}"
+                                    maxlength="60" placeholder="Book Now">
+                                @error('button_text')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-field-label" for="button_color">Button Color</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="form-control form-control-color"
+                                        id="button_color_picker"
+                                        value="{{ old('button_color', '#671dcf') }}"
+                                        style="width: 48px; height: 38px; padding: 2px;">
+                                    <input type="text" class="form-control @error('button_color') is-invalid @enderror"
+                                        name="button_color" id="button_color"
+                                        value="{{ old('button_color', '#671dcf') }}"
+                                        placeholder="#671dcf">
+                                </div>
+                                @error('button_color')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row g-3 form-section-spacer">
+                            <div class="col-md-6">
+                                <label class="form-field-label" for="button_size">Button Size</label>
+                                <select name="button_size" id="button_size" class="form-control @error('button_size') is-invalid @enderror">
+                                    @foreach (\App\Models\SliderModel::BUTTON_SIZES as $sizeValue => $sizeLabel)
+                                        <option value="{{ $sizeValue }}" {{ old('button_size', 'medium') === $sizeValue ? 'selected' : '' }}>
+                                            {{ $sizeLabel }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('button_size')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-field-label" for="button_position">Button Position</label>
+                                <select name="button_position" id="button_position" class="form-control @error('button_position') is-invalid @enderror">
+                                    @foreach (\App\Models\SliderModel::DESCRIPTION_POSITIONS as $positionValue => $positionLabel)
+                                        <option value="{{ $positionValue }}" {{ old('button_position', 'right-bottom') === $positionValue ? 'selected' : '' }}>
+                                            {{ $positionLabel }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('button_position')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row g-3 form-section-spacer">
                         <div class="col-md-6">
                             <label class="form-field-label d-block">Status</label>
@@ -317,12 +431,25 @@ jQuery(document).ready(function ($) {
         const hasEvent = $('#event').val();
         const isActive = $('#is_active_switch').is(':checked');
         const textColor = $('input[name="text_color"]:checked').val() || 'white';
+        const positionText = $('#description_position option:selected').text().trim() || 'Left Center';
+        const showButton = $('#show_button_switch').is(':checked');
+        const buttonText = $('#button_text').val().trim() || 'Book Now';
+        const buttonPos = $('#button_position option:selected').text().trim() || 'Right Bottom';
 
         $('#preview-slide-title').text(meta ? truncateText(meta, 40) : 'New Slide');
         $('#preview-meta').text(truncateText(meta, 80));
         $('#preview-event').text(hasEvent ? eventText : 'Not selected');
         $('#preview-status').text(isActive ? 'Active' : 'Inactive');
         $('#preview-text-color').text(textColor.charAt(0).toUpperCase() + textColor.slice(1));
+        $('#preview-description-position').text(positionText);
+        $('#preview-button').text(showButton ? (buttonText + ' · ' + buttonPos) : 'Hidden');
+    }
+
+    function syncButtonSettingsVisibility() {
+        const enabled = $('#show_button_switch').is(':checked');
+        $('#show_button').val(enabled ? '1' : '0');
+        $('#button-settings-wrap').toggleClass('d-none', !enabled);
+        updatePreview();
     }
 
     function handleImageFile(file) {
@@ -351,6 +478,21 @@ jQuery(document).ready(function ($) {
         updatePreview();
     });
 
+    $('#show_button_switch').on('change', syncButtonSettingsVisibility);
+
+    $('#button_color_picker').on('input change', function () {
+        $('#button_color').val(this.value);
+        updatePreview();
+    });
+
+    $('#button_color').on('input change', function () {
+        const value = this.value.trim();
+        if (/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value)) {
+            $('#button_color_picker').val(value);
+        }
+        updatePreview();
+    });
+
     $('#slide_image').on('change', function () {
         handleImageFile(this.files[0]);
     });
@@ -361,8 +503,8 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    $('#meta_description, #event, input[name="text_color"]').on('input change', updatePreview);
-    updatePreview();
+    $('#meta_description, #event, #description_position, #button_text, #button_size, #button_position, input[name="text_color"]').on('input change', updatePreview);
+    syncButtonSettingsVisibility();
 });
 </script>
 @endpush

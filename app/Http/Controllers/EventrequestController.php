@@ -24,20 +24,41 @@ class EventrequestController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:50',
-            'event_details' => 'required|string|max:5000',
+            'website_url' => 'nullable|url|max:500',
+            'location_details' => 'nullable|string|max:2000',
+            'venue_details' => 'nullable|string|max:255',
+            'event_date' => 'required|date',
+            'city' => 'nullable|string|max:255',
+            'artist_names' => 'nullable|array',
+            'artist_names.*' => 'nullable|string|max:120',
+            'event_details' => 'nullable|string|max:5000',
         ], [
             'name.required' => 'Please enter your full name.',
             'email.required' => 'Please enter your email address.',
             'email.email' => 'Please enter a valid email address.',
             'phone.required' => 'Please enter your phone number.',
-            'event_details.required' => 'Please describe the event you want to request.',
+            'website_url.url' => 'Please enter a valid website URL (including https://).',
+            'event_date.required' => 'Please select the event date.',
         ]);
+
+        $artists = collect($validated['artist_names'] ?? [])
+            ->map(fn ($name) => trim((string) $name))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
         $data = new RequestEventModel();
         $data->name = $validated['name'];
         $data->email = $validated['email'];
-        $data->event_details = $validated['event_details'];
         $data->phone = $validated['phone'];
+        $data->website_url = $validated['website_url'] ?? null;
+        $data->location_details = $validated['location_details'];
+        $data->venue_details = $validated['venue_details'];
+        $data->event_date = $validated['event_date'];
+        $data->city = $validated['city'];
+        $data->artist_names = $artists ?: null;
+        $data->event_details = $validated['event_details'] ?? null;
         $data->save();
 
         app(NotificationService::class)->notifyEventRequest($data);

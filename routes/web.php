@@ -6,6 +6,7 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\ArtistfiedController;
 use App\Http\Controllers\BankTransferController;
 use App\Http\Controllers\CompanySettingsController;
+use App\Http\Controllers\CmsPageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CustomerReviewController;
 use App\Http\Controllers\CityController;
@@ -111,6 +112,10 @@ Route::group(['prefix' => 'reseller', 'middleware' => ['auth', 'user.type:resell
 });
 
 Route::get('/sell_tickets', [FrontendController::class, 'sell_tickets'])->name('sell_tickets');
+
+Route::get('terms-and-conditions', [CmsPageController::class, 'terms'])->name('cms.terms');
+Route::get('term-condition', [CmsPageController::class, 'terms']);
+Route::get('privacy-policy', [CmsPageController::class, 'privacy'])->name('cms.privacy');
 
 
 
@@ -239,6 +244,12 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('edit/{id}', [CompanySettingsController::class, 'edit']);
     // Route::post('update', [CompanySettingsController::class, 'update']);
     Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company');
+
+    Route::group(['prefix' => 'cms-pages'], function () {
+        Route::get('/', [CmsPageController::class, 'index'])->name('admin.cms-pages.index');
+        Route::get('edit/{id}', [CmsPageController::class, 'edit'])->name('admin.cms-pages.edit');
+        Route::post('update', [CmsPageController::class, 'update'])->name('admin.cms-pages.update');
+    });
     
     // Admin User Management Routes - Customer & Reseller
     Route::group(['prefix' => 'customer'], function () {

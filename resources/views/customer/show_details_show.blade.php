@@ -835,9 +835,6 @@
                     {{ $cityCountry }}
                 @endif
             </p>
-            @if (!empty($event_datas->tag_name))
-                <p class="event-header-bar__venue mb-0">{{ $event_datas->tag_name }}</p>
-            @endif
         </div>
         @if ($galleryImages->count())
             <button type="button"

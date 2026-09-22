@@ -34,7 +34,7 @@
 												<label class="focus-label">Create Password</label>
 											</div>
 											<div class="terms-and-policy pt-2 pb-2">
-												<input type="checkbox" required name="checkbox" value="check" id="agree" /><span class="agree">I agree to these <span class="terms"><a href="term-condition" target="_blank">Terms of Use</a> and <a href="privacy-policy" target="_blank">Privacy Policy</a></span></span>
+												<input type="checkbox" required name="checkbox" value="check" id="agree" /><span class="agree">I agree to these <span class="terms"><a href="{{ route('cms.terms') }}" target="_blank">Terms of Use</a> and <a href="{{ route('cms.privacy') }}" target="_blank">Privacy Policy</a></span></span>
 											</div>
 											<div class="text-right">
 												<a class="forgot-link" href="login">Already have an account?</a>

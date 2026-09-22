@@ -26,7 +26,7 @@
                         <h2 class="footer-title">Quick Links</h2>
                         <ul>
                             <li><a href="{{ url('/') }}">Home</a></li>
-                            <li><a href="{{ route('new_eventlistfrontend') }}">Browse Events</a></li>
+                            <li><a href="{{ route('welcome.index') }}#find-top-events">Browse Events</a></li>
                             <li><a href="{{ url('sell_tickets') }}">Sell Tickets</a></li>
                             <li><a href="{{ route('reviews') }}">Customer Reviews</a></li>
                             <li><a href="{{ url('login') }}">Login</a></li>
@@ -63,7 +63,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-6">
                         <ul class="policy-menu text-left mb-md-0">
-                            <li><a href="#">Terms and Conditions</a></li>
+                            <li><a href="{{ route('cms.terms') }}">Terms and Conditions</a></li>
                         </ul>
                     </div>
                     <div class="col-md-6">

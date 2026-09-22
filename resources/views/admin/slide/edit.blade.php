@@ -92,6 +92,128 @@
                                         </div>
                                     </div>
                                     <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Description Position</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select name="description_position" id="description_position" class="form-control">
+                                                    @foreach (\App\Models\SliderModel::DESCRIPTION_POSITIONS as $positionValue => $positionLabel)
+                                                        <option value="{{ $positionValue }}"
+                                                            {{ old('description_position', $data->description_position ?? 'left-center') === $positionValue ? 'selected' : '' }}>
+                                                            {{ $positionLabel }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <small class="text-muted">Where the description text appears on the homepage banner.</small>
+                                                @error('description_position')
+                                                    <div class="text-danger small">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Linked Event</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select name="event" id="event" class="form-control">
+                                                    <option value="">Select event</option>
+                                                    @foreach (($events ?? []) as $eventItem)
+                                                        <option value="{{ $eventItem->id }}"
+                                                            {{ (string) old('event', $data->eventid) === (string) $eventItem->id ? 'selected' : '' }}>
+                                                            {{ $eventItem->event_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <small class="text-muted">Required if the slide button is enabled.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Show Button</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="me-3">
+                                                    <input type="radio" name="show_button" value="1"
+                                                        {{ (string) old('show_button', $data->show_button ?? 0) === '1' ? 'checked' : '' }}>
+                                                    <span> Yes</span>
+                                                </label>
+                                                <label>
+                                                    <input type="radio" name="show_button" value="0"
+                                                        {{ (string) old('show_button', $data->show_button ?? 0) === '0' ? 'checked' : '' }}>
+                                                    <span> No</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Button Text</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="button_text"
+                                                    value="{{ old('button_text', $data->button_text ?? 'Book Now') }}"
+                                                    maxlength="60" placeholder="Book Now">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Button Color</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <input type="color" id="button_color_picker" class="form-control form-control-color"
+                                                        value="{{ old('button_color', $data->button_color ?? '#671dcf') }}"
+                                                        style="width: 48px; height: 38px; padding: 2px;">
+                                                    <input type="text" class="form-control" name="button_color" id="button_color"
+                                                        value="{{ old('button_color', $data->button_color ?? '#671dcf') }}"
+                                                        placeholder="#671dcf">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Button Size</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select name="button_size" id="button_size" class="form-control">
+                                                    @foreach (\App\Models\SliderModel::BUTTON_SIZES as $sizeValue => $sizeLabel)
+                                                        <option value="{{ $sizeValue }}"
+                                                            {{ old('button_size', $data->button_size ?? 'medium') === $sizeValue ? 'selected' : '' }}>
+                                                            {{ $sizeLabel }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Button Position</label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select name="button_position" id="button_position" class="form-control">
+                                                    @foreach (\App\Models\SliderModel::DESCRIPTION_POSITIONS as $positionValue => $positionLabel)
+                                                        <option value="{{ $positionValue }}"
+                                                            {{ old('button_position', $data->button_position ?? 'right-bottom') === $positionValue ? 'selected' : '' }}>
+                                                            {{ $positionLabel }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group ">
 										<div class="row">
 											<div class="col-md-3">
 												<label class="form-label">Status</label>
@@ -122,3 +244,19 @@
 
 
 @endsection
+
+@push('scripts')
+<script>
+jQuery(document).ready(function ($) {
+    $('#button_color_picker').on('input change', function () {
+        $('#button_color').val(this.value);
+    });
+    $('#button_color').on('input change', function () {
+        const value = this.value.trim();
+        if (/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value)) {
+            $('#button_color_picker').val(value);
+        }
+    });
+});
+</script>
+@endpush

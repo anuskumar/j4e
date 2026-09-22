@@ -19,7 +19,7 @@
         [
             'extend' => 'excel',
             'exportOptions' => [
-                'columns' => [0, 1, 2, 3, 4],
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
                 'stripHtml' => true,
             ],
             'title' => $exportTitle,
@@ -27,7 +27,7 @@
         [
             'extend' => 'pdf',
             'exportOptions' => [
-                'columns' => [0, 1, 2, 3, 4],
+                'columns' => [0, 1, 2, 3, 4, 5, 6, 7, 8],
                 'stripHtml' => true,
             ],
             'title' => $exportTitle,
@@ -69,9 +69,13 @@
                             <tr>
                                 <th>SL</th>
                                 <th>Name</th>
-                                <th>Email</th>
-                                <th>Event Details</th>
-                                <th>Phone</th>
+                                <th>Contact</th>
+                                <th>Venue / City</th>
+                                <th>Event Date</th>
+                                <th>Artists</th>
+                                <th>Website</th>
+                                <th>Location</th>
+                                <th>Notes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,13 +83,29 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $val->name ?? '-' }}</td>
-                                    <td>{{ $val->email ?? '-' }}</td>
-                                    <td class="text-wrap" style="min-width:220px;max-width:420px;">{{ $val->event_details ?? '-' }}</td>
-                                    <td>{{ $val->phone ?? '-' }}</td>
+                                    <td>
+                                        <div>{{ $val->email ?? '-' }}</div>
+                                        <div class="tx-12 text-muted">{{ $val->phone ?? '-' }}</div>
+                                    </td>
+                                    <td class="text-wrap" style="min-width:160px;max-width:240px;">
+                                        <div class="fw-semibold">{{ $val->venue_details ?: '-' }}</div>
+                                        <div class="tx-12 text-muted">{{ $val->city ?: '-' }}</div>
+                                    </td>
+                                    <td>{{ $val->event_date ? $val->event_date->format('d M Y') : '-' }}</td>
+                                    <td class="text-wrap" style="min-width:140px;max-width:220px;">{{ $val->artistNamesLabel() }}</td>
+                                    <td>
+                                        @if (!empty($val->website_url))
+                                            <a href="{{ $val->website_url }}" target="_blank" rel="noopener noreferrer">Open link</a>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="text-wrap" style="min-width:180px;max-width:280px;">{{ $val->location_details ?: '-' }}</td>
+                                    <td class="text-wrap" style="min-width:180px;max-width:280px;">{{ $val->event_details ?: '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">No requested events found</td>
+                                    <td colspan="9" class="text-center text-muted py-4">No requested events found</td>
                                 </tr>
                             @endforelse
                         </tbody>

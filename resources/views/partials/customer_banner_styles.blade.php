@@ -69,16 +69,23 @@
 
 .customer-site-banner__hero .breadcrumb-item,
 .customer-site-banner__hero .breadcrumb-item a {
-    color: rgba(255, 255, 255, 0.75);
+    color: #ffffff;
     font-size: 14px;
+    font-weight: 500;
+}
+
+.customer-site-banner__hero .breadcrumb-item a:hover {
+    color: #ffffff;
+    text-decoration: underline;
 }
 
 .customer-site-banner__hero .breadcrumb-item.active {
-    color: #fff;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .customer-site-banner__hero .breadcrumb-item + .breadcrumb-item::before {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .customer-site-banner__hero-title {
@@ -87,12 +94,14 @@
     margin: 0 0 8px;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    color: #ffffff;
 }
 
 .customer-site-banner__hero-meta {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.85);
+    color: #ffffff;
     margin: 0;
+    opacity: 0.95;
 }
 
 .customer-site-banner__hero-filter {
@@ -104,7 +113,7 @@
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #ffffff;
 }
 
 .customer-site-banner__hero-filter select {

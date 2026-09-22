@@ -1,13 +1,22 @@
 @extends('layout.mainlayout')
 
 @push('customer_banner_hero')
+@php
+    $isSearch = !empty($search);
+    $heroTitle = $isSearch
+        ? 'SEARCH RESULTS'
+        : (strtoupper($event_tag->tag_name ?? 'Events') . ' TICKETS');
+    $heroCrumb = $isSearch
+        ? 'Search Results'
+        : (($event_tag->tag_name ?? 'Events') . ' Tickets');
+@endphp
 <div class="customer-site-banner__hero">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
                 <li class="breadcrumb-item active" aria-current="page">
-                    {{ $event_tag->tag_name ?? 'Events' }} Tickets
+                    {{ $heroCrumb }}
                 </li>
             </ol>
         </nav>
@@ -15,10 +24,10 @@
         <div class="row align-items-end">
             <div class="col-lg-6">
                 <h1 class="customer-site-banner__hero-title">
-                    {{ strtoupper($event_tag->tag_name ?? 'Events') }} TICKETS
+                    {{ $heroTitle }}
                 </h1>
                 <p class="customer-site-banner__hero-meta">
-                    @if(!empty($search))
+                    @if($isSearch)
                         {{ $listings->count() }} {{ Str::plural('result', $listings->count()) }} for "{{ $search }}"
                     @else
                         {{ $listings->count() }} {{ Str::plural('showtime', $listings->count()) }} available

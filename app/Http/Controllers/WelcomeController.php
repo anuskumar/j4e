@@ -103,7 +103,8 @@ class WelcomeController extends Controller
                 // Search in JSON artists column if artist IDs found
                 if(!empty($artistIds)){
                     foreach($artistIds as $artistId){
-                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                        $q->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((string) $artistId)])
+                          ->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((int) $artistId)]);
                     }
                 }
             });
@@ -113,14 +114,19 @@ class WelcomeController extends Controller
         }
 
         $data = $query->select(
-                '*',
                 'event.id as id',
+                'event.event_name',
+                'event.event_image',
+                'event.event_from_date',
+                'event.event_to_date',
+                'event.artists',
                 'event.priority as priority',
+                'event.venue',
                 'location.id as location_id',
                 'cities.id as city_id',
-                'country_name',
+                'countries.country_name as country_name',
                 'cities.name as city_name',
-                'location_name',
+                'location.location_name as location_name',
                 'venue.name as venue_name'
             )
             ->customerDisplayOrder()
@@ -213,7 +219,8 @@ class WelcomeController extends Controller
                 // Search in JSON artists column if artist IDs found
                 if(!empty($artistIdsForLocation)){
                     foreach($artistIdsForLocation as $artistId){
-                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                        $q->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((string) $artistId)])
+                          ->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((int) $artistId)]);
                     }
                 }
             });
