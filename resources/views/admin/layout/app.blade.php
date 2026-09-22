@@ -31,7 +31,7 @@
     <!--- Animations css --->
     <link href="{{ asset('admin_assets/css/animate.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/toastr.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/css/summernote.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('admin_assets/css/summernote.min.css') }}" rel="stylesheet">
     <style>
         .loader {
             border: 16px solid #f3f3f3;
@@ -575,8 +575,8 @@
     <!--- Back-to-top --->
     <a href="#top" id="back-to-top"><i class="las la-angle-double-up"></i></a>
     <!--- JQuery min js --->
-    <script src="{{ asset('admin_assets/js/summernote.min.js') }}"></script>
     <script src="{{ asset('admin_assets/plugins/jquery/jquery.min.js') }}"></script>
+    <script src="{{ asset('admin_assets/js/summernote.min.js') }}"></script>
 
     @stack('scripts')
 
@@ -668,7 +668,7 @@
 
                 var moduleRoots = [
                     'eventtype', 'eventtags', 'currency', 'venue', 'slide',
-                    'artistfield', 'venuetype', 'location', 'city',
+                    'artistfield', 'venuetype', 'city',
                     'ticket_restrictions', 'artist'
                 ];
 

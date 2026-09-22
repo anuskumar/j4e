@@ -128,7 +128,7 @@
                             <span class="input-group-text"><i class="fe fe-layers"></i></span>
                             <input type="text" class="form-control" value="{{ $data->priority ?? 0 }}" readonly>
                         </div>
-                        <small class="form-field-hint">Higher number appears first on customer site.</small>
+                        <small class="form-field-hint">Lower numbers appear first on the customer event list.</small>
                     </div>
                 </div>
 

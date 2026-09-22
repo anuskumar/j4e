@@ -21,13 +21,19 @@
                     style="background-image: url('{{ asset('storage/uploads/slide/' . $slide->slide_image) }}');"
                     role="img"
                     aria-label="{{ $slide->meta_description ?? 'Slide ' . ($index + 1) }}">
-                    <div class="carousel-caption home-hero__overlay d-none d-md-flex {{ $slide->captionTextColorClass() }}">
+                    <div class="carousel-caption home-hero__overlay d-none d-md-block {{ $slide->captionTextColorClass() }} {{ $slide->captionPositionClass() }}">
+                        @if(!empty($slide->meta_description))
                         <div class="home-hero__caption-text">
                             <h1>{{ $slide->meta_description }}</h1>
                         </div>
-                        @if(!empty($slide->eventid))
-                        <div class="home-hero__caption-action">
-                            <a href="{{ url('show_details_show', $slide->eventid) }}" class="btn btn-primary">Book Now</a>
+                        @endif
+                        @if($slide->shouldShowButton())
+                        <div class="home-hero__caption-action {{ $slide->buttonPositionClass() }}">
+                            <a href="{{ url('show_details_show', $slide->eventid) }}"
+                                class="btn home-hero__btn {{ $slide->buttonSizeClass() }}"
+                                style="background: {{ $slide->buttonColorValue() }}; border-color: {{ $slide->buttonColorValue() }};">
+                                {{ $slide->buttonLabel() }}
+                            </a>
                         </div>
                         @endif
                     </div>
@@ -56,7 +62,7 @@
 <!-- /Home Banner -->
 
 <!-- Popular Events -->
-            <section class="popular-events">
+            <section class="popular-events" id="find-top-events">
 				<div class="container">
 
 					<!-- Section Header -->

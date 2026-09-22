@@ -7,10 +7,15 @@
 }
 
 .customer-site-banner__trust {
-    background: #7e0982;
+    background: #022D5F;
     color: #fff;
     font-size: 13px;
     padding: 8px 0;
+    overflow: hidden;
+}
+
+.customer-site-banner__trust-viewport {
+    width: 100%;
     overflow: hidden;
 }
 
@@ -20,15 +25,24 @@
     animation: customerBannerMarquee 22s linear infinite;
 }
 
+.customer-site-banner__trust-track:hover {
+    animation-play-state: paused;
+}
+
+.customer-site-banner__trust-item {
+    display: inline-block;
+    padding: 0 1rem;
+}
+
 @keyframes customerBannerMarquee {
-    0% { transform: translateX(100%); }
+    0% { transform: translateX(100vw); }
     100% { transform: translateX(-100%); }
 }
 
 .customer-site-banner__types {
-    background: rgb(34, 30, 105);
-    background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: #022D5F;
+    background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     overflow: visible;
     position: relative;
     z-index: 200;
@@ -41,8 +55,8 @@
 }
 
 .customer-site-banner__hero {
-    background: rgb(34, 30, 105);
-    background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
+    background: #022D5F;
+    background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
     padding: 28px 0 36px;
     color: #fff;
 }
@@ -55,16 +69,23 @@
 
 .customer-site-banner__hero .breadcrumb-item,
 .customer-site-banner__hero .breadcrumb-item a {
-    color: rgba(255, 255, 255, 0.75);
+    color: #ffffff;
     font-size: 14px;
+    font-weight: 500;
+}
+
+.customer-site-banner__hero .breadcrumb-item a:hover {
+    color: #ffffff;
+    text-decoration: underline;
 }
 
 .customer-site-banner__hero .breadcrumb-item.active {
-    color: #fff;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .customer-site-banner__hero .breadcrumb-item + .breadcrumb-item::before {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .customer-site-banner__hero-title {
@@ -73,12 +94,14 @@
     margin: 0 0 8px;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    color: #ffffff;
 }
 
 .customer-site-banner__hero-meta {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.85);
+    color: #ffffff;
     margin: 0;
+    opacity: 0.95;
 }
 
 .customer-site-banner__hero-filter {
@@ -90,7 +113,7 @@
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #ffffff;
 }
 
 .customer-site-banner__hero-filter select {
@@ -98,9 +121,13 @@
     border-radius: 999px;
     min-height: 44px;
     padding: 0 18px;
-    max-width: 320px;
+    max-width: 100%;
     width: 100%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.event-list-hero-filters .customer-site-banner__hero-filter {
+    margin-top: 12px;
 }
 
 .header-event-types {
@@ -199,7 +226,7 @@
     border: none;
     border-radius: 0 0 12px 12px;
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-    background: rgba(34, 30, 105, 0.98);
+    background: rgba(2, 45, 95, 0.98);
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;

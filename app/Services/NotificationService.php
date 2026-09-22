@@ -18,6 +18,8 @@ class NotificationService
     public const TYPE_EVENT_REQUEST = 'event_request';
     public const TYPE_NEW_EVENT = 'new_event';
     public const TYPE_NEW_TICKET = 'new_ticket';
+    public const TYPE_TICKET_REJECTED = 'ticket_rejected';
+    public const TYPE_TICKET_APPROVED = 'ticket_approved';
 
     public function send(
         int $userId,
@@ -89,7 +91,10 @@ class NotificationService
     public function notifyEventRequest(RequestEventModel $request): void
     {
         $title = $request->name . ' requested a new event';
-        $message = $request->event_details;
+        $message = $request->summaryLabel();
+        if ($request->artistNamesLabel() !== '-') {
+            $message .= ' | Artists: ' . $request->artistNamesLabel();
+        }
         $link = route('events.requestlist');
 
         $this->sendToSuperadmins(
@@ -132,6 +137,48 @@ class NotificationService
             'New Ticket: ' . $ticketLabel,
             $creatorName . ' listed ' . ($quantity ?: 'new') . ' ticket(s) for ' . $eventName . $creatorLabel,
             url('tickets/ticket_view/' . $ticket->id),
+            $ticket->id,
+            'event_tickets'
+        );
+    }
+
+    public function notifyTicketRejected(EventTickets $ticket, string $reason, ?User $reseller = null): void
+    {
+        $reseller ??= User::find($ticket->created_by);
+        if (!$reseller) {
+            return;
+        }
+
+        $eventName = Events::find($ticket->event)?->event_name ?? ('Event #' . $ticket->event);
+        $ticketLabel = $ticket->ticket_name ?: ('Ticket #' . $ticket->id);
+
+        $this->send(
+            (int) $reseller->id,
+            self::TYPE_TICKET_REJECTED,
+            'Ticket Rejected: ' . $ticketLabel,
+            'Your listing for ' . $eventName . ' was rejected. Reason: ' . $reason,
+            url('tickets/ticket_view/' . $ticket->id),
+            $ticket->id,
+            'event_tickets'
+        );
+    }
+
+    public function notifyTicketApproved(EventTickets $ticket, ?User $reseller = null): void
+    {
+        $reseller ??= User::find($ticket->created_by);
+        if (!$reseller) {
+            return;
+        }
+
+        $eventName = Events::find($ticket->event)?->event_name ?? ('Event #' . $ticket->event);
+        $ticketLabel = $ticket->ticket_name ?: ('Ticket #' . $ticket->id);
+
+        $this->send(
+            (int) $reseller->id,
+            self::TYPE_TICKET_APPROVED,
+            'Ticket Approved: ' . $ticketLabel,
+            'Your listing for ' . $eventName . ' has been approved.',
+            url('tickets/manage_individual_tickets/' . $ticket->id),
             $ticket->id,
             'event_tickets'
         );
@@ -253,6 +300,8 @@ class NotificationService
             self::TYPE_EVENT_REQUEST => 'la-calendar-plus text-success',
             self::TYPE_NEW_EVENT => 'la-calendar text-success',
             self::TYPE_NEW_TICKET => 'la-ticket text-warning',
+            self::TYPE_TICKET_REJECTED => 'la-times-circle text-danger',
+            self::TYPE_TICKET_APPROVED => 'la-check-circle text-success',
             default => 'la-bell text-info',
         };
     }
@@ -264,6 +313,8 @@ class NotificationService
             self::TYPE_EVENT_REQUEST => 'bg-success-transparent',
             self::TYPE_NEW_EVENT => 'bg-success-transparent',
             self::TYPE_NEW_TICKET => 'bg-warning-transparent',
+            self::TYPE_TICKET_REJECTED => 'bg-danger-transparent',
+            self::TYPE_TICKET_APPROVED => 'bg-success-transparent',
             default => 'bg-info-transparent',
         };
     }
@@ -291,7 +342,7 @@ class NotificationService
             'source' => 'legacy_event_request',
             'type' => self::TYPE_EVENT_REQUEST,
             'title' => $request->name . ' added new event',
-            'message' => $request->event_details,
+            'message' => $request->summaryLabel(),
             'link' => route('events.requestlist'),
             'created_at' => $request->created_at,
             'time_ago' => Carbon::parse($request->created_at)->diffForHumans(),

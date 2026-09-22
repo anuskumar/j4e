@@ -306,7 +306,7 @@ $val = $data[0];
 @php
     $currentListingTicketStatus = match ((int) ($val['ticket_status'] ?? 0)) {
         \App\Models\EventTickets::STATUS_ACTIVE => 'active',
-        \App\Models\EventTickets::STATUS_POSTED => 'posted',
+        \App\Models\EventTickets::STATUS_PAUSED => 'paused',
         \App\Models\EventTickets::STATUS_SOLD => 'sold',
         \App\Models\EventTickets::STATUS_PENDING => 'pending',
         default => 'unapproved',
@@ -708,14 +708,14 @@ $val = $data[0];
             <select class="form-select" name="listing_ticket_status" id="listing-ticket-status"
                 @disabled(! $canChangeListingTicketStatus)>
                 <option value="active" @selected($currentListingTicketStatus === 'active')>Active</option>
-                <option value="posted" @selected($currentListingTicketStatus === 'posted')>Posted</option>
+                <option value="paused" @selected($currentListingTicketStatus === 'paused')>Paused</option>
                 <option value="sold" @selected($currentListingTicketStatus === 'sold')>Sold</option>
                 <option value="pending" @selected($currentListingTicketStatus === 'pending')>Pending</option>
                 <option value="unapproved" @selected($currentListingTicketStatus === 'unapproved') @disabled(true)>Unapproved</option>
             </select>
             <small class="text-muted d-block mt-1" id="ticket-status-hint">
                 @if ($canChangeListingTicketStatus)
-                    You can set this listing to Active, Posted, Sold, or Pending.
+                    You can set this listing to Active, Paused, Sold, or Pending.
                 @else
                     This listing status cannot be changed until it is approved.
                 @endif
@@ -954,7 +954,7 @@ function confirmToggleStatus(el) {
 
     Swal.fire({
         title: 'Are you sure?',
-        text: `You are about to ${newStatus ? 'activate' : 'deactivate'} this ticket.`,
+        text: `You are about to ${newStatus ? 'activate' : 'pause'} this listing.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, change it!',

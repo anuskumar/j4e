@@ -110,7 +110,7 @@ class ResellerController extends Controller
     }
     public function eventlisting()
     {
-        $eventdatas = EventType::select('event_type_name', 'id')->where('is_active', 1)->get();
+        $eventdatas = EventType::select('event_type_name', 'id')->where('is_active', 1)->ordered()->get();
         foreach ($eventdatas as $val) {
             $val['tags'] = Events::leftjoin('event_tags', 'event_tags.id', 'event.event_tag')->select('event_tags.id', 'event_tags.tag_name')->where('event_type', $val->id)->groupBy('event.event_tag')->whereNotNull('event.event_tag')->get();
         }
@@ -462,7 +462,7 @@ class ResellerController extends Controller
 
         // dd("hello");
 
-        $event_type = EventType::get();
+        $event_type = EventType::ordered()->get();
         $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
             ->leftjoin('cities', 'cities.id', 'location.city')
@@ -526,7 +526,7 @@ class ResellerController extends Controller
 
     public function event_edit(string $id)
     {
-        $event_type = EventType::get();
+        $event_type = EventType::ordered()->get();
         $data       = Events::find($id);
         $venue      = VenueModel::leftjoin('location', 'location.id', 'venue.location')
             ->leftjoin('countries', 'countries.id', 'location.country')
@@ -1121,14 +1121,23 @@ class ResellerController extends Controller
         $mobile_applications = MobileApplication::where('is_active', 1)
             ->orderBy('name')
             ->get();
-        $event_timing   = EventTiming::where('event', $id)->first();
+        $event_timings = EventTiming::where('event', $id)
+            ->where('is_active', 1)
+            ->orderBy('event_date')
+            ->orderBy('from_time')
+            ->get();
+        $event_timing = $event_timings->first();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
         // dd($event->venue);
-        $currency     = Currency::get();
+        $currency = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         $restrictions = RestrictionModel::get();
         $splittypes   = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
-        return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
+        return view('reseller.event_list_sell', compact('data', 'id', 'ticket_type', 'mobile_applications', 'event_timing', 'event_timings', 'venue_seatings', 'currency', 'restrictions', 'splittypes', 'event'));
     }
 
     public function currencycodelist(Request $request)
@@ -1142,6 +1151,12 @@ class ResellerController extends Controller
         try {
             // Build validation rules
             $rules = [
+            'event_timing'      => [
+                'required',
+                Rule::exists('event_timings', 'id')->where(function ($query) use ($id) {
+                    $query->where('event', $id)->where('is_active', 1)->whereNull('deleted_at');
+                }),
+            ],
             'ticket_count'      => 'required|numeric|min:1|max:30',
             'venue_seating'     => 'required',
             'row'               => 'nullable|string',
@@ -1149,7 +1164,11 @@ class ResellerController extends Controller
             'seat_to'           => 'nullable|numeric',
             'seat_reason'       => 'nullable|in:not_provided,other',
             'sell_together'     => 'required|numeric',
-            'currency'          => 'required|numeric',
+            'currency'          => [
+                'required',
+                'numeric',
+                Rule::exists('currency', 'id')->where('is_active', 1),
+            ],
             'amount'            => 'required|numeric|min:0',
             'cents'             => 'nullable|numeric|min:0|max:99',
             'ticket_type'       => 'required|exists:ticket_type,id',
@@ -1170,10 +1189,13 @@ class ResellerController extends Controller
         // Validate the form data
         $validated = $request->validate($rules);
 
-        // Retrieve event timing based on event ID
-        $eventTiming = EventTiming::where('event', $id)->first();
+        // Retrieve the selected event timing for this event
+        $eventTiming = EventTiming::where('event', $id)
+            ->where('id', $validated['event_timing'])
+            ->where('is_active', 1)
+            ->first();
         if (!$eventTiming) {
-                return back()->with('error', 'Event timing not found for the given event ID.')->withInput();
+                return back()->with('error', 'Selected event timing is invalid or inactive.')->withInput();
         }
 
         // Create new ticket record
@@ -1208,6 +1230,7 @@ class ResellerController extends Controller
         // Process features (checkboxes)
         $features = [];
         $featureFields = [
+            'clearView',
             'limitedView',
             'vipPass',
             'mealPackage',
@@ -1220,6 +1243,11 @@ class ResellerController extends Controller
             if ($request->has($field)) {
                 $features[] = $field;
             }
+        }
+
+        // Clear view and limited view cannot both apply.
+        if (in_array('clearView', $features, true) && in_array('limitedView', $features, true)) {
+            $features = array_values(array_filter($features, fn ($feature) => $feature !== 'limitedView'));
         }
 
         // Combine restrictions and features into a single JSON field
@@ -1497,7 +1525,11 @@ class ResellerController extends Controller
     public function savesellconformation(Request $request)
     {
         $eventid   = $request->id;
-        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol')->where('is_active', 1)->get();
+        $currencys = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         //fetching event name
         $data = EventTickets::leftjoin('event', 'event.id', '=', 'event_tickets.event')
             ->leftjoin('event_timings', 'event_timings.event', 'event.id')
@@ -1604,7 +1636,7 @@ class ResellerController extends Controller
             if ($status === 'active') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
             } elseif ($status === 'paused' || $status === 'posted') {
-                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PAUSED);
             } elseif ($status === 'unapproved') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
             } elseif ($status === 'pending') {
@@ -1640,12 +1672,17 @@ class ResellerController extends Controller
             'event_tickets.id as id',
             'event_tickets.is_admin_approved as is_admin_approved',
             'event_tickets.ticket_status as ticket_status',
+            'event_tickets.ticket_amount as ticket_amount',
+            'event_tickets.face_value as face_value',
             'event_tickets.event as event_id',
             'event_tickets.row as row',
             'event_tickets.seat_from as seat_from',
             'event_tickets.seat_to as seat_to',
             'event.event_name as event_name',
             'event.event_is_active as event_is_active',
+            'currency.short_name as short_name',
+            'currency.symbol as currency_symbol',
+            'currency.currency_rate as currency_rate',
             'country_name',
             'cities.name as city_name',
             'location_name',
@@ -1694,10 +1731,35 @@ class ResellerController extends Controller
         $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
         $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
         $val['can_toggle_status'] = (int) $val->is_admin_approved === 1
-            && in_array((int) $val->ticket_status, [EventTickets::STATUS_ACTIVE, EventTickets::STATUS_POSTED], true)
+            && in_array((int) $val->ticket_status, [EventTickets::STATUS_ACTIVE, EventTickets::STATUS_PAUSED], true)
             && $availableCount > 0;
         $val['event_status_label'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'Active' : 'Inactive';
         $val['event_status_badge'] = ((int) ($val->event_is_active ?? 0) === 1) ? 'text-bg-success' : 'text-bg-secondary';
+
+        // Convert prices to USD for display (rate = selected-currency units per 1 USD).
+        $currencyCode = strtoupper((string) ($val->short_name ?? 'USD'));
+        $currencyRate = (float) ($val->currency_rate ?? 1);
+        $currencyRate = $currencyRate > 0 ? $currencyRate : 1;
+        $ticketAmount = (float) ($val->ticket_amount ?? 0);
+        $faceValue = (float) ($val->face_value ?? 0);
+
+        if ($currencyCode === 'USD') {
+            $usdTicketAmount = round($ticketAmount, 2);
+            $usdFaceValue = round($faceValue, 2);
+        } else {
+            $usdFaceValue = round($faceValue / $currencyRate, 2);
+            // After confirmation flow, ticket_amount is already USD while currency may still be original.
+            // If it still matches face value, convert; otherwise treat as USD.
+            if (abs($ticketAmount - $faceValue) < 0.0001) {
+                $usdTicketAmount = round($ticketAmount / $currencyRate, 2);
+            } else {
+                $usdTicketAmount = round($ticketAmount, 2);
+            }
+        }
+
+        $val['usd_ticket_amount'] = $usdTicketAmount;
+        $val['usd_face_value'] = $usdFaceValue;
+        $val['display_currency_code'] = 'USD';
 
        }
 
@@ -1739,7 +1801,7 @@ class ResellerController extends Controller
             if ($status === 'active') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE);
             } elseif ($status === 'paused' || $status === 'posted') {
-                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_POSTED);
+                $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_PAUSED);
             } elseif ($status === 'unapproved') {
                 $data_all->where('event_tickets.ticket_status', EventTickets::STATUS_UNAPPROVED);
             } elseif ($status === 'pending') {
@@ -1824,8 +1886,11 @@ class ResellerController extends Controller
                 'event_tickets.seat_from as seat_from',
                 'event_tickets.seat_to as seat_to',
                 'event_tickets.unique_id as unique_id',
+                'event_tickets.ticket_amount as ticket_amount',
+                'event_tickets.face_value as face_value',
                 'event.event_name as event_name',
                 'currency.short_name as short_name',
+                'currency.currency_rate as currency_rate',
                 'country_name',
                 'cities.name as city_name',
                 'location_name',
@@ -1858,6 +1923,27 @@ class ResellerController extends Controller
         $val['ticket_status_label'] = EventTickets::statusLabel($val->ticket_status);
         $val['ticket_status_badge'] = EventTickets::statusBadgeClass($val->ticket_status);
         $val['fulfilled_sales_count'] = max(0, (int) $val['sales_count'] - (int) $val['pending_upload_count']);
+
+        $currencyCode = strtoupper((string) ($val->short_name ?? 'USD'));
+        $currencyRate = (float) ($val->currency_rate ?? 1);
+        $currencyRate = $currencyRate > 0 ? $currencyRate : 1;
+        $ticketAmount = (float) ($val->ticket_amount ?? 0);
+        $faceValue = (float) ($val->face_value ?? 0);
+
+        if ($currencyCode === 'USD') {
+            $usdTicketAmount = round($ticketAmount, 2);
+            $usdFaceValue = round($faceValue, 2);
+        } else {
+            $usdFaceValue = round($faceValue / $currencyRate, 2);
+            if (abs($ticketAmount - $faceValue) < 0.0001) {
+                $usdTicketAmount = round($ticketAmount / $currencyRate, 2);
+            } else {
+                $usdTicketAmount = round($ticketAmount, 2);
+            }
+        }
+
+        $val['usd_ticket_amount'] = $usdTicketAmount;
+        $val['usd_face_value'] = $usdFaceValue;
 
        }
 
@@ -2070,7 +2156,7 @@ class ResellerController extends Controller
             'generated_ticket_id' => 'required|integer',
             'seat_number' => 'required|string|max:255',
             'seat_serial_number' => 'nullable|string|max:255',
-            'listing_ticket_status' => 'nullable|in:active,posted,sold,pending',
+            'listing_ticket_status' => 'nullable|in:active,paused,posted,sold,pending',
         ]);
 
         $ticket = TicketsGenerated::find($request->generated_ticket_id);
@@ -2099,7 +2185,8 @@ class ResellerController extends Controller
 
             $statusMap = [
                 'active' => EventTickets::STATUS_ACTIVE,
-                'posted' => EventTickets::STATUS_POSTED,
+                'paused' => EventTickets::STATUS_PAUSED,
+                'posted' => EventTickets::STATUS_PAUSED,
                 'sold' => EventTickets::STATUS_SOLD,
                 'pending' => EventTickets::STATUS_PENDING,
             ];

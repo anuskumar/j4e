@@ -6,6 +6,7 @@ use App\Http\Controllers\ArtistController;
 use App\Http\Controllers\ArtistfiedController;
 use App\Http\Controllers\BankTransferController;
 use App\Http\Controllers\CompanySettingsController;
+use App\Http\Controllers\CmsPageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CustomerReviewController;
 use App\Http\Controllers\CityController;
@@ -111,6 +112,10 @@ Route::group(['prefix' => 'reseller', 'middleware' => ['auth', 'user.type:resell
 });
 
 Route::get('/sell_tickets', [FrontendController::class, 'sell_tickets'])->name('sell_tickets');
+
+Route::get('terms-and-conditions', [CmsPageController::class, 'terms'])->name('cms.terms');
+Route::get('term-condition', [CmsPageController::class, 'terms']);
+Route::get('privacy-policy', [CmsPageController::class, 'privacy'])->name('cms.privacy');
 
 
 
@@ -239,6 +244,12 @@ Route::group(['prefix' => 'admin'], function () {
     Route::get('edit/{id}', [CompanySettingsController::class, 'edit']);
     // Route::post('update', [CompanySettingsController::class, 'update']);
     Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company');
+
+    Route::group(['prefix' => 'cms-pages'], function () {
+        Route::get('/', [CmsPageController::class, 'index'])->name('admin.cms-pages.index');
+        Route::get('edit/{id}', [CmsPageController::class, 'edit'])->name('admin.cms-pages.edit');
+        Route::post('update', [CmsPageController::class, 'update'])->name('admin.cms-pages.update');
+    });
     
     // Admin User Management Routes - Customer & Reseller
     Route::group(['prefix' => 'customer'], function () {
@@ -324,6 +335,7 @@ Route::group(['prefix' => 'eventtype'], function () {
     Route::get('view/{id}', [EventTypeController::class, 'show']);
     Route::get('edit/{id}', [EventTypeController::class, 'edit']);
     Route::post('update', [EventTypeController::class, 'update']);
+    Route::post('reorder', [EventTypeController::class, 'reorder']);
     Route::delete('destroy/{id}', [EventTypeController::class, 'delete']);
 });
 
@@ -367,7 +379,8 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::get('manage_tickets/{id}', [TicketController::class, 'manage_tickets']);
     Route::get('check_availability', [TicketController::class, 'check_availability']);
     Route::get('approve_tickets', [TicketController::class, 'approve_tickets']);
-    Route::get('reject_tickets', [TicketController::class, 'reject_tickets']);
+    Route::post('reject_tickets', [TicketController::class, 'reject_tickets']);
+    Route::get('reject_tickets', [TicketController::class, 'reject_tickets']); // legacy
     Route::post('store_ticket', [TicketController::class, 'store']);
     Route::get('ticket_view/{id}', [TicketController::class, 'show']);
     Route::delete('delete_main_ticket/{id}', [TicketController::class, 'delete_main_ticket']);
@@ -377,6 +390,7 @@ Route::group(['prefix' => 'tickets'], function () {
     Route::post('update', [TicketController::class, 'update']);
     Route::post('update-hold-status', [TicketController::class, 'updateHoldStatus']);
     Route::post('outsidesell.store', [TicketController::class, 'outsidesell'])->name('tickets.outsidesell.store');
+    Route::post('outsidesell.upload-proof', [TicketController::class, 'uploadOutsideSellProof'])->name('tickets.outsidesell.upload-proof');
     Route::get('get-outsidesell_data/{outsidesell_id}', [TicketController::class, 'get_outsidesell_data']);
     Route::post('update-ticket-status/{id}', [TicketController::class, 'updateStatus']);
     Route::post('update-ticket-sale-status/{id}', [TicketController::class, 'updatesaleStatus']);
@@ -401,6 +415,7 @@ Route::group(['prefix' => 'city'], function () {
     Route::get('list', [CityController::class, 'index']);
     Route::get('create', [CityController::class, 'create']);
     Route::post('store', [CityController::class, 'store']);
+    Route::post('quick-create', [CityController::class, 'quickStore']);
     Route::get('view/{id}', [CityController::class, 'show']);
     Route::get('edit/{id}', [CityController::class, 'edit']);
     Route::post('update', [CityController::class, 'update']);
@@ -463,10 +478,13 @@ Route::group(['prefix' => 'artistfield'], function () {
 
 
 
-Route::group(['prefix' => 'currency', 'middleware' => 'auth'], function () {
+Route::group(['prefix' => 'currency', 'middleware' => ['auth', 'user.type:superadmin']], function () {
 
     Route::get('create', [CurrencyController::class, 'create']);
     Route::post('store', [CurrencyController::class, 'store']);
+    Route::post('store-from-catalog', [CurrencyController::class, 'storeFromCatalog'])->name('currency.store-from-catalog');
+    Route::get('preview', [CurrencyController::class, 'preview'])->name('currency.preview');
+    Route::post('sync-rates', [CurrencyController::class, 'syncRates'])->name('currency.sync-rates');
     Route::get('list', [CurrencyController::class, 'index']);
     Route::get('view/{id}', [CurrencyController::class, 'show']);
     Route::get('edit/{id}', [CurrencyController::class, 'edit']);
@@ -480,6 +498,7 @@ Route::group(['prefix' => 'ticket_restrictions', 'middleware' => 'auth'], functi
     Route::get('/', [RestrictionController::class, 'index']);
     Route::get('create', [RestrictionController::class, 'create']);
     Route::post('store', [RestrictionController::class, 'store']);
+    Route::post('quick-create', [RestrictionController::class, 'quickStore'])->name('ticket_restrictions.quick-create');
     Route::get('list', [RestrictionController::class, 'index'])->name('ticket_restrictions.list');
     Route::get('view/{id}', [RestrictionController::class, 'show']);
     Route::get('edit/{id}', [RestrictionController::class, 'edit']);
@@ -496,6 +515,7 @@ Route::group(['prefix' => 'eventtags'], function () {
     Route::get('view/{id}', [TagController::class, 'show']);
     Route::get('edit/{id}', [TagController::class, 'edit']);
     Route::post('update', [TagController::class, 'update']);
+    Route::post('reorder', [TagController::class, 'reorder']);
     Route::delete('destroy/{id}', [TagController::class, 'delete']);
 });
 
@@ -527,6 +547,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('booking_failed', 'booking_failed');
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');
     Route::get('show_details_show/{id}', 'show_details_show');
+    Route::post('event-page-viewers/{id}', 'eventPageViewerPing')->name('event.page.viewers.ping');
     Route::get('show_booking_details_show/{id}', 'show_booking_details_show')->middleware('auth');
     Route::get('invoice/pdf/{id}', 'downloadInvoicePdf')->middleware('auth')->name('invoice.pdf');
     Route::post('update-facevalue-ticket', 'updatefacevalueticket')->middleware('auth');

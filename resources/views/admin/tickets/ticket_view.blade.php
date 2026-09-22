@@ -70,6 +70,12 @@
                         <span class="badge bg-primary-transparent text-primary">{{ $data->ticket_status_name }}</span>
                     @endif
                 </p>
+                @if ((int) $data->is_admin_approved === 2 && !empty($data->rejection_reason))
+                    <div class="alert alert-danger tx-13 text-start mt-3 mb-0">
+                        <strong>Rejection Reason:</strong>
+                        <div class="mt-1">{{ $data->rejection_reason }}</div>
+                    </div>
+                @endif
             </div>
         </div>
 

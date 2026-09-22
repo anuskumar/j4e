@@ -19,6 +19,8 @@ use App\Models\VenueModel;
 use App\Models\VenueSeating;
 use App\Models\TicketPurchase;
 use App\Models\TicketStatus;
+use App\Models\MobileApplication;
+use App\Models\SplitTypeModel;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +29,8 @@ use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\Emailj4eController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
 {
@@ -131,7 +135,7 @@ class TicketController extends Controller
             $val->total_tickets = (int) (clone $ticketQuery)->sum('no_of_tickets');
         }
 
-        $eventTypes = EventType::orderBy('event_type_name')->get();
+        $eventTypes = EventType::ordered()->get();
 
         $locations = LocationModel::leftJoin('countries', 'countries.id', 'location.country')
             ->leftJoin('cities', 'cities.id', 'location.city')
@@ -274,12 +278,33 @@ class TicketController extends Controller
             'ticket_status.status_name as ticket_status_name'
         )->latest('event_tickets.created_at')->get();
 
-        $ticket_type = TicketType::get();
-        $event_timing = EventTiming::where('event', $id)->get();
+        $selectedTicketTypeIds = [];
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true) ?: [];
+        }
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)
+                ->where('is_active', 1)
+                ->get();
+        } else {
+            $ticket_type = TicketType::where('is_active', 1)->get();
+        }
+
+        $event_timing = EventTiming::where('event', $id)
+            ->where('is_active', 1)
+            ->orderBy('event_date')
+            ->orderBy('from_time')
+            ->get();
         $venue_seatings = VenueSeating::leftjoin('venue', 'venue.id', 'venue_seating.venue')
             ->where('venue.id', $event->venue)->select('*', 'venue_seating.id as id')->get();
-        $currency = Currency::get();
+        $currency = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         $restrictions = RestrictionModel::get();
+        $splittypes = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
+        $mobile_applications = MobileApplication::where('is_active', 1)->orderBy('name')->get();
         $ticketStatuses = TicketStatus::where('is_active', 1)->orderBy('id')->get();
 
         $filters = [
@@ -298,6 +323,8 @@ class TicketController extends Controller
             'venue_seatings',
             'currency',
             'restrictions',
+            'splittypes',
+            'mobile_applications',
             'ticketStatuses',
             'filters',
             'isReseller'
@@ -344,42 +371,60 @@ class TicketController extends Controller
 
      }
 
-       public function reject_tickets(Request $request){
+       public function reject_tickets(Request $request)
+       {
+            $validated = $request->validate([
+                'ticket_id' => 'required|numeric|exists:event_tickets,id',
+                'rejection_reason' => 'required|string|min:5|max:2000',
+            ]);
 
-          $data =[];
-          $id = $request->ticket_id;
-          $new = EventTickets::find($id);
-          if (!$new) {
+            $ticket = EventTickets::find($validated['ticket_id']);
+            if (!$ticket) {
                 return Response::json([
                     'status' => false,
-                    'message' => 'Ticket not found.'
+                    'message' => 'Ticket not found.',
                 ]);
-          }
-                $new->is_admin_approved = 2;
-                $new->ticket_status = EventTickets::STATUS_UNAPPROVED;
-                $new->save();
+            }
 
-                try {
-                    $user = User::find($new->created_by);
-                    $event = Events::find($new->event);
-                    if ($user && $event) {
-                        Mail::to($user->email)->send(new TicketRejectedMail(
-                            $user->name,
-                            $event->event_name,
-                            $event->event_from_date,
-                            $new->ticket_name
-                        ));
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Failed to send rejection email: ' . $e->getMessage(), [
-                        'ticket_id' => $id,
-                        'error' => $e->getMessage(),
-                    ]);
+            $reason = trim($validated['rejection_reason']);
+            $ticket->is_admin_approved = 2;
+            $ticket->ticket_status = EventTickets::STATUS_UNAPPROVED;
+            $ticket->rejection_reason = $reason;
+            $ticket->save();
+
+            $user = User::find($ticket->created_by);
+            $event = Events::find($ticket->event);
+
+            try {
+                if ($user && $user->email && $event) {
+                    Mail::to($user->email)->send(new TicketRejectedMail(
+                        $user->name,
+                        $event->event_name,
+                        $event->event_from_date,
+                        $ticket->ticket_name,
+                        $reason
+                    ));
                 }
-                $data['status'] = true;
-                $data['message'] = "Rejected";
-          return Response::json($data);
+            } catch (\Exception $e) {
+                Log::error('Failed to send rejection email: ' . $e->getMessage(), [
+                    'ticket_id' => $ticket->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
+            try {
+                app(NotificationService::class)->notifyTicketRejected($ticket, $reason, $user);
+            } catch (\Exception $e) {
+                Log::error('Failed to create rejection notification: ' . $e->getMessage(), [
+                    'ticket_id' => $ticket->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return Response::json([
+                'status' => true,
+                'message' => 'Ticket rejected. Reseller has been notified.',
+            ]);
        }
 
      public function approve_tickets(Request $request){
@@ -411,14 +456,9 @@ class TicketController extends Controller
                 ]);
             }
             
-            $seating = VenueSeating::find($ticket->venue_seating);
-            if (!$seating) {
-                DB::rollBack();
-                return Response::json([
-                    'status' => false,
-                    'message' => 'Cannot Approve: Venue seating has some issues. Please check that.'
-                ]);
-            }
+            $seating = $ticket->venue_seating
+                ? VenueSeating::find($ticket->venue_seating)
+                : null;
             
             $event = Events::where('id', $ticket->event)->first();
             if (!$event) {
@@ -435,6 +475,7 @@ class TicketController extends Controller
                 // Ticket already has generated tickets, just update approval status
                 $ticket->is_admin_approved = 1;
                 $ticket->ticket_status = EventTickets::STATUS_ACTIVE;
+                $ticket->rejection_reason = null;
                 $ticket->save();
                 DB::commit();
 
@@ -458,6 +499,15 @@ class TicketController extends Controller
                         'error' => $e->getMessage()
                     ]);
                 }
+
+                try {
+                    app(NotificationService::class)->notifyTicketApproved($ticket, $user);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create approval notification: ' . $e->getMessage(), [
+                        'ticket_id' => $id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
                 
                 return Response::json([
                     'status' => true,
@@ -465,31 +515,36 @@ class TicketController extends Controller
                 ]);
             }
             
-            // Check if seat information is available
-            if (!$ticket->seat_from || !$ticket->seat_to || !$ticket->row) {
-                DB::rollBack();
-                return Response::json([
-                    'status' => false,
-                    'message' => 'Cannot Approve: Seat information is missing. Please check seat details.'
-                ]);
+            // Generate individual tickets without requiring row/seat details.
+            // Prefer seat_from/seat_to when present; otherwise use no_of_tickets.
+            $seatPrefix = optional($seating)->seat_serial_prefix ?? 'T';
+            $seatRow = $ticket->row !== null && $ticket->row !== '' ? $ticket->row : null;
+
+            if ($ticket->seat_from !== null && $ticket->seat_from !== ''
+                && $ticket->seat_to !== null && $ticket->seat_to !== '') {
+                $seatFrom = (int) $ticket->seat_from;
+                $seatTo = (int) $ticket->seat_to;
+                if ($seatTo < $seatFrom) {
+                    [$seatFrom, $seatTo] = [$seatTo, $seatFrom];
+                }
+            } else {
+                $ticketCount = max(1, (int) $ticket->no_of_tickets);
+                $seatFrom = 1;
+                $seatTo = $ticketCount;
             }
-            
-            // Generate tickets for each seat
-            $seatFrom = (int)$ticket->seat_from;
-            $seatTo = (int)$ticket->seat_to;
-            $seatPrefix = $seating->seat_serial_prefix ?? 'T';
-            
+
             for ($i = $seatFrom; $i <= $seatTo; $i++) {
+                $rowPart = $seatRow !== null ? $seatRow : 'NA';
                 $new_generate = new TicketsGenerated();
                 $new_generate->event_tickets = $id;
-                $new_generate->ticket_serial_number = $seatPrefix . $i . '-' . $ticket->row . '-' . time() . '-' . $i;
+                $new_generate->ticket_serial_number = $seatPrefix . $i . '-' . $rowPart . '-' . time() . '-' . $i;
                 $new_generate->is_sold = 0;
                 $new_generate->under_purchase_hold = 0;
                 $new_generate->ticket_amount = $ticket->ticket_amount;
                 $new_generate->seat_number = $i;
-                $new_generate->seat_row = $ticket->row;
+                $new_generate->seat_row = $seatRow;
                 $new_generate->seat_prefix = $seatPrefix;
-                $new_generate->seat_number_prefix = $seatPrefix . '-' . $ticket->row . '-' . $i;
+                $new_generate->seat_number_prefix = $seatPrefix . '-' . $rowPart . '-' . $i;
                 $new_generate->event_timing = $ticket->event_timing;
                 $new_generate->event_seating = $ticket->venue_seating;
                 $new_generate->event_id = $ticket->event;
@@ -499,6 +554,7 @@ class TicketController extends Controller
             // Update ticket approval status
             $ticket->is_admin_approved = 1;
             $ticket->ticket_status = EventTickets::STATUS_ACTIVE;
+            $ticket->rejection_reason = null;
             $ticket->save();
             
             // Commit transaction
@@ -526,6 +582,15 @@ class TicketController extends Controller
                     'error' => $e->getMessage()
                 ]);
                 // Continue - approval was successful even if email failed
+            }
+
+            try {
+                app(NotificationService::class)->notifyTicketApproved($ticket, $user);
+            } catch (\Exception $e) {
+                Log::error('Failed to create approval notification: ' . $e->getMessage(), [
+                    'ticket_id' => $id,
+                    'error' => $e->getMessage(),
+                ]);
             }
             
             return Response::json([
@@ -563,112 +628,151 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        // dd($request->all());
-        if ($request->post('event_id') == '') {
-            $validated = $request->validate([
+        $isCreate = $request->post('event_id') == '';
+
+        if ($isCreate) {
+            $rules = [
                 'event' => 'required|numeric',
                 'ticket_name' => 'required',
                 'event_timing' => 'required|numeric',
-                'no_of_tickets' => 'required|numeric',
-                'ticket_amount' => 'required|numeric',
-                'face_value' => 'required|numeric',
+                'no_of_tickets' => 'required|numeric|min:1',
+                'ticket_amount' => 'required|numeric|min:0',
+                'cents' => 'nullable|numeric|min:0|max:99',
+                'face_value' => 'nullable|numeric|min:0',
                 'amount_currency' => 'required|numeric',
-                'row' => 'required|numeric',
-                'seat_from' => 'required|numeric',
-                'seat_to' => 'required|numeric',
+                'ticket_type' => 'required|exists:ticket_type,id',
+                'venue_seating' => 'required|numeric',
+                'sell_together' => 'required|numeric',
+                'row' => 'nullable|string|max:50',
+                'seat_from' => 'nullable|numeric',
+                'seat_to' => 'nullable|numeric',
+                'mobile_app' => [
+                    'nullable',
+                    Rule::exists('mobile_applications', 'id')->where('is_active', 1),
+                ],
+                'ticket_restrictions' => 'nullable|array',
+            ];
 
+            $ticketType = TicketType::find($request->ticket_type);
+            $isMobileTransfer = $ticketType && (
+                (int) $ticketType->id === 4
+                || (
+                    stripos($ticketType->ticket_type_name, 'mobile') !== false
+                    && stripos($ticketType->ticket_type_name, 'transfer') !== false
+                )
+            );
 
+            if ($isMobileTransfer) {
+                $rules['mobile_app'] = [
+                    'required',
+                    Rule::exists('mobile_applications', 'id')->where('is_active', 1),
+                ];
+            }
 
-            ]);
+            $request->validate($rules);
             $data = new EventTickets;
-          } else {
+            $data->unique_id = Str::random(16);
+        } else {
             $data = EventTickets::find($request->post('event_id'));
             info($data);
         }
+
+        $cents = (float) ($request->cents ?? 0);
+        $ticketAmount = (float) $request->ticket_amount + ($cents / 100);
+        $faceValue = $request->filled('face_value')
+            ? (float) $request->face_value
+            : $ticketAmount;
+
         $data->ticket_name = $request->ticket_name;
         $data->ticket_type = $request->ticket_type;
         $data->event = $request->event;
         $data->event_timing = $request->event_timing;
         $data->no_of_tickets = $request->no_of_tickets;
         $data->booking_expiry_date_time = $request->booking_expiry_date_time;
-        $data->no_of_tickets = $request->no_of_tickets;
         $data->venue_seating = $request->venue_seating;
-        $data->ticket_amount = $request->ticket_amount;
+        $data->ticket_amount = $ticketAmount;
         $data->amount_currency = $request->amount_currency;
         $data->cancellation_policy_notes = $request->cancellation_policy_notes;
         $data->disclaimer_note = $request->disclaimer_note;
         $data->row = $request->row;
         $data->seat_from = $request->seat_from;
         $data->seat_to = $request->seat_to;
-        $data->face_value = $request->face_value;
-        $data->web_price = $request->face_value;
-        if ($request->post('event_id') == '') {
-            $data->ticket_restrictions = json_encode($request->ticket_restrictions);
+        $data->face_value = $faceValue;
+        $data->split_type = $request->sell_together ?: $data->split_type;
+
+        $qty = max(1, (int) $request->no_of_tickets);
+        $sellerFeePercent = (float) optional(Events::find($request->event))->seller_fee_percent;
+        $sellerFeePercent = $sellerFeePercent > 0 ? $sellerFeePercent : 10;
+        $listingTotal = round($ticketAmount * $qty, 2);
+        $sellerFee = round(($listingTotal * $sellerFeePercent) / 100, 2);
+        $receivePerTicket = round($ticketAmount * (100 - $sellerFeePercent) / 100, 2);
+        $totalReceive = round($listingTotal - $sellerFee, 2);
+
+        // web_price is used as the public per-ticket listing price (same as ticket_amount).
+        $data->web_price = $ticketAmount;
+        $data->seller_fee = $sellerFee;
+        $data->recive_perticket = $receivePerTicket;
+        $data->total_recive = $totalReceive;
+
+        if ($isCreate || $request->has('ticket_restrictions')) {
+            $data->ticket_restrictions = json_encode($request->ticket_restrictions ?? []);
         }
 
-        if($request->hasFile('image')){
+        $features = [];
+        foreach (['clearView', 'limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat'] as $field) {
+            if ($request->has($field)) {
+                $features[] = $field;
+            }
+        }
+        if (in_array('clearView', $features, true) && in_array('limitedView', $features, true)) {
+            $features = array_values(array_filter($features, fn ($feature) => $feature !== 'limitedView'));
+        }
+        if ($isCreate || $request->hasAny(['clearView', 'limitedView', 'vipPass', 'mealPackage', 'parking', 'standingOnly', 'aisleSeat', 'features_submitted'])) {
+            $data->features = json_encode(['features' => $features]);
+        }
+
+        if ($request->filled('mobile_app')) {
+            $data->mobile_application_id = $request->mobile_app;
+        } elseif ($isCreate) {
+            $data->mobile_application_id = null;
+        }
+
+        if ($request->hasFile('image')) {
             $currentImagePath = storage_path('uploads/ticket_images') . '/' . $data->image;
 
             if (is_file($currentImagePath)) {
                 unlink($currentImagePath);
             }
-            $imageName = rand().'.'.$request->image->extension();
+            $imageName = rand() . '.' . $request->image->extension();
             $request->image->move(storage_path('uploads/ticket_images'), $imageName);
-            $data->image =  $imageName;
+            $data->image = $imageName;
         }
 
-        // if($request->hasFile('cover_image')){
-        //     $currentImagePath = storage_path('uploads/ticket_images') . '/' . $data->cover_image;
-
-        //     if (is_file($currentImagePath)) {
-        //         unlink($currentImagePath);
-        //     }
-        //     $imageName = rand().'.'.$request->cover_image->extension();
-        //     $request->cover_image->move(storage_path('uploads/ticket_images'), $imageName);
-        //     $data->cover_image =  $imageName;
-        // }
-        // if($request->hasFile('map_layout')){
-        //     $currentImagePath = storage_path('uploads/ticket_images') . '/' . $data->map_layout;
-
-        //     if (is_file($currentImagePath)) {
-        //         unlink($currentImagePath);
-        //     }
-        //     $imageName = rand().'.'.$request->map_layout->extension();
-        //     $request->map_layout->move(storage_path('uploads/ticket_images'), $imageName);
-        //     $data->map_layout =  $imageName;
-        // }
-        if($request->hasFile('ticket_upload')){
+        if ($request->hasFile('ticket_upload')) {
             $currentImagePath = storage_path('uploads/ticket_images') . '/' . $data->ticket_upload;
 
             if (is_file($currentImagePath)) {
                 unlink($currentImagePath);
             }
-            $imageName = rand().'.'.$request->ticket_upload->extension();
+            $imageName = rand() . '.' . $request->ticket_upload->extension();
             $request->ticket_upload->move(storage_path('uploads/ticket_images'), $imageName);
-            $data->ticket_upload =  $imageName;
+            $data->ticket_upload = $imageName;
         }
-
 
         $data->is_admin_approved = 0;
         $data->ticket_status = EventTickets::STATUS_UNAPPROVED;
         $data->created_by = Auth::user()->id;
         $data->save();
 
-        if ($request->post('event_id') == '') {
+        if ($isCreate) {
             app(NotificationService::class)->notifyTicketCreated($data);
         }
 
-        // dd($request->request);
         if ($request->post('event_id')) {
             return back()->with('success', 'Ticket Updated successfully');
-            // return redirect('tickets/manage_tickets'.'/'.$request->event)->with('success','Ticket Updated successfully');
-
-        } else{
-            return back()->with('success', 'Ticket Created successfully');
-
-            // return redirect('tickets/manage_tickets'.'/'.$request->event)->with('success','Ticket Created successfully');
         }
+
+        return back()->with('success', 'Ticket Created successfully');
     }
 
     /**
@@ -727,8 +831,6 @@ class TicketController extends Controller
      */
     public function ticket_edit(string $id)
     {
-        //
-        // info($id);
         $data = EventTickets::
         leftjoin('ticket_type','ticket_type.id','event_tickets.ticket_type')
         ->leftjoin('event','event.id','event_tickets.event')
@@ -737,18 +839,48 @@ class TicketController extends Controller
         ->leftjoin('event_timings','event_timings.id','event_tickets.event_timing')
         ->leftjoin('ticket_status','ticket_status.id','event_tickets.ticket_status')
         ->where('event_tickets.id',$id)
-        ->select('*','event_tickets.id as id')->first();
+        ->select('*','event_tickets.id as id', 'event_tickets.event as event')->first();
 
-        $ticket_type =TicketType::get();
-        $event_timing = EventTiming::where('event',$data->event)->get();
+        $event = Events::find($data->event);
+        $selectedTicketTypeIds = [];
+        if (!empty($event->ticket_types)) {
+            $selectedTicketTypeIds = json_decode($event->ticket_types, true) ?: [];
+        }
+        if (!empty($selectedTicketTypeIds) && is_array($selectedTicketTypeIds)) {
+            $ticket_type = TicketType::whereIn('id', $selectedTicketTypeIds)->where('is_active', 1)->get();
+        } else {
+            $ticket_type = TicketType::where('is_active', 1)->get();
+        }
+
+        $event_timing = EventTiming::where('event', $data->event)->where('is_active', 1)->orderBy('event_date')->orderBy('from_time')->get();
 
         $venue_seatings = VenueSeating::leftjoin('venue','venue.id','venue_seating.venue')
         ->where('venue.id',$data->venue)->select('*','venue_seating.id as id')->get();
-        $currency  = Currency::get();
+        $currency = Currency::select('id', 'short_name', 'name', 'currency_rate', 'symbol', 'is_active')
+            ->orderByRaw("CASE WHEN UPPER(short_name) = 'USD' THEN 0 ELSE 1 END")
+            ->orderByDesc('is_active')
+            ->orderBy('name')
+            ->get();
         $restrictions = RestrictionModel::get();
-        // dd($data);
-        return view('admin.tickets.ticket_edit',compact('data','ticket_type','event_timing','venue_seatings','currency','restrictions'));
+        $splittypes = SplitTypeModel::select('split_name', 'id')->where('is_active', 1)->get();
+        $mobile_applications = MobileApplication::where('is_active', 1)->orderBy('name')->get();
+        $selectedFeatures = [];
+        if (!empty($data->features)) {
+            $decoded = json_decode($data->features, true);
+            $selectedFeatures = $decoded['features'] ?? [];
+        }
 
+        return view('admin.tickets.ticket_edit', compact(
+            'data',
+            'ticket_type',
+            'event_timing',
+            'venue_seatings',
+            'currency',
+            'restrictions',
+            'splittypes',
+            'mobile_applications',
+            'selectedFeatures'
+        ));
     }
 
     /**
@@ -777,12 +909,14 @@ class TicketController extends Controller
     {
         $eventTicket = EventTickets::leftJoin('event', 'event.id', 'event_tickets.event')
             ->leftJoin('currency', 'currency.id', 'event_tickets.amount_currency')
+            ->leftJoin('venue_seating', 'venue_seating.id', 'event_tickets.venue_seating')
             ->where('event_tickets.id', $id)
             ->select(
                 'event_tickets.*',
                 'event_tickets.id as id',
                 'event.event_name',
-                'currency.short_name as currency_short_name'
+                'currency.short_name as currency_short_name',
+                'venue_seating.seating_type_name'
             )
             ->firstOrFail();
 
@@ -807,9 +941,10 @@ class TicketController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('ticket_serial_number', 'like', '%' . $search . '%')
-                    ->orWhere('seat_number_prefix', 'like', '%' . $search . '%')
-                    ->orWhere('seat_id', 'like', '%' . $search . '%');
+                $q->where('seat_number_prefix', 'like', '%' . $search . '%')
+                    ->orWhere('seat_id', 'like', '%' . $search . '%')
+                    ->orWhere('seat_row', 'like', '%' . $search . '%')
+                    ->orWhere('seat_number', 'like', '%' . $search . '%');
             });
         }
 
@@ -821,7 +956,9 @@ class TicketController extends Controller
             'search' => $request->search,
         ];
 
-        return view('admin.tickets.generated_ticket_list', compact('data', 'eventTicket', 'filters'));
+        $ticketTypes = TicketType::where('is_active', 1)->orderBy('ticket_type_name')->get();
+
+        return view('admin.tickets.generated_ticket_list', compact('data', 'eventTicket', 'filters', 'ticketTypes'));
     }
     
     public function updateTicketPrice(Request $request, $id)
@@ -889,7 +1026,12 @@ class TicketController extends Controller
     public function get_individual_ticketdata(Request $request, $ticketId)
     {
 
-        $individualticketData = TicketsGenerated::with('eventTicket.ticketType','eventTicket.event.venue','eventTiming')->where('id', $ticketId)->first();
+        $individualticketData = TicketsGenerated::with(
+            'eventTicket.ticketType',
+            'eventTicket.event.venue',
+            'eventTicket.seating',
+            'eventTiming'
+        )->where('id', $ticketId)->first();
         info($individualticketData);
         return response()->json([
             'individualticketData' => $individualticketData,
@@ -924,43 +1066,102 @@ class TicketController extends Controller
 
     public function outsidesell(Request $request)
     {
+        $validated = $request->validate([
+            'event_ticket_tickets_id' => 'required|exists:event_ticket_tickets,id',
+            'ticket_type_id' => 'required|exists:ticket_type,id',
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string',
+            'date' => 'nullable|date',
+            'payment_mode' => 'required|string|max:100',
+            'cost_price' => 'nullable|numeric|min:0',
+            'sale_price' => 'required|numeric|min:0',
+            'remark' => 'nullable|string',
+        ]);
+
+        $generated = TicketsGenerated::findOrFail($validated['event_ticket_tickets_id']);
+        $costPrice = $request->filled('cost_price')
+            ? (float) $request->cost_price
+            : (float) ($generated->ticket_amount ?? 0);
+
         $data = new OutsideSellModel();
-        $data->event_ticket_tickets_id  = $request->event_ticket_tickets_id;
-        $data->name = $request->name;
+        $data->event_ticket_tickets_id = $validated['event_ticket_tickets_id'];
+        $data->ticket_type_id = $validated['ticket_type_id'];
+        $data->name = $validated['name'];
         $data->phone = $request->phone;
+        $data->email = $request->email;
         $data->address = $request->address;
         $data->date = $request->date;
-        $data->payment_mode = $request->payment_mode;
-
+        $data->payment_mode = $validated['payment_mode'];
+        $data->cost_price = $costPrice;
+        $data->sale_price = $validated['sale_price'];
+        $data->remark = $request->remark;
         $data->save();
 
-        $generated = TicketsGenerated::find($request->event_ticket_tickets_id);
-        if ($generated) {
-            $generated->is_sold = 1;
-            $generated->fulfillment_status = TicketsGenerated::FULFILLMENT_SOLD;
-            $generated->on_sale = 0;
-            $generated->save();
+        $generated->is_sold = 1;
+        $generated->fulfillment_status = TicketsGenerated::FULFILLMENT_SOLD;
+        $generated->on_sale = 0;
+        $generated->ticket_amount = $validated['sale_price'];
+        $generated->under_purchase_hold = 0;
+        $generated->save();
 
-            EventTickets::markSoldAfterFulfillment((int) $generated->event_tickets);
-        }
+        EventTickets::markSoldAfterFulfillment((int) $generated->event_tickets);
 
-        return redirect()->back();
-
-
+        return redirect()->back()->with('success', 'Outside sell saved successfully.');
     }
 
     public function get_outsidesell_data(Request $request, $outsidesell_id)
     {
-
-        // return $outsidesell_id;
-
-        $outsidesellData = OutsideSellModel::where('id', $outsidesell_id)->first();
+        $outsidesellData = OutsideSellModel::with('ticketType')->where('id', $outsidesell_id)->first();
 
         return response()->json([
             'outsidesellData' => $outsidesellData,
+            'ticket_type_name' => optional($outsidesellData?->ticketType)->ticket_type_name,
+            'proof_urls' => $outsidesellData ? $outsidesellData->proof_urls : [],
+        ]);
+    }
+
+    public function uploadOutsideSellProof(Request $request)
+    {
+        $validated = $request->validate([
+            'outsidesell_id' => 'required|exists:outsidesell,id',
+            'proof_files' => 'required|array|min:1',
+            'proof_files.*' => 'file|mimes:jpg,jpeg,png,pdf,webp|max:5120',
         ]);
 
-        // return view('admin.tickets.generated_ticket_list', compact('individualticketData'));
+        $sale = OutsideSellModel::findOrFail($validated['outsidesell_id']);
+        $uploadDir = storage_path('uploads/outside_sell_proof');
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $existing = $sale->proof_files_list;
+        $uploaded = [];
+
+        foreach ($request->file('proof_files', []) as $file) {
+            if (!$file) {
+                continue;
+            }
+            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move($uploadDir, $fileName);
+            $existing[] = $fileName;
+            $uploaded[] = $fileName;
+        }
+
+        $sale->proof_file = array_values(array_unique($existing));
+        $sale->save();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => count($uploaded) . ' proof file(s) uploaded successfully.',
+                'proof_files' => $sale->proof_files_list,
+                'proof_urls' => $sale->proof_urls,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Proof file(s) uploaded successfully.');
     }
 
 public function updateStatus(Request $request, $id)
@@ -975,15 +1176,15 @@ public function updateStatus(Request $request, $id)
         ], 404);
     }
 
-    if (! $ticket->canToggleActivePosted()) {
+    if (! $ticket->canToggleActivePaused()) {
         return response()->json([
             'success' => false,
-            'message' => 'Only Active or Posted listings can be toggled.',
+            'message' => 'Only Active or Paused listings can be toggled.',
         ], 422);
     }
 
     $ticket->ticket_status = (int) $ticket->ticket_status === EventTickets::STATUS_ACTIVE
-        ? EventTickets::STATUS_POSTED
+        ? EventTickets::STATUS_PAUSED
         : EventTickets::STATUS_ACTIVE;
 
     $ticket->save();

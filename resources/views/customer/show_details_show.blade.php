@@ -7,18 +7,31 @@
     $eventImageUrl = !empty($event_datas->event_image)
         ? asset('storage/uploads/events/' . $event_datas->event_image)
         : $defaultEventImg;
-    $venueImageUrl = !empty($event_datas->venue_image)
-        ? asset('storage/uploads/venue/' . $event_datas->venue_image)
-        : $defaultVenueImg;
+    $venueImageUrl = !empty($event_datas->venue_map)
+        ? asset('storage/uploads/venue_maps/' . $event_datas->venue_map)
+        : (!empty($event_datas->venue_image)
+            ? asset('storage/uploads/venue/' . $event_datas->venue_image)
+            : $defaultVenueImg);
     $currencyLabel = $allTickets[0]['ticket']->short_name ?? '';
-    $eventDateLabel = $event_datas->event_from_date
-        ? \Carbon\Carbon::parse($event_datas->event_from_date)->format('d M • D • Y')
-        : '';
-    $eventTimeLabel = $event_timing->from_time ?? ($allTickets[0]['from_time'] ?? '');
+    $selectedTimingId = $selectedTimingId ?? null;
+    $headerTiming = $event_timing ?? null;
+    $eventDateLabel = $headerTiming && $headerTiming->event_date
+        ? \Carbon\Carbon::parse($headerTiming->event_date)->format('d M • D • Y')
+        : ($event_datas->event_from_date
+            ? \Carbon\Carbon::parse($event_datas->event_from_date)->format('d M • D • Y')
+            : '');
+    $eventTimeLabel = $headerTiming?->from_time ?? ($allTickets[0]['from_time'] ?? '');
     if ($eventTimeLabel) {
-        $eventTimeLabel = \Carbon\Carbon::parse($eventTimeLabel)->format('H:i');
+        $eventTimeLabel = \Carbon\Carbon::parse($eventTimeLabel)->format('g:i A');
+        if (!empty($headerTiming?->to_time)) {
+            $eventTimeLabel .= ' – ' . \Carbon\Carbon::parse($headerTiming->to_time)->format('g:i A');
+        }
     }
-    $locationLabel = trim(($event_datas->venue_name ?? '') . ', ' . ($event_datas->location_name ?? '') . ', ' . ($event_datas->country_name ?? ''));
+    $venueName = trim((string) ($event_datas->venue_name ?? ''));
+    $cityName = trim((string) ($event_datas->city_name ?? ''));
+    $countryName = trim((string) ($event_datas->country_name ?? ''));
+    $cityCountry = implode(', ', array_filter([$cityName, $countryName]));
+    $locationLabel = implode(' · ', array_filter([$venueName, $cityCountry]));
 @endphp
 
 <style>
@@ -84,6 +97,11 @@
         border: 1px solid #e8ebf3;
     }
 
+    .event-header-bar__content {
+        flex: 1;
+        min-width: 0;
+    }
+
     .event-header-bar__title {
         font-size: 22px;
         font-weight: 700;
@@ -102,6 +120,281 @@
         font-size: 13px;
         color: #6b7280;
         margin: 2px 0 0;
+    }
+
+    .event-photos-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(21, 101, 192, 0.25);
+        background: #eff6ff;
+        color: #022D5F;
+        border-radius: 999px;
+        padding: 9px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .event-photos-btn:hover,
+    .event-photos-btn:focus {
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        border-color: #1565C0;
+        color: #fff;
+        text-decoration: none;
+        box-shadow: 0 6px 16px rgba(2, 45, 95, 0.22);
+        outline: none;
+    }
+
+    .event-photos-btn__count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: rgba(21, 101, 192, 0.12);
+        color: inherit;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .event-photos-btn:hover .event-photos-btn__count,
+    .event-photos-btn:focus .event-photos-btn__count {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .event-header-bar__aside {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .event-viewers-strip {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 0 0 10px;
+    }
+
+    .event-viewers {
+        display: inline-flex;
+        align-items: stretch;
+        gap: 10px;
+        max-width: 100%;
+        padding: 6px;
+        border-radius: 18px;
+        background: linear-gradient(90deg, rgba(2, 45, 95, 0.06) 0%, rgba(21, 101, 192, 0.1) 100%);
+        border: 1px solid rgba(21, 101, 192, 0.16);
+        box-shadow: 0 6px 18px rgba(2, 45, 95, 0.06);
+    }
+
+    .event-viewers__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        max-width: 320px;
+        padding: 10px 16px 10px 12px;
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(21, 101, 192, 0.1);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .event-viewers__icon-wrap {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        font-size: 12px;
+        position: relative;
+    }
+
+    .event-viewers__icon-wrap--live::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #22c55e;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+        animation: eventViewerPulse 1.8s ease-out infinite;
+    }
+
+    .event-viewers__copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        line-height: 1.25;
+        min-width: 0;
+    }
+
+    .event-viewers__value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #022D5F;
+        letter-spacing: -0.01em;
+    }
+
+    .event-viewers__label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #64748b;
+        text-transform: none;
+        letter-spacing: 0;
+        white-space: normal;
+    }
+
+    @keyframes eventViewerPulse {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+        70% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .event-photos-modal .modal-dialog {
+        max-width: 860px;
+    }
+
+    .event-photos-modal .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    }
+
+    .event-photos-modal .modal-header {
+        border-bottom: 1px solid #eef1f7;
+        padding: 16px 20px;
+        background: #fff;
+    }
+
+    .event-photos-modal .modal-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .event-photos-modal .modal-title i {
+        color: #7e0982;
+    }
+
+    .event-photos-modal .modal-body {
+        padding: 16px;
+        background: #f8f9fc;
+        max-height: min(72vh, 640px);
+        overflow-y: auto;
+    }
+
+    .event-photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .event-photos-grid__item a {
+        display: block;
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #111827;
+        aspect-ratio: 4 / 3;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .event-photos-grid__item a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    }
+
+    .event-photos-grid__item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .event-photos-grid__item a::after {
+        content: '\f00e';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.35);
+        color: #fff;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 18px;
+    }
+
+    .event-photos-grid__item a:hover::after {
+        opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+        .event-header-bar {
+            flex-wrap: wrap;
+        }
+
+        .event-header-bar__aside {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .event-viewers-strip {
+            margin-bottom: 12px;
+        }
+
+        .event-viewers {
+            width: 100%;
+            border-radius: 16px;
+            justify-content: stretch;
+        }
+
+        .event-viewers__item {
+            flex: 1 1 0;
+            min-width: 0;
+            justify-content: flex-start;
+            padding: 8px 10px;
+        }
+
+        .event-viewers__label {
+            white-space: normal;
+        }
+
+        .event-photos-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .event-photos-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
     }
 
     .filter-bar {
@@ -507,6 +800,31 @@
         gap: 6px;
     }
 
+    .ticket-card__split-reason {
+        display: none;
+        font-size: 12px;
+        color: #9d174d;
+        font-weight: 600;
+        margin: 6px 0 0;
+        align-items: flex-start;
+        gap: 6px;
+        line-height: 1.35;
+    }
+
+    .ticket-card__split-reason.is-visible {
+        display: flex;
+    }
+
+    .ticket-card--split-blocked {
+        border-color: #f9a8d4;
+        background: #fff7fb;
+    }
+
+    .ticket-card--split-blocked .btn-book {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
     .ticket-card__price-block {
         text-align: right;
         flex-shrink: 0;
@@ -567,6 +885,159 @@
         color: #9d174d;
     }
 
+    .ticket-qty-modal .modal-dialog {
+        max-width: 420px;
+    }
+
+    .ticket-qty-modal .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+        padding: 8px 4px 4px;
+    }
+
+    .ticket-qty-modal__title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #111827;
+        text-align: center;
+        margin: 12px 0 20px;
+    }
+
+    .ticket-qty-modal__select {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #111827;
+        background: #fff;
+        appearance: auto;
+    }
+
+    .ticket-qty-modal__select:focus {
+        outline: none;
+        border-color: #1565C0;
+        box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.2);
+    }
+
+    .ticket-qty-modal__together {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 14px 14px 14px 12px;
+        background: #f3f4f6;
+        border-radius: 12px;
+    }
+
+    .ticket-qty-modal__together-icon {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #1565C0;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+
+    .ticket-qty-modal__together-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ticket-qty-modal__together-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .ticket-qty-modal__together-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .ticket-qty-modal__together-hint {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 6px 0 0;
+        line-height: 1.4;
+    }
+
+    .ticket-qty-toggle {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+
+    .ticket-qty-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .ticket-qty-toggle__slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: #d1d5db;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+    }
+
+    .ticket-qty-toggle__slider::before {
+        content: '';
+        position: absolute;
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s ease;
+    }
+
+    .ticket-qty-toggle input:checked + .ticket-qty-toggle__slider {
+        background: #1565C0;
+    }
+
+    .ticket-qty-toggle input:checked + .ticket-qty-toggle__slider::before {
+        transform: translateX(20px);
+    }
+
+    .ticket-qty-modal__continue {
+        display: block;
+        width: 100%;
+        margin-top: 20px;
+        min-height: 50px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        font-size: 17px;
+        font-weight: 700;
+        transition: filter 0.2s ease, transform 0.15s ease;
+    }
+
+    .ticket-qty-modal__continue:hover,
+    .ticket-qty-modal__continue:focus {
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        filter: brightness(1.06);
+        outline: none;
+    }
+
     .no-results-box {
         border: 1px dashed #d1d5db;
         border-radius: 12px;
@@ -616,10 +1087,38 @@
     <input type="hidden" id="event-id" value="{{ $id }}">
 
     <div class="ticket-picker-page__top">
+    @php
+        $galleryImages = ($event_images ?? collect())->filter(fn ($img) => !empty($img->image))->values();
+        $viewerStats = $viewerStats ?? ['current' => 1, 'past_hour' => 1];
+    @endphp
+
+    <div class="event-viewers-strip">
+        <div class="event-viewers" id="event-viewers" data-event-id="{{ $id }}" aria-live="polite">
+            <div class="event-viewers__item">
+                <span class="event-viewers__icon-wrap event-viewers__icon-wrap--live" aria-hidden="true">
+                    <i class="fas fa-user-friends"></i>
+                </span>
+                <span class="event-viewers__copy">
+                    <span class="event-viewers__value" id="event-viewers-current">{{ (int) ($viewerStats['current'] ?? 1) }}</span>
+                    <span class="event-viewers__label">People currently viewing this event</span>
+                </span>
+            </div>
+            <div class="event-viewers__item">
+                <span class="event-viewers__icon-wrap" aria-hidden="true">
+                    <i class="fas fa-eye"></i>
+                </span>
+                <span class="event-viewers__copy">
+                    <span class="event-viewers__value" id="event-viewers-hour">{{ (int) ($viewerStats['past_hour'] ?? 1) }}</span>
+                    <span class="event-viewers__label">People who viewed this event in the past hour</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
     <div class="event-header-bar">
         <img src="{{ $eventImageUrl }}" alt="{{ $event_datas->event_name }}" class="event-header-bar__thumb"
             onerror="this.onerror=null;this.src='{{ $defaultEventImg }}';">
-        <div>
+        <div class="event-header-bar__content">
             <h1 class="event-header-bar__title">{{ Str::ucfirst($event_datas->event_name ?? '') }}</h1>
             <p class="event-header-bar__meta">
                 @if ($eventDateLabel)
@@ -629,14 +1128,61 @@
                     @endif
                 @endif
             </p>
-            <p class="event-header-bar__venue">{{ $locationLabel }}</p>
-            @if (!empty($event_datas->tag_name))
-                <p class="event-header-bar__venue mb-0">{{ $event_datas->tag_name }}</p>
-            @endif
+            <p class="event-header-bar__venue">
+                @if($venueName !== '')
+                    <strong>{{ $venueName }}</strong>@if($cityCountry !== '') · {{ $cityCountry }}@endif
+                @elseif($cityCountry !== '')
+                    {{ $cityCountry }}
+                @endif
+            </p>
         </div>
+        @if ($galleryImages->count())
+            <div class="event-header-bar__aside">
+                <button type="button"
+                    class="event-photos-btn"
+                    data-toggle="modal"
+                    data-target="#eventPhotosModal">
+                    <i class="far fa-images"></i>
+                    See event photos
+                    <span class="event-photos-btn__count">{{ $galleryImages->count() }}</span>
+                </button>
+            </div>
+        @endif
     </div>
 
     <div class="filter-bar">
+        @if (($event_timings ?? collect())->count() > 0)
+        <div class="dropdown">
+            <button class="filter-pill dropdown-toggle {{ $selectedTimingId ? 'active' : '' }}" type="button" id="timingDropdown" aria-haspopup="true" aria-expanded="false">
+                @if ($headerTiming)
+                    {{ $headerTiming->event_date ? \Carbon\Carbon::parse($headerTiming->event_date)->format('d M Y') : 'Timing' }}
+                    @if ($headerTiming->from_time)
+                        · {{ \Carbon\Carbon::parse($headerTiming->from_time)->format('g:i A') }}
+                    @endif
+                @else
+                    Timing
+                @endif
+            </button>
+            <ul class="dropdown-menu" id="timingOptions">
+                <li><a class="dropdown-item timing-option" href="#" data-value="all">All Timings</a></li>
+                @foreach ($event_timings as $timingOption)
+                    @php
+                        $timingLabel = trim(
+                            ($timingOption->event_date ? \Carbon\Carbon::parse($timingOption->event_date)->format('d M Y') : '')
+                            . ($timingOption->from_time ? ' · ' . \Carbon\Carbon::parse($timingOption->from_time)->format('g:i A') : '')
+                            . ($timingOption->to_time ? ' – ' . \Carbon\Carbon::parse($timingOption->to_time)->format('g:i A') : '')
+                        );
+                    @endphp
+                    <li>
+                        <a class="dropdown-item timing-option" href="#" data-value="{{ $timingOption->id }}">
+                            {{ $timingLabel !== '' ? $timingLabel : ('Timing #'.$timingOption->id) }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
         <div class="dropdown">
             <button class="filter-pill dropdown-toggle" type="button" id="zoneDropdown" aria-haspopup="true" aria-expanded="false">
                 Zone
@@ -749,7 +1295,9 @@
                             data-availability="{{ $item['availability'] }}"
                             data-zone="{{ $dat->seating_type_name }}"
                             data-price="{{ $ticketPrice }}"
-                            data-split-type="{{ $dat->split_type }}">
+                            data-timing-id="{{ $item['timing_id'] ?? '' }}"
+                            data-split-name="{{ $dat->split_type_name ?? 'Any' }}"
+                            data-split-ok="1">
                             <div class="ticket-card__top">
                                 <div>
                                     <h3 class="ticket-card__section">{{ $item['section_label'] }}</h3>
@@ -770,35 +1318,21 @@
                                 @if ($dat->ticket_type_name)
                                     <span class="ticket-tag"><i class="fas fa-ticket-alt"></i> {{ $dat->ticket_type_name }}</span>
                                 @endif
-                                @if (!empty($dat->split_type_name))
-                                    <span class="ticket-tag"><i class="fas fa-layer-group"></i> {{ $dat->split_type_name }}</span>
-                                @endif
                                 @if ($item['has_eticket'])
                                     <span class="ticket-tag"><i class="fas fa-bolt"></i> Instant download</span>
                                 @endif
                                 @foreach ($item['restrictions'] as $restriction)
                                     <span class="ticket-tag ticket-tag--warning"><i class="fas fa-exclamation-circle"></i> {{ $restriction }}</span>
                                 @endforeach
-                                @if (empty($item['restrictions']))
+                                @if (!empty($item['has_clear_view']))
                                     <span class="ticket-tag"><i class="fas fa-eye"></i> Clear view</span>
+                                @elseif (!empty($item['has_limited_view']))
+                                    <span class="ticket-tag ticket-tag--warning"><i class="fas fa-eye-slash"></i> Limited view</span>
                                 @endif
                             </div>
 
                             <div class="ticket-card__footer">
                                 <div class="ticket-card__notes">
-                                    <p class="ticket-card__note-line">
-                                        <i class="far fa-calendar-alt"></i>
-                                        {{ isset($item['event_date']) ? date('D, d M Y', strtotime($item['event_date'])) : '-' }}
-                                        @if (!empty($item['from_time']))
-                                            · {{ date('g:i A', strtotime($item['from_time'])) }}
-                                            @if (!empty($item['to_time']))
-                                                – {{ date('g:i A', strtotime($item['to_time'])) }}
-                                            @endif
-                                        @endif
-                                    </p>
-                                    <p class="ticket-card__note-line">
-                                        <i class="fas fa-map-marker-alt"></i> {{ $dat->seating_type_name ?? 'Venue seating' }}
-                                    </p>
                                     @if ($item['availability'] <= 3)
                                         <p class="ticket-card__note-line" style="color:#9d174d;font-weight:600;">
                                             <i class="fas fa-fire"></i>
@@ -810,6 +1344,7 @@
                                             {{ $item['availability'] }} tickets remaining in this listing
                                         </p>
                                     @endif
+                                    <p class="ticket-card__split-reason" aria-live="polite"></p>
                                 </div>
                                 <div class="ticket-card__price-block">
                                     @if ($item['face_value'] > $ticketPrice)
@@ -831,17 +1366,102 @@
             </div>
         </div>
     </div>
+
 </div>
+
+<div class="modal fade ticket-qty-modal" id="ticketQtyModal" tabindex="-1" role="dialog" aria-labelledby="ticketQtyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body px-4 pb-4 pt-3">
+                <h2 class="ticket-qty-modal__title" id="ticketQtyModalLabel">How many tickets?</h2>
+
+                <label class="sr-only" for="ticket-qty-select">Number of tickets</label>
+                <select id="ticket-qty-select" class="ticket-qty-modal__select">
+                    @php
+                        $qtySelectMax = max(1, (int) ($maxQuantityOption ?? 6));
+                        $qtySelectMax = min(10, max($qtySelectMax, 6));
+                    @endphp
+                    @for ($q = 1; $q <= $qtySelectMax; $q++)
+                        <option value="{{ $q }}" {{ $q === 2 ? 'selected' : '' }}>
+                            {{ $q }} ticket{{ $q > 1 ? 's' : '' }}
+                        </option>
+                    @endfor
+                </select>
+
+                <div class="ticket-qty-modal__together">
+                    <span class="ticket-qty-modal__together-icon" aria-hidden="true">
+                        <i class="fas fa-couch"></i>
+                    </span>
+                    <div class="ticket-qty-modal__together-body">
+                        <div class="ticket-qty-modal__together-row">
+                            <p class="ticket-qty-modal__together-label">We want to be seated together</p>
+                            <label class="ticket-qty-toggle" for="ticket-qty-together">
+                                <input type="checkbox" id="ticket-qty-together" checked>
+                                <span class="ticket-qty-toggle__slider"></span>
+                            </label>
+                        </div>
+                        <p class="ticket-qty-modal__together-hint">
+                            We will find you the best available tickets based on your search criteria.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button" class="ticket-qty-modal__continue" id="ticket-qty-continue">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (($galleryImages ?? collect())->count())
+<div class="modal fade event-photos-modal" id="eventPhotosModal" tabindex="-1" role="dialog" aria-labelledby="eventPhotosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventPhotosModalLabel">
+                    <i class="far fa-images"></i>
+                    Event Photos
+                    <span class="event-photos-btn__count ml-1">{{ $galleryImages->count() }}</span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <ul class="event-photos-grid">
+                    @foreach ($galleryImages as $index => $img)
+                        <li class="event-photos-grid__item">
+                            <a href="{{ asset('storage/uploads/events/' . $img->image) }}"
+                                data-fancybox="event-photos"
+                                data-caption="{{ ($event_datas->event_name ?? 'Event photo') . ' (' . ($index + 1) . '/' . $galleryImages->count() . ')' }}">
+                                <img
+                                    src="{{ asset('storage/uploads/events/' . $img->image) }}"
+                                    alt="{{ ($event_datas->event_name ?? 'Event') . ' photo ' . ($index + 1) }}"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='{{ asset('assets/img/default-event.jpg') }}';">
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     let currentZone = 'all';
+    let currentTiming = @json($selectedTimingId ? (string) $selectedTimingId : 'all');
     let currentQuantity = 1;
     let quantitySelected = false;
+    let seatedTogether = true;
     let customQuantityMode = false;
     let currentMinPrice = 0;
     let currentMaxPrice = Number.MAX_SAFE_INTEGER;
 
+    const timingButton = document.getElementById('timingDropdown');
     const zoneButton = document.getElementById('zoneDropdown');
     const quantityButton = document.getElementById('quantityDropdown');
     const priceButton = document.getElementById('priceDropdown');
@@ -850,6 +1470,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const visibleCountEl = document.getElementById('visible-listing-count');
     const noResultsMessage = document.getElementById('no-results-message');
     const filterBar = document.querySelector('.filter-bar');
+    const headerMeta = document.querySelector('.event-header-bar__meta');
+    const timingLabels = @json(
+        ($event_timings ?? collect())->mapWithKeys(function ($timing) {
+            $label = trim(
+                ($timing->event_date ? \Carbon\Carbon::parse($timing->event_date)->format('d M • D • Y') : '')
+                . ($timing->from_time ? ' • ' . \Carbon\Carbon::parse($timing->from_time)->format('g:i A') : '')
+                . ($timing->to_time ? ' – ' . \Carbon\Carbon::parse($timing->to_time)->format('g:i A') : '')
+            );
+
+            return [(string) $timing->id => $label !== '' ? $label : ('Timing #'.$timing->id)];
+        })
+    );
 
     function closeAllFilterDropdowns() {
         if (!filterBar) return;
@@ -896,12 +1528,37 @@ document.addEventListener('DOMContentLoaded', function () {
         let maxQty = 0;
         document.querySelectorAll('.ticket-container').forEach(function (ticket) {
             const ticketZone = ticket.getAttribute('data-zone') || '';
+            const ticketTiming = ticket.getAttribute('data-timing-id') || '';
             const availability = parseInt(ticket.getAttribute('data-availability'), 10) || 0;
-            if (zone === 'all' || ticketZone === zone) {
+            const matchesTiming = currentTiming === 'all' || String(ticketTiming) === String(currentTiming);
+            if (matchesTiming && (zone === 'all' || ticketZone === zone)) {
                 maxQty = Math.max(maxQty, availability);
             }
         });
         return maxQty;
+    }
+
+    function updateTimingHeader() {
+        if (!headerMeta) {
+            return;
+        }
+
+        if (currentTiming !== 'all' && timingLabels[currentTiming]) {
+            headerMeta.textContent = timingLabels[currentTiming];
+            return;
+        }
+
+        headerMeta.textContent = @json(trim($eventDateLabel . ($eventTimeLabel ? ' • ' . $eventTimeLabel : '')));
+    }
+
+    function syncTimingQueryParam() {
+        const url = new URL(window.location.href);
+        if (currentTiming && currentTiming !== 'all') {
+            url.searchParams.set('timing', currentTiming);
+        } else {
+            url.searchParams.delete('timing');
+        }
+        window.history.replaceState({}, '', url.toString());
     }
 
     function hideCustomQuantityPanel() {
@@ -1021,40 +1678,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showQuantityRequiredNotice() {
-        if (typeof swal === 'function') {
-            swal({
-                title: 'Quantity required',
-                text: 'Please select a quantity before booking.',
-                icon: 'warning',
-                button: 'OK',
-            });
-        } else if (typeof toastr !== 'undefined') {
-            toastr.warning('Please select a quantity before booking.');
-        } else {
-            alert('Please select a quantity before booking.');
-        }
-
-        if (quantityButton) {
-            quantityButton.classList.add('filter-pill--required');
-            quantityButton.focus();
-        }
+        openTicketQtyModal();
     }
 
     function updateBookButtons() {
         document.querySelectorAll('.btn-book').forEach(function (button) {
             const card = button.closest('.ticket-container');
             const isVisible = card && card.style.display !== 'none';
-            const canBook = quantitySelected && isVisible;
+            const splitOk = !card || card.getAttribute('data-split-ok') !== '0';
+            const canBook = quantitySelected && isVisible && splitOk;
 
-            button.disabled = !isVisible;
-            button.classList.toggle('btn-book--blocked', !quantitySelected && isVisible);
+            button.disabled = !isVisible || !splitOk;
+            button.classList.toggle('btn-book--blocked', (!quantitySelected || !splitOk) && isVisible);
             button.setAttribute('aria-disabled', canBook ? 'false' : 'true');
-            button.title = quantitySelected ? '' : 'Please select quantity first';
+            if (!quantitySelected) {
+                button.title = 'Please select quantity first';
+            } else if (!splitOk) {
+                button.title = 'Selected quantity is not allowed for this listing';
+            } else {
+                button.title = '';
+            }
         });
     }
 
     if (filterBar) {
         filterBar.addEventListener('click', function (e) {
+            const timingOption = e.target.closest('.timing-option');
+            if (timingOption) {
+                e.preventDefault();
+                currentTiming = timingOption.getAttribute('data-value') || 'all';
+                if (timingButton) {
+                    timingButton.textContent = currentTiming === 'all'
+                        ? 'All Timings'
+                        : timingOption.textContent.trim();
+                    timingButton.classList.toggle('active', currentTiming !== 'all');
+                    closeDropdown(timingButton);
+                }
+                updateTimingHeader();
+                syncTimingQueryParam();
+                rebuildQuantityOptions();
+                applyFilters();
+                return;
+            }
+
             const zoneOption = e.target.closest('.zone-option');
             if (zoneOption) {
                 e.preventDefault();
@@ -1135,19 +1801,100 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function evaluateSplitRule(splitName, available, buyCount) {
+        const name = String(splitName || 'Any').trim().toLowerCase();
+        const remaining = available - buyCount;
+
+        if (buyCount < 1 || buyCount > available) {
+            return {
+                allowed: false,
+                reason: 'Only ' + available + ' ticket(s) are available in this listing.',
+            };
+        }
+
+        if (name === 'none') {
+            if (remaining === 0) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Seller requires all ' + available + ' tickets to be purchased together.',
+            };
+        }
+
+        if (name === 'avoid leaving one ticket') {
+            if (remaining !== 1) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave 1 ticket — seller does not allow leaving one ticket.',
+            };
+        }
+
+        if (name === 'avoid leaving one or three tickets') {
+            if (remaining !== 1 && remaining !== 3) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave ' + remaining + ' ticket(s) — seller does not allow leaving one or three tickets.',
+            };
+        }
+
+        if (name === 'avoid leaving odd numbers') {
+            if (remaining % 2 === 0) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave ' + remaining + ' ticket(s) — seller does not allow leaving an odd number of tickets.',
+            };
+        }
+
+        // Any / unknown
+        return { allowed: true, reason: '' };
+    }
+
     function applyFilters() {
         const tickets = document.querySelectorAll('.ticket-container');
         let visibleCount = 0;
 
         tickets.forEach(function (ticket) {
             const zone = ticket.getAttribute('data-zone');
+            const timingId = ticket.getAttribute('data-timing-id') || '';
             const availability = parseInt(ticket.getAttribute('data-availability'), 10);
             const price = parseFloat(ticket.getAttribute('data-price'));
+            const splitName = ticket.getAttribute('data-split-name') || 'Any';
+            const reasonEl = ticket.querySelector('.ticket-card__split-reason');
 
             let shouldShow = true;
-            if (currentZone !== 'all' && zone !== currentZone) shouldShow = false;
+            if (currentTiming !== 'all' && String(timingId) !== String(currentTiming)) shouldShow = false;
+            if (shouldShow && currentZone !== 'all' && zone !== currentZone) shouldShow = false;
             if (shouldShow && quantitySelected && availability < currentQuantity) shouldShow = false;
             if (shouldShow && (price < currentMinPrice || price > currentMaxPrice)) shouldShow = false;
+
+            let splitOk = true;
+            let splitReason = '';
+            if (shouldShow && quantitySelected) {
+                const splitCheck = evaluateSplitRule(splitName, availability, currentQuantity);
+                splitOk = splitCheck.allowed;
+                splitReason = splitCheck.reason || '';
+            }
+
+            ticket.setAttribute('data-split-ok', splitOk ? '1' : '0');
+            ticket.classList.toggle('ticket-card--split-blocked', shouldShow && quantitySelected && !splitOk);
+
+            if (reasonEl) {
+                if (shouldShow && quantitySelected && !splitOk) {
+                    reasonEl.innerHTML = '<i class="fas fa-exclamation-circle"></i><span></span>';
+                    reasonEl.querySelector('span').textContent = splitReason;
+                    reasonEl.classList.add('is-visible');
+                } else {
+                    reasonEl.classList.remove('is-visible');
+                    reasonEl.innerHTML = '';
+                }
+            }
 
             ticket.style.display = shouldShow ? 'block' : 'none';
 
@@ -1156,6 +1903,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const buyInput = ticket.querySelector('input[name="buy_count"]');
                 if (buyInput && quantitySelected) {
                     buyInput.value = currentQuantity;
+                }
+
+                const qtyEl = ticket.querySelector('.ticket-card__qty');
+                if (qtyEl && quantitySelected) {
+                    if (seatedTogether && currentQuantity > 1) {
+                        qtyEl.textContent = currentQuantity + ' tickets together';
+                    } else {
+                        qtyEl.textContent = currentQuantity + ' ticket' + (currentQuantity > 1 ? 's' : '');
+                    }
+                } else if (qtyEl) {
+                    qtyEl.textContent = availability == 1 ? '1 ticket' : availability + ' tickets';
                 }
             }
         });
@@ -1196,6 +1954,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            const splitName = card.getAttribute('data-split-name') || 'Any';
+            const splitCheck = evaluateSplitRule(splitName, availability, currentQuantity);
+            if (!splitCheck.allowed) {
+                e.preventDefault();
+                alert(splitCheck.reason || 'This quantity is not allowed for this listing.');
+                return;
+            }
+
             const buyInput = form.querySelector('input[name="buy_count"]');
             if (buyInput) {
                 buyInput.value = currentQuantity;
@@ -1203,8 +1969,90 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function confirmTicketQuantity(qty, together) {
+        const availableMax = getMaxAvailableForZone(currentZone);
+        let nextQty = parseInt(qty, 10) || 1;
+
+        if (availableMax > 0 && nextQty > availableMax) {
+            nextQty = availableMax;
+        }
+
+        currentQuantity = Math.max(1, nextQty);
+        seatedTogether = !!together;
+        quantitySelected = true;
+        customQuantityMode = currentQuantity > maxQuantityCap;
+        rebuildQuantityOptions();
+        updateQuantityLabel();
+        applyFilters();
+    }
+
+    function openTicketQtyModal() {
+        const modalEl = document.getElementById('ticketQtyModal');
+        const selectEl = document.getElementById('ticket-qty-select');
+        const togetherEl = document.getElementById('ticket-qty-together');
+        if (!modalEl || !selectEl) {
+            return;
+        }
+
+        const availableMax = getMaxAvailableForZone(currentZone);
+        const optionMax = Math.max(1, Math.min(10, availableMax || {{ (int) ($maxQuantityOption ?? 6) }}));
+        const desired = quantitySelected ? currentQuantity : Math.min(2, optionMax);
+
+        selectEl.innerHTML = '';
+        for (let q = 1; q <= optionMax; q++) {
+            const option = document.createElement('option');
+            option.value = String(q);
+            option.textContent = q + ' ticket' + (q > 1 ? 's' : '');
+            if (q === desired) {
+                option.selected = true;
+            }
+            selectEl.appendChild(option);
+        }
+
+        if (togetherEl) {
+            togetherEl.checked = seatedTogether;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalEl).modal('show');
+        } else {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function closeTicketQtyModal() {
+        const modalEl = document.getElementById('ticketQtyModal');
+        if (!modalEl) {
+            return;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalEl).modal('hide');
+        } else {
+            modalEl.classList.remove('show');
+            modalEl.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    const ticketQtyContinue = document.getElementById('ticket-qty-continue');
+    if (ticketQtyContinue) {
+        ticketQtyContinue.addEventListener('click', function () {
+            const selectEl = document.getElementById('ticket-qty-select');
+            const togetherEl = document.getElementById('ticket-qty-together');
+            confirmTicketQuantity(
+                selectEl ? selectEl.value : 2,
+                togetherEl ? togetherEl.checked : true
+            );
+            closeTicketQtyModal();
+        });
+    }
+
     rebuildQuantityOptions();
     applyFilters();
+    openTicketQtyModal();
 
     const image = document.getElementById('hero-venue-image');
     const zoomInBtn = document.getElementById('zoom-in');
@@ -1261,6 +2109,64 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTransform();
         });
     }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var viewersRoot = document.getElementById('event-viewers');
+    if (!viewersRoot) {
+        return;
+    }
+
+    var eventId = viewersRoot.getAttribute('data-event-id');
+    var currentEl = document.getElementById('event-viewers-current');
+    var hourEl = document.getElementById('event-viewers-hour');
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    var pingUrl = @json(url('event-page-viewers')) + '/' + encodeURIComponent(eventId);
+
+    function renderViewerStats(stats) {
+        if (!stats) {
+            return;
+        }
+        if (currentEl && typeof stats.current !== 'undefined') {
+            currentEl.textContent = String(stats.current);
+        }
+        if (hourEl && typeof stats.past_hour !== 'undefined') {
+            hourEl.textContent = String(stats.past_hour);
+        }
+    }
+
+    function pingViewers() {
+        fetch(pingUrl, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken ? csrfToken.getAttribute('content') : ''
+            },
+            credentials: 'same-origin'
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Viewer ping failed');
+                }
+                return response.json();
+            })
+            .then(renderViewerStats)
+            .catch(function () {
+                // Keep last known counts if the ping fails.
+            });
+    }
+
+    pingViewers();
+    setInterval(pingViewers, 30000);
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            pingViewers();
+        }
+    });
 });
 </script>
 

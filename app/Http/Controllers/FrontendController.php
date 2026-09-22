@@ -17,12 +17,16 @@ use App\Models\TicketsGenerated;
 use App\Models\User;
 use App\Models\RestrictionModel;
 use App\Models\VenueSeating;
+use App\Services\EventPageViewerService;
+use App\Services\TicketSplitTypeService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -244,27 +248,41 @@ class FrontendController extends Controller
                     ->where('under_purchase_hold', 0)
                     ->count();
 
-                if ($check >= $buy_count) {
-                    $data = TicketsGenerated::where('event_tickets', $event_ticket_id)
-                        ->where('is_sold', 0)
-                        ->where('under_purchase_hold', 0)
-                        ->orderBy('id')
-                        ->take($buy_count)
-                        ->lockForUpdate()
-                        ->get();
-
-                    foreach ($data as $val) {
-                        $dat = TicketsGenerated::find($val->id);
-                        $dat->user_id = Auth::user()->id;
-                        $dat->under_purchase_hold = 1;
-                        $dat->purchase_hold_time = date('Y-m-d H:i:s');
-                        $dat->save();
-                    }
-                } else {
+                if ($check < $buy_count) {
                     DB::rollBack();
                     return redirect()->back()->withErrors([
                         "Only {$check} ticket(s) are available right now. Please reduce quantity and try again.",
                     ]);
+                }
+
+                $splitName = EventTickets::query()
+                    ->leftJoin('split_types', 'split_types.id', 'event_tickets.split_type')
+                    ->where('event_tickets.id', $event_ticket_id)
+                    ->value('split_types.split_name');
+
+                $splitService = app(TicketSplitTypeService::class);
+                if (! $splitService->isPurchaseAllowed($splitName, $check, $buy_count)) {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors([
+                        $splitService->denialReason($splitName, $check, $buy_count)
+                            ?? 'This quantity is not allowed for this listing.',
+                    ]);
+                }
+
+                $data = TicketsGenerated::where('event_tickets', $event_ticket_id)
+                    ->where('is_sold', 0)
+                    ->where('under_purchase_hold', 0)
+                    ->orderBy('id')
+                    ->take($buy_count)
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($data as $val) {
+                    $dat = TicketsGenerated::find($val->id);
+                    $dat->user_id = Auth::user()->id;
+                    $dat->under_purchase_hold = 1;
+                    $dat->purchase_hold_time = date('Y-m-d H:i:s');
+                    $dat->save();
                 }
 
                 DB::commit();
@@ -316,6 +334,19 @@ class FrontendController extends Controller
                        $maxAllowed = $currentHeld + $freePoolCount;
                        $desired = min(max(1, (int) $validated['ticket_count']), $maxAllowed);
 
+                       $splitName = EventTickets::query()
+                           ->leftJoin('split_types', 'split_types.id', 'event_tickets.split_type')
+                           ->where('event_tickets.id', $eventTicketId)
+                           ->value('split_types.split_name');
+
+                       $splitService = app(TicketSplitTypeService::class);
+                       if (! $splitService->isPurchaseAllowed($splitName, $maxAllowed, $desired)) {
+                           throw new \RuntimeException(
+                               'split_denied|' . ($splitService->denialReason($splitName, $maxAllowed, $desired)
+                                   ?? 'This quantity is not allowed for this listing.')
+                           );
+                       }
+
                        if ($desired > $currentHeld) {
                            $need = $desired - $currentHeld;
                            $toAdd = TicketsGenerated::where('event_tickets', $eventTicketId)
@@ -359,6 +390,13 @@ class FrontendController extends Controller
                            'code' => 'hold_expired',
                            'message' => 'Your ticket hold has expired. Please select tickets again.',
                            'redirect' => url('ticket_purchase_expired'),
+                       ], 422);
+                   }
+                   if (str_starts_with($e->getMessage(), 'split_denied|')) {
+                       return response()->json([
+                           'ok' => false,
+                           'code' => 'split_denied',
+                           'message' => substr($e->getMessage(), strlen('split_denied|')),
                        ], 422);
                    }
                    throw $e;
@@ -459,12 +497,39 @@ class FrontendController extends Controller
                 ? RestrictionModel::whereIn('id', $restrictionIds)->pluck('restrictions')->all()
                 : [];
 
-            $ticket_count = TicketsGenerated::where('event_tickets', $id)
+            $heldTickets = TicketsGenerated::where('event_tickets', $id)
                 ->where('user_id', Auth::user()->id)
                 ->where('is_sold', 0)
                 ->where('under_purchase_hold', 1)
                 ->where('purchase_hold_time', '>=', $validHoldStart)
-                ->count();
+                ->orderBy('seat_number')
+                ->get(['id', 'seat_number', 'seat_row', 'seat_number_prefix']);
+
+            $ticket_count = $heldTickets->count();
+
+            $selectedSeatNumbers = $heldTickets
+                ->pluck('seat_number')
+                ->filter(fn ($seat) => $seat !== null && $seat !== '')
+                ->values()
+                ->all();
+
+            $selectedSeatRows = $heldTickets
+                ->pluck('seat_row')
+                ->filter(fn ($row) => $row !== null && $row !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            $selectedSeatsLabel = '';
+            if (count($selectedSeatNumbers) === 1) {
+                $selectedSeatsLabel = (string) $selectedSeatNumbers[0];
+            } elseif (count($selectedSeatNumbers) > 1) {
+                $selectedSeatsLabel = implode(', ', $selectedSeatNumbers);
+            }
+
+            $selectedRowLabel = count($selectedSeatRows) === 1
+                ? (string) $selectedSeatRows[0]
+                : (count($selectedSeatRows) > 1 ? implode(', ', $selectedSeatRows) : null);
 
             $available_ticket_count = TicketsGenerated::where('event_tickets', $id)
                 ->where('is_sold', 0)
@@ -498,7 +563,10 @@ class FrontendController extends Controller
                 'id',
                 'restrictionLabels',
                 'paypalSettings',
-                'paypalEnabled'
+                'paypalEnabled',
+                'selectedSeatsLabel',
+                'selectedRowLabel',
+                'heldTickets'
             ));
 
            }
@@ -712,7 +780,7 @@ class FrontendController extends Controller
 
            }
 
-           public function show_details_show($id)
+           public function show_details_show(Request $request, $id)
            {
 
             $settings = \App\Models\CompanySettings::first();
@@ -725,12 +793,24 @@ class FrontendController extends Controller
 
 
                                 ->where('event.id',$id)
-                                ->select('*','event.id as id','venue.name as venue_name',
-                                'event.id as event_id','venue.image as venue_image')->first();
+                                ->select(
+                                    '*',
+                                    'event.id as id',
+                                    'venue.name as venue_name',
+                                    'event.id as event_id',
+                                    'event.venue_map as venue_map',
+                                    'venue.image as venue_image',
+                                    'cities.name as city_name',
+                                    'countries.country_name as country_name',
+                                    'location.location_name as location_name'
+                                )->first();
 
             // $event_tickets = TicketsGenerated::where()
 
-            $event_images = EventImages::where('event',$id)->get();
+            $event_images = EventImages::where('event', $id)
+                ->where('is_active', 1)
+                ->orderBy('id', 'desc')
+                ->get();
 
             $event_reviews = EventReviews::where('event_id',$id)->get();
             $event_reviews_stars = EventReviews::where('event_id',$id)->sum('number_of_stars');
@@ -750,24 +830,30 @@ class FrontendController extends Controller
                 }
             }
             
-            $event_timings = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->get();
-            $event_timing = EventTiming::where('event',$id)->where('is_active',1)->groupBy('event_date')->first();
+            $event_timings = EventTiming::where('event', $id)
+                ->where('is_active', 1)
+                ->orderBy('event_date')
+                ->orderBy('from_time')
+                ->get();
+
+            $selectedTimingId = $request->query('timing');
+            if ($selectedTimingId && ! $event_timings->contains('id', (int) $selectedTimingId)) {
+                $selectedTimingId = null;
+            }
+
+            $event_timing = $selectedTimingId
+                ? $event_timings->firstWhere('id', (int) $selectedTimingId)
+                : $event_timings->first();
             
             // Get all unique seating types (zones) from tickets that have availability
             $available_zones = [];
-            foreach ($event_timings as $timing_date) {
-                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
-                if ($event_timing_list) {
-                    foreach ($event_timing_list as $event_time) {
-                        $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $event_time->id);
-                        foreach ($event_ticket_list as $ticket) {
-                            $ticket_availability = EventTiming::get_available_tickets($ticket->id);
-                            if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
-                                // Add zone if not already in array
-                                if (!in_array($ticket->seating_type_name, $available_zones)) {
-                                    $available_zones[] = $ticket->seating_type_name;
-                                }
-                            }
+            foreach ($event_timings as $event_time) {
+                $event_ticket_list = EventTiming::get_ticket_list($id, $event_time->id);
+                foreach ($event_ticket_list as $ticket) {
+                    $ticket_availability = EventTiming::get_available_tickets($ticket->id);
+                    if ($ticket_availability > 0 && !empty($ticket->seating_type_name)) {
+                        if (!in_array($ticket->seating_type_name, $available_zones)) {
+                            $available_zones[] = $ticket->seating_type_name;
                         }
                     }
                 }
@@ -783,40 +869,34 @@ class FrontendController extends Controller
             }
 
             $allTickets = [];
-            foreach ($event_timings as $timing_date) {
-                $event_timing_list = EventTiming::get_events_with_date($timing_date->event, $timing_date->event_date);
-                if (!$event_timing_list) {
-                    continue;
-                }
-
-                foreach ($event_timing_list as $event_time) {
-                    $event_ticket_list = EventTiming::get_ticket_list($timing_date->event, $event_time->id);
-                    foreach ($event_ticket_list as $ticket) {
-                        $availability = EventTiming::get_available_tickets($ticket->id);
-                        if ($availability <= 0) {
-                            continue;
-                        }
-
-                        $allTickets[] = [
-                            'ticket' => $ticket,
-                            'availability' => $availability,
-                            'event_date' => $event_time->event_date,
-                            'from_time' => $event_time->from_time,
-                            'to_time' => $event_time->to_time,
-                        ];
+            foreach ($event_timings as $event_time) {
+                $event_ticket_list = EventTiming::get_ticket_list($id, $event_time->id);
+                foreach ($event_ticket_list as $ticket) {
+                    $availability = EventTiming::get_available_tickets($ticket->id);
+                    if ($availability <= 0) {
+                        continue;
                     }
+
+                    $allTickets[] = [
+                        'ticket' => $ticket,
+                        'availability' => $availability,
+                        'timing_id' => $event_time->id,
+                        'event_date' => $event_time->event_date,
+                        'from_time' => $event_time->from_time,
+                        'to_time' => $event_time->to_time,
+                    ];
                 }
             }
 
             usort($allTickets, function ($a, $b) {
-                $priceA = (float) ($a['ticket']->web_price ?? $a['ticket']->ticket_amount ?? 0);
-                $priceB = (float) ($b['ticket']->web_price ?? $b['ticket']->ticket_amount ?? 0);
+                $priceA = (float) ($a['ticket']->ticket_amount ?? $a['ticket']->web_price ?? 0);
+                $priceB = (float) ($b['ticket']->ticket_amount ?? $b['ticket']->web_price ?? 0);
 
                 return $priceA <=> $priceB;
             });
 
             $prices = array_map(function ($item) {
-                return (float) ($item['ticket']->web_price ?? $item['ticket']->ticket_amount ?? 0);
+                return (float) ($item['ticket']->ticket_amount ?? $item['ticket']->web_price ?? 0);
             }, $allTickets);
 
             $minPrice = $prices ? min($prices) : 0;
@@ -832,13 +912,21 @@ class FrontendController extends Controller
             $restrictionMap = RestrictionModel::pluck('restrictions', 'id')->all();
             foreach ($allTickets as $index => &$item) {
                 $ticket = $item['ticket'];
-                $price = (float) ($ticket->web_price ?? $ticket->ticket_amount ?? 0);
+                // ticket_amount is the per-ticket selling price; web_price may be a listing total.
+                $price = (float) ($ticket->ticket_amount ?? $ticket->web_price ?? 0);
                 $faceValue = (float) ($ticket->face_value ?? 0);
 
                 $restrictionIds = $ticket->ticket_restrictions ? json_decode($ticket->ticket_restrictions, true) : [];
                 $item['restrictions'] = is_array($restrictionIds)
                     ? array_values(array_filter(array_map(fn ($rid) => $restrictionMap[$rid] ?? null, $restrictionIds)))
                     : [];
+
+                $featurePayload = $ticket->features ? json_decode($ticket->features, true) : [];
+                $featureList = is_array($featurePayload['features'] ?? null)
+                    ? $featurePayload['features']
+                    : (is_array($featurePayload) ? $featurePayload : []);
+                $item['has_clear_view'] = in_array('clearView', $featureList, true);
+                $item['has_limited_view'] = in_array('limitedView', $featureList, true);
 
                 $sectionParts = array_filter([
                     $ticket->seating_type_name ?? null,
@@ -859,6 +947,10 @@ class FrontendController extends Controller
             }
             unset($item);
 
+            $viewerId = (string) ($request->cookie('event_viewer_id') ?: Str::uuid());
+            Cookie::queue(cookie('event_viewer_id', $viewerId, 60 * 24 * 365, null, null, false, false));
+            $viewerStats = app(EventPageViewerService::class)->ping((int) $id, $viewerId);
+
             return view('customer.show_details_show', compact(
                 'settings',
                 'id',
@@ -869,6 +961,7 @@ class FrontendController extends Controller
                 'event_reviews_stars',
                 'event_timing',
                 'event_timings',
+                'selectedTimingId',
                 'venue_seating',
                 'available_zones',
                 'allTickets',
@@ -877,9 +970,25 @@ class FrontendController extends Controller
                 'lowestPrice',
                 'listingCount',
                 'totalAvailableSeats',
-                'maxQuantityOption'
+                'maxQuantityOption',
+                'viewerStats'
             ));
 
+           }
+
+           public function eventPageViewerPing(Request $request, $id)
+           {
+               $eventExists = Events::where('id', $id)->exists();
+               if (! $eventExists) {
+                   return response()->json(['message' => 'Event not found.'], 404);
+               }
+
+               $viewerId = (string) ($request->cookie('event_viewer_id') ?: Str::uuid());
+               $stats = app(EventPageViewerService::class)->ping((int) $id, $viewerId);
+
+               return response()
+                   ->json($stats)
+                   ->cookie(cookie('event_viewer_id', $viewerId, 60 * 24 * 365, null, null, false, false));
            }
 
            public function filterTickets(Request $request)

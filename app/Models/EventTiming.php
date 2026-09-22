@@ -27,7 +27,7 @@ class EventTiming extends Model
         ->where('event_tickets.is_admin_approved', 1)
         ->where('event_tickets.ticket_status', EventTickets::STATUS_ACTIVE)
         ->select('*','event_tickets.id as id', 'split_types.split_name as split_type_name')
-        ->orderBy('event_tickets.web_price', 'asc')->get();
+        ->orderBy('event_tickets.ticket_amount', 'asc')->get();
     }
 
     /**

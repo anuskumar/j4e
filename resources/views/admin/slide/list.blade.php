@@ -66,6 +66,8 @@
                                 <th>Banner Image</th>
                                 <th>Meta Description</th>
                                 <th>Text Color</th>
+                                <th>Position</th>
+                                <th>Button</th>
                                 <th>Status</th>
                                 <th class="text-end">Action</th>
                             </tr>
@@ -85,6 +87,15 @@
                                     </td>
                                     <td>{{ $val->meta_description ?: '-' }}</td>
                                     <td>{{ ucfirst($val->text_color ?? 'white') }}</td>
+                                    <td>{{ $val->descriptionPositionLabel() }}</td>
+                                    <td>
+                                        @if ($val->shouldShowButton())
+                                            <span class="badge bg-success">{{ $val->buttonLabel() }}</span>
+                                            <div class="tx-11 text-muted mt-1">{{ $val->buttonPositionLabel() }} · {{ $val->buttonSizeLabel() }}</div>
+                                        @else
+                                            <span class="text-muted">Hidden</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if ($val->is_active == 1)
                                             <span class="badge bg-success">Active</span>
@@ -113,6 +124,8 @@
                             @empty
                                 <tr>
                                     <td class="text-center text-muted py-4">No slides found</td>
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>

@@ -13,7 +13,10 @@ class EventTickets extends Model
 
     public const STATUS_ACTIVE = 1;
 
-    public const STATUS_POSTED = 2;
+    public const STATUS_PAUSED = 2;
+
+    /** @deprecated Use STATUS_PAUSED */
+    public const STATUS_POSTED = self::STATUS_PAUSED;
 
     public const STATUS_UNAPPROVED = 3;
 
@@ -47,6 +50,7 @@ class EventTickets extends Model
         'cancellation_policy_notes',
         'map_layout',
         'is_admin_approved',
+        'rejection_reason',
         'ticket_status',
         'split_type',
         'web_price',
@@ -73,11 +77,16 @@ class EventTickets extends Model
         return $this->belongsTo(Events::class, 'event');
     }
 
+    public function seating()
+    {
+        return $this->belongsTo(VenueSeating::class, 'venue_seating');
+    }
+
     public static function statusLabel(?int $status): string
     {
         return match ((int) $status) {
             self::STATUS_ACTIVE => 'Active',
-            self::STATUS_POSTED => 'Posted',
+            self::STATUS_PAUSED => 'Paused',
             self::STATUS_UNAPPROVED => 'Unapproved',
             self::STATUS_SOLD => 'Sold',
             self::STATUS_PENDING => 'Pending',
@@ -89,7 +98,7 @@ class EventTickets extends Model
     {
         return match ((int) $status) {
             self::STATUS_ACTIVE => 'text-bg-success',
-            self::STATUS_POSTED => 'text-bg-primary',
+            self::STATUS_PAUSED => 'text-bg-secondary',
             self::STATUS_UNAPPROVED => 'text-bg-danger',
             self::STATUS_SOLD => 'text-bg-success',
             self::STATUS_PENDING => 'text-bg-warning',
@@ -97,13 +106,13 @@ class EventTickets extends Model
         };
     }
 
-    public function canToggleActivePosted(): bool
+    public function canToggleActivePaused(): bool
     {
         if ((int) $this->is_admin_approved !== 1) {
             return false;
         }
 
-        if (! in_array((int) $this->ticket_status, [self::STATUS_ACTIVE, self::STATUS_POSTED], true)) {
+        if (! in_array((int) $this->ticket_status, [self::STATUS_ACTIVE, self::STATUS_PAUSED], true)) {
             return false;
         }
 
@@ -159,9 +168,9 @@ class EventTickets extends Model
             ->count();
 
         // Available or pending tickets remain → listing stays Active.
-        // Preserve Posted only while available tickets still exist.
+        // Preserve Paused only while available tickets still exist.
         if ($availableCount > 0 || $pendingCount > 0) {
-            if ($availableCount > 0 && (int) $listing->ticket_status === self::STATUS_POSTED) {
+            if ($availableCount > 0 && (int) $listing->ticket_status === self::STATUS_PAUSED) {
                 return;
             }
 

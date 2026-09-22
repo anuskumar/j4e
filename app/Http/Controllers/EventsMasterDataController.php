@@ -26,6 +26,7 @@ class EventsMasterDataController extends Controller
         $tag = new Tag();
         $tag->tag_name = $validated['tag_name'];
         $tag->is_active = $request->input('is_active', 1);
+        $tag->sort_order = ((int) Tag::max('sort_order')) + 1;
         $tag->save();
 
         return response()->json([
@@ -48,6 +49,7 @@ class EventsMasterDataController extends Controller
         $eventType = new EventType();
         $eventType->event_type_name = $validated['name'];
         $eventType->is_active = $request->input('is_active', 1);
+        $eventType->sort_order = ((int) EventType::max('sort_order')) + 1;
         $eventType->save();
 
         return response()->json([

@@ -1,5 +1,5 @@
 @php
-    $headerEventTypes = \App\Models\EventType::headerMenu()->select('event_type_name', 'id')->orderBy('event_type_name')->get();
+    $headerEventTypes = \App\Models\EventType::headerMenu()->select('event_type_name', 'id')->ordered()->get();
     $currentType = request('type');
 @endphp
 
@@ -13,7 +13,7 @@
             <li>
                 <a href="{{ url('/?type=' . $eventtype->id) }}"
                     class="{{ (string) $currentType === (string) $eventtype->id ? 'active' : '' }}">
-                    {{ $eventtype->event_type_name }} Tickets
+                    {{ $eventtype->event_type_name }}
                 </a>
             </li>
             @endforeach

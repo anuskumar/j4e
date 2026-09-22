@@ -23,7 +23,8 @@
                                     <th class="border-bottom-0">Venue Type</th>
                                     <th class="border-bottom-0">Image</th>
                                     <th class="border-bottom-0">Name</th>
-                                    <th class="border-bottom-0">Location</th>
+                                    <th class="border-bottom-0">City</th>
+                                    <th class="border-bottom-0">Country</th>
                                     <th class="border-bottom-0">google link</th>
                                     {{-- <th class="border-bottom-0">Latitude</th>
                                     <th class="border-bottom-0">Longitude</th> --}}
@@ -52,7 +53,8 @@
                                         @endif
                                     </td>
                                     <td>{{ $val->venue_name }}</td>
-                                    <td>{{ $val->location_name ?? '-' }}</td>
+                                    <td>{{ $val->city_name ?? '-' }}</td>
+                                    <td>{{ $val->country_name ?? '-' }}</td>
                                     <td>
                                         @if(!empty($val->google_map_link))
                                             <a href="{{ $val->google_map_link }}" target="_blank" rel="noopener">Map</a>

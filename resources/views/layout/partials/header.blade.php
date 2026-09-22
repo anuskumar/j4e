@@ -7,8 +7,10 @@
     }
 
     .site-navbar {
-        background: rgb(34, 30, 105);
-        background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
+        --header-blue-start: #022D5F;
+        --header-blue-end: #1565C0;
+        background: var(--header-blue-start);
+        background: linear-gradient(90deg, var(--header-blue-start) 0%, var(--header-blue-end) 100%);
         padding: 8px 0;
     }
 
@@ -88,14 +90,30 @@
         min-height: 36px;
         font-size: 13px;
         border-radius: 999px 0 0 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
         border-right: 0;
         padding: 0 12px;
+        background: #fff;
+        color: #022D5F;
+    }
+
+    .site-navbar__search .form-control::placeholder {
+        color: rgba(2, 45, 95, 0.55);
     }
 
     .site-navbar__search .input-group .btn {
         border-radius: 0 999px 999px 0;
         min-height: 36px;
         padding: 0 12px;
+        background: #1565C0;
+        border-color: #1565C0;
+        color: #fff;
+    }
+
+    .site-navbar__search .input-group .btn:hover {
+        background: #0f4f99;
+        border-color: #0f4f99;
+        color: #fff;
     }
 
     .site-navbar .nav-actions {
@@ -157,15 +175,27 @@
     }
 
     .gradient-button {
-        background-image: linear-gradient(to right, #001f3f, #117eea);
+        background-image: linear-gradient(to right, #022D5F, #1565C0);
     }
 
     .gradient-button1 {
-        background-image: linear-gradient(to right, #d900d2, #35042a);
+        background-image: linear-gradient(to right, #0f4f99, #1e88e5);
     }
 
     .gradient-button2 {
-        background-image: linear-gradient(to right, #671dcf, #221e69);
+        background-image: linear-gradient(to right, #1565C0, #022D5F);
+    }
+
+    .site-navbar .nav-actions .btn-nav.gradient-button2 {
+        background: linear-gradient(to right, #1565C0, #022D5F) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .site-navbar .nav-actions .btn-nav.gradient-button2:hover {
+        color: #fff !important;
+        opacity: 0.92;
+        filter: brightness(1.06);
     }
 
     @media (max-width: 991px) {
@@ -184,7 +214,7 @@
         .site-navbar .navbar-collapse {
             order: 3;
             flex: 1 1 100%;
-            background: rgba(34, 30, 105, 0.95);
+            background: rgba(2, 45, 95, 0.98);
             padding: 14px;
             margin-top: 0;
             border-radius: 10px;

@@ -141,7 +141,6 @@
                     </a>
                     <ul class="slide-menu">
                         <li class="side-menu__label1"><a href="javascript:void(0);">Masters</a></li>
-                        <li><a class="slide-item" href="{{ url('location/list') }}">Location</a></li>
                         <li><a class="slide-item" href="{{ url('city/list') }}">City</a></li>
                         <li><a class="slide-item" href="{{ url('tickettype/list') }}">Ticket Types</a></li>
                         <li><a class="slide-item" href="{{ route('admin.mobile-applications.index') }}">Mobile Applications</a></li>
@@ -158,6 +157,12 @@
                         <a class="side-menu__item" href="{{ url('admin/company_settings') }}">
                             <i class="side-menu__icon fe fe-settings"></i>
                             <span class="side-menu__label">Company Settings</span>
+                        </a>
+                    </li>
+                    <li class="slide">
+                        <a class="side-menu__item" href="{{ route('admin.cms-pages.index') }}">
+                            <i class="side-menu__icon fe fe-file-text"></i>
+                            <span class="side-menu__label">Terms &amp; CMS Pages</span>
                         </a>
                     </li>
                     <li class="slide">

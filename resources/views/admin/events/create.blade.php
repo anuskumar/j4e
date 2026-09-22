@@ -33,7 +33,7 @@
                     <label for="event_image" class="fas fa-camera event-image-edit mb-0" title="Upload event image"></label>
                 </div>
                 <h5 class="main-profile-name mb-1" id="preview-event-name">New Event</h5>
-                <p class="main-profile-name-text text-muted mb-2">Priority: <span id="preview-priority">0</span></p>
+                <p class="main-profile-name-text text-muted mb-2">Priority: <span id="preview-priority">{{ old('priority', $nextPriority ?? 1) }}</span></p>
                 <p class="form-field-hint mb-0" id="event-image-file-name">
                     @if ($tempEventImage)
                         Image uploaded — select a new file to replace
@@ -149,10 +149,10 @@
                                     class="form-control @error('priority') is-invalid @enderror"
                                     name="priority"
                                     id="priority"
-                                    value="{{ old('priority', '0') }}"
+                                    value="{{ old('priority', $nextPriority ?? 1) }}"
                                     required>
                             </div>
-                            <small class="form-field-hint">Higher number appears first on customer site.</small>
+                            <p class="form-field-hint mb-0">Lower numbers appear first on the customer event list (same as event types/tags).</p>
                             @error('priority')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
@@ -194,7 +194,8 @@
                                 <option value="">Select venue</option>
                                 @foreach ($venue as $ven)
                                     <option value="{{ $ven->id }}" {{ old('venue') == $ven->id ? 'selected' : '' }}
-                                        data-label="{{ $ven->venue_name }} — {{ $ven->location_name }}, {{ $ven->city_name }}">
+                                        data-label="{{ $ven->venue_name }} — {{ $ven->location_name }}, {{ $ven->city_name }}"
+                                        data-venue-image="{{ !empty($ven->venue_image) ? asset('storage/uploads/venue/' . $ven->venue_image) : '' }}">
                                         {{ $ven->venue_name }} [{{ $ven->location_name }}, {{ $ven->city_name }}, {{ $ven->country_name }}]
                                     </option>
                                 @endforeach
@@ -202,6 +203,48 @@
                             @error('venue')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
+                        </div>
+                    </div>
+
+                    <div class="row g-3 form-section-spacer">
+                        <div class="col-12">
+                            <label class="form-field-label" for="venue_map">Venue Map</label>
+                            <div class="venue-map-field">
+                                <div class="venue-map-field__top">
+                                    <div>
+                                        <div class="form-field-hint mb-1">Upload a seating/venue map for this event. Shown on the ticket page.</div>
+                                        <span class="venue-map-status is-missing" id="venue-map-status">
+                                            <i class="fe fe-alert-circle"></i>
+                                            <span id="venue-map-status-text">No venue map yet</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="venue-map-preview-wrap">
+                                    <img src="{{ asset('assets/img/default-venue.jpg') }}"
+                                        alt="Venue map preview"
+                                        class="venue-map-preview d-none"
+                                        id="venue-map-preview"
+                                        onerror="this.onerror=null;this.src='{{ asset('assets/img/default-venue.jpg') }}';">
+                                    <div class="venue-map-preview is-empty" id="venue-map-preview-empty">
+                                        <i class="fe fe-map"></i>
+                                    </div>
+                                    <div>
+                                        <div class="venue-map-actions">
+                                            <label for="venue_map" class="btn btn-sm btn-outline-primary mb-0">
+                                                <i class="fe fe-upload"></i> Upload map
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="venue-map-clear-btn">
+                                                Clear selection
+                                            </button>
+                                        </div>
+                                        <p class="form-field-hint mb-0 mt-2" id="venue-map-file-name">JPG, PNG or WEBP — max 5MB</p>
+                                        @error('venue_map')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <input type="file" name="venue_map" id="venue_map" class="d-none" accept="image/jpeg,image/png,image/jpg,image/webp">
+                            </div>
                         </div>
                     </div>
 
@@ -715,6 +758,82 @@ jQuery(document).ready(function ($) {
     $('#event_name, #event_from_date, #event_to_date, #event_start_time, #event_end_time, #seller_fee_percent, #customer_fee_percent, #priority').on('input change', updatePreview);
     $('#event_type, #venue').on('change', updatePreview);
     updatePreview();
+
+    const defaultVenueMap = @json(asset('assets/img/default-venue.jpg'));
+    let selectedVenueMapFile = null;
+
+    function setVenueMapStatus(ready, text) {
+        const $status = $('#venue-map-status');
+        $status.toggleClass('is-ready', ready).toggleClass('is-missing', !ready);
+        $status.find('i').attr('class', ready ? 'fe fe-check-circle' : 'fe fe-alert-circle');
+        $('#venue-map-status-text').text(text);
+    }
+
+    function showVenueMapPreview(url) {
+        if (url) {
+            $('#venue-map-preview').attr('src', url).removeClass('d-none');
+            $('#venue-map-preview-empty').addClass('d-none');
+            $('#venue-map-clear-btn').removeClass('d-none');
+        } else {
+            $('#venue-map-preview').addClass('d-none').attr('src', defaultVenueMap);
+            $('#venue-map-preview-empty').removeClass('d-none');
+            $('#venue-map-clear-btn').addClass('d-none');
+        }
+    }
+
+    function updateVenueMapStatus() {
+        if (selectedVenueMapFile) {
+            setVenueMapStatus(true, 'New venue map selected for upload');
+            return;
+        }
+
+        const venueImage = $('#venue option:selected').data('venue-image') || '';
+        if (venueImage) {
+            setVenueMapStatus(true, 'Venue already has a map — upload to override for this event');
+            showVenueMapPreview(venueImage);
+            $('#venue-map-file-name').text('Using venue default map until you upload an event map');
+        } else {
+            setVenueMapStatus(false, 'No venue map yet');
+            showVenueMapPreview(null);
+            $('#venue-map-file-name').text('JPG, PNG or WEBP — max 5MB');
+        }
+    }
+
+    function handleVenueMapFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Venue map must not exceed 5MB.');
+            $('#venue_map').val('');
+            selectedVenueMapFile = null;
+            updateVenueMapStatus();
+            return;
+        }
+
+        selectedVenueMapFile = file;
+        $('#venue-map-file-name').text(file.name);
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            showVenueMapPreview(event.target.result);
+            setVenueMapStatus(true, 'New venue map selected for upload');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    $('#venue_map').on('change', function () {
+        handleVenueMapFile(this.files[0]);
+    });
+
+    $('#venue-map-clear-btn').on('click', function () {
+        $('#venue_map').val('');
+        selectedVenueMapFile = null;
+        updateVenueMapStatus();
+    });
+
+    $('#venue').on('change', updateVenueMapStatus);
+    updateVenueMapStatus();
 });
 </script>
 @endpush

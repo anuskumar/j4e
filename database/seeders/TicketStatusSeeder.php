@@ -17,7 +17,7 @@ class TicketStatusSeeder extends Seeder
             ],
             [
                 'id' => 2,
-                'status_name' => 'Posted',
+                'status_name' => 'Paused',
                 'is_active' => 1,
             ],
             [

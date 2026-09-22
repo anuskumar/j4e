@@ -223,11 +223,11 @@ class TicketCheckoutService
     {
         return [
             'shipping_name' => 'required|string|max:255',
-            'shipping_address1' => 'required|string|max:500',
+            'shipping_address1' => 'nullable|string|max:500',
             'shipping_address2' => 'nullable|string|max:500',
-            'shipping_country' => 'required|numeric|exists:countries,id',
-            'shipping_city' => 'required|string|max:255',
-            'shipping_pincode' => 'required|string|max:20',
+            'shipping_country' => 'nullable|numeric|exists:countries,id',
+            'shipping_city' => 'nullable|string|max:255',
+            'shipping_pincode' => 'nullable|string|max:20',
             'payment_amount' => 'required|numeric|min:0',
             'event_id' => 'required|numeric|exists:event,id',
             'event_ticket_id' => 'required|numeric|exists:event_tickets,id',
@@ -240,11 +240,7 @@ class TicketCheckoutService
     {
         return [
             'shipping_name.required' => 'Please enter your name.',
-            'shipping_address1.required' => 'Please enter your address.',
-            'shipping_country.required' => 'Please select a country.',
             'shipping_country.exists' => 'Please select a valid country.',
-            'shipping_city.required' => 'Please enter your city.',
-            'shipping_pincode.required' => 'Please enter your pincode.',
         ];
     }
 

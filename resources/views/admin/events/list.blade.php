@@ -123,8 +123,8 @@
             'zeroRecords' => 'No matching events found',
         ],
         'columnDefs' => [
-            ['orderable' => false, 'targets' => [6, 7, 8, 10]],
-            ['searchable' => false, 'targets' => [0, 6, 7, 8, 10]],
+            ['orderable' => false, 'targets' => [7, 8, 9, 11]],
+            ['searchable' => false, 'targets' => [0, 1, 7, 8, 9, 11]],
         ],
     ];
 @endphp
@@ -212,6 +212,7 @@
                         <thead>
                             <tr>
                                 <th>SL</th>
+                                <th>Priority</th>
                                 <th>Event Name</th>
                                 <th>Event Type</th>
                                 <th>Event Date</th>
@@ -228,6 +229,9 @@
                             @forelse ($data as $index => $val)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ $val->priority ?? 0 }}</span>
+                                    </td>
                                     <td>
                                         <span class="font-weight-semibold">{{ $val->event_name }}</span>
                                     </td>
@@ -298,17 +302,7 @@
                                 </tr>
                             @empty
                                 <tr class="odd">
-                                    <td class="text-center text-muted py-4">No events found</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td colspan="12" class="text-center text-muted py-4">No events found</td>
                                 </tr>
                             @endforelse
                         </tbody>

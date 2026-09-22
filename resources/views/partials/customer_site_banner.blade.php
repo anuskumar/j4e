@@ -1,11 +1,15 @@
 @include('partials.customer_banner_styles')
 
+@php
+    $marqueeText = trim((string) ($companySettings?->bannerMessage() ?? 'All tickets are 100% guaranteed and secure.'));
+@endphp
+
 <section class="customer-site-banner">
     <div class="customer-site-banner__trust">
-        <div class="container text-center">
-            <span class="customer-site-banner__trust-track">
-                {{ $companySettings?->bannerMessage() ?? 'All tickets are 100% guaranteed and secure.' }}
-            </span>
+        <div class="customer-site-banner__trust-viewport">
+            <div class="customer-site-banner__trust-track" aria-label="{{ $marqueeText }}">
+                <span class="customer-site-banner__trust-item">{{ $marqueeText }}</span>
+            </div>
         </div>
     </div>
 

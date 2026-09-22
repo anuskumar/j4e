@@ -76,7 +76,7 @@ class WelcomeController extends Controller
         if($request->get('tag')){
             $event_tag = EventTags::find($request->get('tag'));
         }else{
-            $event_tag = EventTags::first();
+            $event_tag = EventTags::ordered()->first();
         }
 
         // Build the base query
@@ -103,7 +103,8 @@ class WelcomeController extends Controller
                 // Search in JSON artists column if artist IDs found
                 if(!empty($artistIds)){
                     foreach($artistIds as $artistId){
-                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                        $q->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((string) $artistId)])
+                          ->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((int) $artistId)]);
                     }
                 }
             });
@@ -112,15 +113,33 @@ class WelcomeController extends Controller
             $query->where('event.event_tag',$event_tag->id);
         }
 
-        $data = $query->select('*','event.id as id','location.id as location_id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
+        $data = $query->select(
+                'event.id as id',
+                'event.event_name',
+                'event.event_image',
+                'event.event_from_date',
+                'event.event_to_date',
+                'event.artists',
+                'event.priority as priority',
+                'event.venue',
+                'venue.id as venue_id',
+                'location.id as location_id',
+                'cities.id as city_id',
+                'countries.id as country_id',
+                'countries.country_name as country_name',
+                'cities.name as city_name',
+                'location.location_name as location_name',
+                'venue.name as venue_name'
+            )
             ->customerDisplayOrder()
             ->get();
 
-        // Get first event for display (or null if no results)
-        $data1 = $data->isNotEmpty() ? $data->first() : null;
-
         foreach ($data as $key) {
-            $key['timings'] = EventTiming::where('event',$key->id)->get();
+            $key['timings'] = EventTiming::where('event', $key->id)
+                ->where('is_active', 1)
+                ->orderBy('event_date')
+                ->orderBy('from_time')
+                ->get();
 
             $key['tickets_available'] = TicketsGenerated::where('event_id',$key->id)
             ->where('is_sold',0)
@@ -139,6 +158,90 @@ class WelcomeController extends Controller
                 $key['artist_names'] = [];
             }
         }
+
+        // Expand events into one listing row per active timing
+        $listings = collect();
+        foreach ($data as $event) {
+            $timings = collect($event->timings ?? []);
+
+            if ($timings->isEmpty()) {
+                $listings->push((object) [
+                    'event' => $event,
+                    'timing' => null,
+                ]);
+                continue;
+            }
+
+            foreach ($timings as $timing) {
+                $listings->push((object) [
+                    'event' => $event,
+                    'timing' => $timing,
+                ]);
+            }
+        }
+
+        $timingFilters = $listings
+            ->filter(fn ($item) => !empty($item->timing))
+            ->map(function ($item) {
+                $timing = $item->timing;
+                $datePart = $timing->event_date ? date('d M Y', strtotime($timing->event_date)) : '';
+                $timePart = $timing->from_time ? date('g:i A', strtotime($timing->from_time)) : '';
+                $label = trim($datePart . ($datePart && $timePart ? ' · ' : '') . $timePart);
+
+                return [
+                    'id' => $timing->id,
+                    'label' => $label !== '' ? $label : ('Timing #'.$timing->id),
+                    'sort' => ($timing->event_date ?? '9999-99-99').' '.($timing->from_time ?? '99:99:99'),
+                ];
+            })
+            ->unique('id')
+            ->sortBy('sort')
+            ->values();
+
+        $dateFilters = $listings
+            ->map(function ($item) {
+                $event = $item->event;
+                $timing = $item->timing;
+                $singleDay = $event->event_from_date == $event->event_to_date;
+                $eventDate = $timing->event_date
+                    ?? ($singleDay ? $event->event_to_date : $event->event_from_date);
+
+                if (empty($eventDate)) {
+                    return null;
+                }
+
+                $normalized = date('Y-m-d', strtotime($eventDate));
+
+                return [
+                    'id' => $normalized,
+                    'label' => date('d M Y', strtotime($normalized)),
+                    'sort' => $normalized,
+                ];
+            })
+            ->filter()
+            ->unique('id')
+            ->sortBy('sort')
+            ->values();
+
+        $venueFilters = $data
+            ->filter(fn ($event) => !empty($event->venue_id) && filled($event->venue_name))
+            ->map(fn ($event) => [
+                'id' => $event->venue_id,
+                'label' => $event->venue_name,
+            ])
+            ->unique('id')
+            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        $countryFilters = $data
+            ->filter(fn ($event) => !empty($event->country_id) && filled($event->country_name))
+            ->map(fn ($event) => [
+                'id' => $event->country_id,
+                'label' => $event->country_name,
+            ])
+            ->unique('id')
+            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
 
         // Get locations for filter
         $locationQuery = Events::
@@ -163,7 +266,8 @@ class WelcomeController extends Controller
                 // Search in JSON artists column if artist IDs found
                 if(!empty($artistIdsForLocation)){
                     foreach($artistIdsForLocation as $artistId){
-                        $q->orWhereRaw("JSON_CONTAINS(event.artists, '\"$artistId\"')");
+                        $q->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((string) $artistId)])
+                          ->orWhereRaw('JSON_CONTAINS(event.artists, ?)', [json_encode((int) $artistId)]);
                     }
                 }
             });
@@ -172,11 +276,30 @@ class WelcomeController extends Controller
         }
 
         $location = $locationQuery
-        ->groupBy('venue.location')
-        ->select('location.id as id','country_name','cities.name as city_name','location_name','venue.name as venue_name')
-        ->get();
+            ->whereNotNull('cities.id')
+            ->groupBy('cities.id', 'cities.name', 'countries.country_name')
+            ->select(
+                'cities.id as id',
+                'country_name',
+                'cities.name as city_name'
+            )
+            ->orderBy('cities.name')
+            ->get();
 
-        return view('new_eventlistfrontend',compact('data','event_tag','location','data1','search'));
+        $data1 = $data->isNotEmpty() ? $data->first() : null;
+
+        return view('new_eventlistfrontend', compact(
+            'data',
+            'listings',
+            'timingFilters',
+            'dateFilters',
+            'venueFilters',
+            'countryFilters',
+            'event_tag',
+            'location',
+            'data1',
+            'search'
+        ));
 
 
     }
@@ -294,12 +417,14 @@ class WelcomeController extends Controller
                 'event_tags.id',
                 'event_tags.tag_name',
                 'event_tags.tag_image',
+                'event_tags.sort_order',
                 DB::raw('MAX(event.event_image) as event_image')
             )
             ->join('event', 'event.event_tag', '=', 'event_tags.id')
             ->where('event_tags.is_active', 1)
             ->whereNull('event.deleted_at')
-            ->groupBy('event_tags.id', 'event_tags.tag_name', 'event_tags.tag_image')
+            ->groupBy('event_tags.id', 'event_tags.tag_name', 'event_tags.tag_image', 'event_tags.sort_order')
+            ->orderBy('event_tags.sort_order')
             ->orderBy('event_tags.tag_name');
     }
 

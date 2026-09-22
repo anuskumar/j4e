@@ -93,6 +93,24 @@
     .form-section-spacer {
         margin-bottom: 1.75rem;
     }
+
+    .select2-results__option.create-new-option {
+        color: var(--primary-bg-color, #6259ca);
+        font-weight: 600;
+    }
+
+    .select2-results__option.create-new-option:before {
+        content: '+ ';
+    }
+
+    .create-new-option-text {
+        color: var(--primary-bg-color, #6259ca);
+        font-weight: 600;
+    }
+
+    .city-field-actions {
+        margin-top: 0.35rem;
+    }
 </style>
 
 <div class="row row-sm">
@@ -186,34 +204,52 @@
                         @enderror
                     </div>
 
+                    <div class="form-group form-section-spacer">
+                        <label class="form-field-label" for="venue_type">Venue Type <span class="text-danger">*</span></label>
+                        <select name="venue_type" id="venue_type" class="form-control select2-single @error('venue_type') is-invalid @enderror" required>
+                            <option value="">Select venue type</option>
+                            @foreach ($venue_type as $type)
+                                <option value="{{ $type->id }}" {{ old('venue_type') == $type->id ? 'selected' : '' }}>
+                                    {{ $type->venue_type_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('venue_type')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <div class="row g-3 form-section-spacer">
                         <div class="col-md-6">
-                            <label class="form-field-label" for="venue_type">Venue Type <span class="text-danger">*</span></label>
-                            <select name="venue_type" id="venue_type" class="form-control select2-single @error('venue_type') is-invalid @enderror" required>
-                                <option value="">Select venue type</option>
-                                @foreach ($venue_type as $type)
-                                    <option value="{{ $type->id }}" {{ old('venue_type') == $type->id ? 'selected' : '' }}>
-                                        {{ $type->venue_type_name }}
+                            <label class="form-field-label" for="country_id">Country <span class="text-danger">*</span></label>
+                            <select name="country_id" id="country_id" class="form-control select2-single @error('country_id') is-invalid @enderror" required>
+                                <option value="">Select country</option>
+                                @foreach ($countries as $country)
+                                    <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                        {{ $country->country_name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('venue_type')
+                            @error('country_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-field-label" for="location">Location <span class="text-danger">*</span></label>
-                            <select name="location" id="location" class="form-control select2-single @error('location') is-invalid @enderror" required>
-                                <option value="">Select location</option>
-                                @foreach ($location as $loc)
-                                    <option value="{{ $loc->id }}"
-                                        {{ old('location') == $loc->id ? 'selected' : '' }}
-                                        data-label="{{ $loc->location_name }}, {{ $loc->name }}, {{ $loc->country_name }}">
-                                        {{ $loc->location_name }}, {{ $loc->name }}, {{ $loc->country_name }}
+                            <label class="form-field-label" for="city_id">City <span class="text-danger">*</span></label>
+                            <select name="city_id" id="city_id" class="form-control select2-single @error('city_id') is-invalid @enderror" required>
+                                <option value="">Select city</option>
+                                @foreach ($cities as $city)
+                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                        {{ $city->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('location')
+                            <div class="city-field-actions">
+                                <button type="button" class="btn btn-link btn-sm p-0" id="open-create-city-btn">
+                                    + Create new city
+                                </button>
+                            </div>
+                            @error('city_id')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
@@ -283,6 +319,8 @@
     </div>
 </div>
 
+@include('admin.venue.partials.create_city_modal')
+
 @endsection
 
 @push('scripts')
@@ -291,24 +329,51 @@
 jQuery(document).ready(function ($) {
     const defaultImage = @json(asset('assets/img/default-venue.jpg'));
     const fallbackImage = @json(asset('assets/img/default-event.jpg'));
+    const selectedCityId = @json(old('city_id'));
+    const CREATE_VALUE = '__create_new__';
+    const csrfToken = $('meta[name="csrf-token"]').attr('content');
+    const quickCreateCityUrl = @json(url('city/quick-create'));
+
+    function formatCreateOption(option) {
+        if (!option.id || option.id !== CREATE_VALUE) {
+            return option.text;
+        }
+
+        return $('<span class="create-new-option-text">' + option.text + '</span>');
+    }
+
+    function appendCreateCityOption() {
+        const $city = $('#city_id');
+        if (!$city.find('option[value="' + CREATE_VALUE + '"]').length) {
+            $city.append(new Option('Create new city...', CREATE_VALUE, false, false));
+        }
+    }
 
     $('.select2-single').select2({
         width: '100%',
         allowClear: true,
-        placeholder: 'Select an option'
+        placeholder: 'Select an option',
+        templateResult: formatCreateOption
     });
 
     function updatePreview() {
         const name = $('#name').val().trim();
         const venueType = $('#venue_type option:selected').text().trim();
-        const locationOption = $('#location option:selected');
-        const locationLabel = locationOption.data('label') || locationOption.text().trim();
+        const country = $('#country_id option:selected').text().trim();
+        const city = $('#city_id option:selected').text().trim();
         const latitude = $('#latitude').val();
         const longitude = $('#longitude').val();
 
+        let locationLabel = 'Not selected';
+        if (city && city !== 'Select city' && city.indexOf('Create new') !== 0 && country && country !== 'Select country') {
+            locationLabel = city + ', ' + country;
+        } else if (country && country !== 'Select country') {
+            locationLabel = country;
+        }
+
         $('#preview-venue-name').text(name || 'New Venue');
         $('#preview-venue-type').text(venueType && venueType !== 'Select venue type' ? venueType : 'Not selected');
-        $('#preview-location').text(locationLabel && locationLabel !== 'Select location' ? locationLabel : 'Not selected');
+        $('#preview-location').text(locationLabel);
 
         if (latitude && longitude) {
             $('#preview-coordinates').text(latitude + ', ' + longitude);
@@ -317,6 +382,77 @@ jQuery(document).ready(function ($) {
         } else {
             $('#preview-coordinates').text('Not set yet');
         }
+    }
+
+    function loadCities(countryId, preselectCityId) {
+        const $city = $('#city_id');
+        $city.empty().append('<option value="">Select city</option>').val('').trigger('change');
+
+        if (!countryId) {
+            updatePreview();
+            return;
+        }
+
+        $.get(@json(url('get-city')) + '/' + countryId, function (cities) {
+            $.each(cities, function (id, name) {
+                $city.append(new Option(name, id, false, false));
+            });
+
+            appendCreateCityOption();
+
+            if (preselectCityId && $city.find('option[value="' + preselectCityId + '"]').length) {
+                $city.val(String(preselectCityId)).trigger('change');
+            } else {
+                $city.trigger('change');
+            }
+
+            updatePreview();
+        });
+    }
+
+    function openCreateCityModal() {
+        const countryId = $('#country_id').val();
+        const countryName = $('#country_id option:selected').text().trim();
+
+        if (!countryId) {
+            alert('Please select a country first.');
+            return;
+        }
+
+        const modalEl = document.getElementById('quickCreateCityModal');
+        const $form = $('#quick-create-city-form');
+
+        $form[0].reset();
+        $form.find('.invalid-feedback').text('');
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $('#quick_city_country_id').val(countryId);
+        $('#quick_city_country_name').val(countryName);
+
+        $('#city_id').select2('close');
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+        setTimeout(function () {
+            $('#quick_city_name').trigger('focus');
+        }, 300);
+    }
+
+    function insertCityOption(item) {
+        const $city = $('#city_id');
+        const $existing = $city.find('option[value="' + item.id + '"]');
+
+        if ($existing.length) {
+            $existing.text(item.text);
+        } else if ($city.find('option[value="' + CREATE_VALUE + '"]').length) {
+            $city.find('option[value="' + CREATE_VALUE + '"]').before(
+                $('<option></option>').val(item.id).text(item.text)
+            );
+        } else {
+            $city.append(new Option(item.text, item.id, false, false));
+            appendCreateCityOption();
+        }
+
+        $city.val(String(item.id)).trigger('change');
+        updatePreview();
     }
 
     function handleImageFile(file) {
@@ -350,9 +486,93 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $('#country_id').on('change', function () {
+        loadCities($(this).val(), null);
+    });
+
+    $('#city_id').on('select2:opening', function () {
+        $(this).data('previousValue', $(this).val());
+    }).on('select2:select', function (event) {
+        if (event.params.data.id !== CREATE_VALUE) {
+            return;
+        }
+
+        $(this).val($(this).data('previousValue') || null).trigger('change');
+        openCreateCityModal();
+    }).on('select2:open', function () {
+        setTimeout(function () {
+            $('.select2-results__option[id$="-' + CREATE_VALUE + '"]').addClass('create-new-option');
+        }, 0);
+    });
+
+    $('#open-create-city-btn').on('click', openCreateCityModal);
+
+    $('#quick-create-city-form').on('submit', function (event) {
+        event.preventDefault();
+
+        const $form = $(this);
+        const $submit = $('#quick-create-city-submit');
+
+        $form.find('.invalid-feedback').text('');
+        $form.find('.is-invalid').removeClass('is-invalid');
+        $submit.prop('disabled', true);
+
+        $.ajax({
+            url: quickCreateCityUrl,
+            method: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        }).done(function (response) {
+            if (!response.success) {
+                return;
+            }
+
+            insertCityOption(response.data);
+            bootstrap.Modal.getInstance(document.getElementById('quickCreateCityModal')).hide();
+
+            if (typeof toastr !== 'undefined') {
+                toastr.success(response.message);
+            }
+        }).fail(function (xhr) {
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                $.each(xhr.responseJSON.errors, function (field, messages) {
+                    const $input = $form.find('[name="' + field + '"]');
+                    $input.addClass('is-invalid');
+                    const $error = $('#' + $input.attr('id') + '_error');
+                    if ($error.length) {
+                        $error.text(messages[0]);
+                    }
+                });
+                return;
+            }
+
+            const message = (xhr.responseJSON && xhr.responseJSON.message)
+                ? xhr.responseJSON.message
+                : 'Unable to save city. Please try again.';
+
+            if (typeof toastr !== 'undefined') {
+                toastr.error(message);
+            } else {
+                alert(message);
+            }
+        }).always(function () {
+            $submit.prop('disabled', false);
+        });
+    });
+
     $('#name, #latitude, #longitude').on('input change', updatePreview);
-    $('#venue_type, #location').on('change', updatePreview);
-    updatePreview();
+    $('#venue_type, #city_id').on('change', updatePreview);
+
+    if ($('#country_id').val()) {
+        loadCities($('#country_id').val(), selectedCityId);
+    } else {
+        updatePreview();
+    }
 });
 </script>
 @endpush

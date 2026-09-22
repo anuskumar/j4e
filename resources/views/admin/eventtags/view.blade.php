@@ -51,6 +51,15 @@ $tagImage = ($data && $data->tag_image)
                             <div>{{ $data->tag_name ?? '-' }}</div>
                         </div>
                     </div>
+                    <div class="media">
+                        <div class="media-icon bg-info-transparent text-info">
+                            <i class="fe fe-list"></i>
+                        </div>
+                        <div class="media-body">
+                            <span>Display Order</span>
+                            <div>{{ $data->sort_order ?? 0 }}</div>
+                        </div>
+                    </div>
                     <div class="media mb-0">
                         <div class="media-icon bg-success-transparent text-success">
                             <i class="fe fe-check-circle"></i>
@@ -75,6 +84,14 @@ $tagImage = ($data && $data->tag_image)
                     <div class="input-group">
                         <span class="input-group-text"><i class="fe fe-tag"></i></span>
                         <input type="text" class="form-control view-field" value="{{ $data->tag_name ?? '-' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group form-section-spacer">
+                    <label class="form-field-label">Display Order</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fe fe-list"></i></span>
+                        <input type="text" class="form-control view-field" value="{{ $data->sort_order ?? 0 }}" readonly>
                     </div>
                 </div>
 

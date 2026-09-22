@@ -54,7 +54,8 @@
 												<label class="form-label"> Exchange Rate With 1 USD</label>
 											</div>
 											<div class="col-md-6">
-												<input type="number" class="form-control" name="currency_rate" required  value="{{ $data->currency_rate }}">
+												<input type="text" class="form-control" value="{{ number_format((float) $data->currency_rate, 4) }}" readonly>
+                                                <small class="text-muted">Rate is synced automatically from the internet against USD.</small>
 											</div>
 										</div>
 									</div>

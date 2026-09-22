@@ -73,6 +73,14 @@
                 </div>
 
                 <div class="form-group form-section-spacer">
+                    <label class="form-field-label">Display Order</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fe fe-list"></i></span>
+                        <input type="text" class="form-control view-field" value="{{ $data->sort_order ?? 0 }}" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group form-section-spacer">
                     <label class="form-field-label d-block">Status</label>
                     <div class="d-flex align-items-center justify-content-between border rounded px-3" style="min-height: 38px;">
                         <span class="tx-13 fw-semibold">Active</span>

@@ -238,7 +238,7 @@
                         <thead>
                             <tr>
                                 <th>SL</th>
-                                <th>Ticket Name</th>
+                                <th>Listing ID</th>
                                 @if (!$isReseller)
                                     <th>Reseller</th>
                                 @endif
@@ -257,7 +257,7 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>
-                                        <span class="font-weight-semibold">{{ $val->ticket_name }}</span>
+                                        <span class="font-weight-semibold">#{{ $val->id }}</span>
                                         @if ($val->ticket_status_name)
                                             <span class="d-block mt-1">
                                                 <span class="badge {{ $val->ticket_status == 1 ? 'bg-success-transparent' : 'bg-secondary-transparent' }} tx-11">
@@ -309,12 +309,17 @@
                                             <span class="badge bg-success">Approved</span>
                                         @elseif ($val->is_admin_approved == 2)
                                             <span class="badge bg-danger">Rejected</span>
+                                            @if (!empty($val->rejection_reason))
+                                                <div class="text-muted tx-12 mt-1" title="{{ $val->rejection_reason }}">
+                                                    {{ \Illuminate\Support\Str::limit($val->rejection_reason, 60) }}
+                                                </div>
+                                            @endif
                                         @else
                                             <span class="badge bg-warning mb-1">Pending</span>
                                             @if ($isSuperAdmin)
                                                 <div class="approval-actions">
                                                     <button type="button" class="btn btn-xs btn-success btn-sm" id="approve-btn-{{ $val->id }}" onclick="approval_warning({{ $val->id }}, {{ $val->created_by }}, this)">Approve</button>
-                                                    <button type="button" class="btn btn-xs btn-danger btn-sm" id="reject-btn-{{ $val->id }}" onclick="rejection_warning({{ $val->id }}, {{ $val->created_by }}, this)">Reject</button>
+                                                    <button type="button" class="btn btn-xs btn-danger btn-sm" id="reject-btn-{{ $val->id }}" onclick="openRejectModal({{ $val->id }}, {{ $val->created_by }})">Reject</button>
                                                 </div>
                                             @endif
                                         @endif
@@ -357,6 +362,7 @@
                 <form class="form-horizontal" action="{{ url('tickets/store_ticket') }}" method="POST" enctype="multipart/form-data" id="create-ticket-form">
                     @csrf
                     <input type="hidden" name="event" id="event-id" value="{{ $id }}">
+                    <input type="hidden" name="features_submitted" value="1">
 
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -364,85 +370,206 @@
                             <input type="text" class="form-control" name="ticket_name" required value="{{ old('ticket_name') }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Ticket Type</label>
-                            <select class="form-control form-select" name="ticket_type">
+                            <label class="form-label">Ticket Type <span class="text-danger">*</span></label>
+                            <select class="form-control form-select" name="ticket_type" id="create-ticket-type" required>
                                 <option value="">Select</option>
                                 @foreach ($ticket_type as $val)
-                                    <option value="{{ $val->id }}">{{ $val->ticket_type_name }}</option>
+                                    @php
+                                        $isMobileType = (int) $val->id === 4
+                                            || (
+                                                stripos($val->ticket_type_name, 'mobile') !== false
+                                                && stripos($val->ticket_type_name, 'transfer') !== false
+                                            );
+                                    @endphp
+                                    <option value="{{ $val->id }}" data-mobile="{{ $isMobileType ? 1 : 0 }}" {{ old('ticket_type') == $val->id ? 'selected' : '' }}>
+                                        {{ $val->ticket_type_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-none" id="mobile-app-wrapper">
+                            <label class="form-label">Mobile Application <span class="text-danger">*</span></label>
+                            <select class="form-control form-select" name="mobile_app" id="mobile-app-select">
+                                <option value="">Select an application</option>
+                                @foreach ($mobile_applications as $app)
+                                    <option value="{{ $app->id }}" {{ old('mobile_app') == $app->id ? 'selected' : '' }}>{{ $app->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Event Timing</label>
-                            <select class="form-control form-select" id="event-timing" onchange="reload_value()" name="event_timing">
+                            <label class="form-label">Event Timing <span class="text-danger">*</span></label>
+                            <select class="form-control form-select" id="event-timing" onchange="reload_value()" name="event_timing" required>
                                 <option value="">Select</option>
                                 @foreach ($event_timing as $val)
-                                    <option value="{{ $val->id }}">
+                                    <option value="{{ $val->id }}" {{ old('event_timing') == $val->id ? 'selected' : '' }}>
                                         {{ date('d M Y', strtotime($val->event_date)) }} [{{ date('H:i', strtotime($val->from_time)) }} – {{ date('H:i', strtotime($val->to_time)) }}]
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Seating</label>
-                            <select class="form-control form-select" name="venue_seating" id="seating-select" onchange="get_available_tickets(this.value)">
+                            <label class="form-label">Seating <span class="text-danger">*</span></label>
+                            <select class="form-control form-select" name="venue_seating" id="seating-select" onchange="get_available_tickets(this.value)" required>
                                 <option value="">Select</option>
                                 @foreach ($venue_seatings as $val)
-                                    <option value="{{ $val->id }}">
-                                        {{ $val->seating_type_name }} [{{ $val->seat_serial_prefix }}{{ $val->seat_serial_start }} – {{ $val->seat_serial_prefix }}{{ $val->seat_serial_end ?? $val->seat_serial_start }}]
+                                    <option value="{{ $val->id }}" {{ old('venue_seating') == $val->id ? 'selected' : '' }}>
+                                        {{ $val->seating_type_name }}
+                                        @if (!empty($val->number_of_seats))
+                                            [{{ $val->number_of_seats }} seats]
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Number Of Tickets</label>
-                            <input type="number" class="form-control" id="no-of-tickets" name="no_of_tickets" required value="{{ old('no_of_tickets') }}">
+                            <label class="form-label">Number Of Tickets <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="no-of-tickets" name="no_of_tickets" min="1" required value="{{ old('no_of_tickets') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Row</label>
-                            <input type="number" class="form-control" name="row" required value="{{ old('row') }}">
+                            <input type="text" class="form-control" name="row" id="seat-row" placeholder="e.g. A, AA" value="{{ old('row') }}">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Seat From</label>
-                            <input type="number" class="form-control" name="seat_from" required value="{{ old('seat_from') }}">
+                            <input type="number" class="form-control" name="seat_from" id="seat-from" value="{{ old('seat_from') }}">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Seat To</label>
-                            <input type="number" class="form-control" name="seat_to" required value="{{ old('seat_to') }}">
+                            <input type="number" class="form-control" name="seat_to" id="seat-to" value="{{ old('seat_to') }}">
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Do you want to sell all your tickets together? <span class="text-danger">*</span></label>
+                            <div class="row g-2">
+                                @foreach ($splittypes as $split)
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sell_together"
+                                                id="sell_{{ $split->id }}" value="{{ $split->id }}"
+                                                {{ (string) old('sell_together') === (string) $split->id ? 'checked' : '' }} required>
+                                            <label class="form-check-label" for="sell_{{ $split->id }}">{{ $split->split_name }}</label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
                         <div class="col-md-4">
-                            <label class="form-label">Ticket Amount</label>
-                            <input type="number" class="form-control" name="ticket_amount" required value="{{ old('ticket_amount') }}">
+                            <label class="form-label">Currency <span class="text-danger">*</span></label>
+                            <select class="form-control form-select" name="amount_currency" id="create-currency" required>
+                                <option value="">Select</option>
+                                @foreach ($currency as $val)
+                                    @php $isCurrencyActive = (int) $val->is_active === 1; @endphp
+                                    <option value="{{ $val->id }}"
+                                        data-code="{{ $val->short_name }}"
+                                        data-rate="{{ $val->currency_rate }}"
+                                        @disabled(! $isCurrencyActive)
+                                        {{ old('amount_currency') == $val->id && $isCurrencyActive ? 'selected' : '' }}>
+                                        {{ $val->name }} [{{ $val->short_name }}]{{ $isCurrencyActive ? '' : ' — Inactive' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Ticket Amount <span class="text-danger">*</span></label>
+                            <input type="number" step="1" min="0" class="form-control" name="ticket_amount" id="create-amount" required value="{{ old('ticket_amount') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Cents</label>
+                            <input type="number" class="form-control" name="cents" id="create-cents" min="0" max="99" step="1" placeholder="00" value="{{ old('cents', 0) }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Converted (USD)</label>
+                            <div class="form-control-plaintext fw-semibold" id="create-converted-value">$0.00 USD</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Face Value</label>
-                            <input type="number" class="form-control" name="face_value" required value="{{ old('face_value') }}">
+                            <input type="number" step="0.01" min="0" class="form-control" name="face_value" id="create-face-value" value="{{ old('face_value') }}" placeholder="Defaults to ticket amount">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Currency</label>
-                            <select class="form-control form-select" name="amount_currency" required>
-                                <option value="">Select</option>
-                                @foreach ($currency as $val)
-                                    <option value="{{ $val->id }}">{{ $val->name }} [{{ $val->short_name }}]</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label">Restrictions</label>
-                            <select class="form-control select2-select" multiple name="ticket_restrictions[]" required>
-                                @foreach ($restrictions as $val)
-                                    <option value="{{ $val->id }}">{{ $val->restrictions }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">Booking Expiry</label>
                             <input type="datetime-local" required class="form-control" name="booking_expiry_date_time" value="{{ old('booking_expiry_date_time') }}">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Upload Ticket</label>
                             <input type="file" name="ticket_upload" class="form-control">
                         </div>
+
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <label class="form-label mb-0">Restrictions</label>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="toggle-new-restriction">
+                                    <i class="fe fe-plus me-1"></i> Add Restriction
+                                </button>
+                            </div>
+                            <select class="form-control select2-select" id="ticket-restrictions-select" multiple name="ticket_restrictions[]">
+                                @foreach ($restrictions as $val)
+                                    <option value="{{ $val->id }}" {{ collect(old('ticket_restrictions', []))->contains($val->id) ? 'selected' : '' }}>{{ $val->restrictions }}</option>
+                                @endforeach
+                            </select>
+                            <div class="mt-2 d-none" id="new-restriction-wrap">
+                                <div class="input-group">
+                                    <input type="text"
+                                        class="form-control"
+                                        id="new-restriction-name"
+                                        maxlength="255"
+                                        placeholder="Enter new restriction name">
+                                    <button type="button" class="btn btn-primary" id="add-restriction-btn">
+                                        <i class="fe fe-save me-1"></i> Create
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback d-block" id="new-restriction-error"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label mb-2">Ticket Features</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="clearView" name="clearView" class="form-check-input view-feature-checkbox" {{ old('clearView') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="clearView">Clear view</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="limitedView" name="limitedView" class="form-check-input view-feature-checkbox" {{ old('limitedView') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="limitedView">Limited or restricted view</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="vipPass" name="vipPass" class="form-check-input" {{ old('vipPass') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="vipPass">Includes VIP pass</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="mealPackage" name="mealPackage" class="form-check-input" {{ old('mealPackage') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="mealPackage">Ticket and meal package</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="parking" name="parking" class="form-check-input" {{ old('parking') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="parking">Includes parking</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="standingOnly" name="standingOnly" class="form-check-input" {{ old('standingOnly') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="standingOnly">Standing Only</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="aisleSeat" name="aisleSeat" class="form-check-input" {{ old('aisleSeat') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="aisleSeat">Aisle seat</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Disclaimer Notes</label>
                             <textarea class="form-control" name="disclaimer_note" rows="3">{{ old('disclaimer_note') }}</textarea>
@@ -458,6 +585,33 @@
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" form="create-ticket-form" class="btn btn-primary">
                     <i class="fe fe-save me-1"></i> Create Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if ($isSuperAdmin)
+<div class="modal fade" id="reject-ticket-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Reject Ticket Listing</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reject-ticket-id" value="">
+                <input type="hidden" id="reject-created-by" value="">
+                <p class="text-muted tx-13 mb-3">Provide a clear reason. The reseller will get an email and an in-app notification.</p>
+                <label class="form-label" for="reject-reason">Rejection Reason <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="reject-reason" rows="4" maxlength="2000" placeholder="Explain why this listing is being rejected..."></textarea>
+                <div class="invalid-feedback d-block" id="reject-reason-error"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-reject-ticket">
+                    <i class="fe fe-x-circle me-1"></i> Reject &amp; Notify
                 </button>
             </div>
         </div>
@@ -498,7 +652,145 @@
 })();
 
 jQuery(document).ready(function ($) {
-    $('.select2-select').select2({ width: '100%', placeholder: 'Select restrictions' });
+    const $restrictionsSelect = $('#ticket-restrictions-select');
+    $restrictionsSelect.select2({ width: '100%', placeholder: 'Select restrictions', dropdownParent: $('#create-ticket-modal') });
+
+    $(document).on('change', '.view-feature-checkbox', function () {
+        if (!this.checked) {
+            return;
+        }
+        $('.view-feature-checkbox').not(this).prop('checked', false);
+    });
+
+    $('#toggle-new-restriction').on('click', function () {
+        const $wrap = $('#new-restriction-wrap');
+        $wrap.toggleClass('d-none');
+        if (!$wrap.hasClass('d-none')) {
+            $('#new-restriction-name').trigger('focus');
+        }
+        $('#new-restriction-error').text('');
+    });
+
+    const createRestriction = () => {
+        const $input = $('#new-restriction-name');
+        const $error = $('#new-restriction-error');
+        const $btn = $('#add-restriction-btn');
+        const name = $.trim($input.val());
+
+        $error.text('');
+        if (!name) {
+            $error.text('Please enter a restriction name.');
+            $input.trigger('focus');
+            return;
+        }
+
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: @json(route('ticket_restrictions.quick-create')),
+            method: 'POST',
+            data: { restrictions: name },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            }
+        }).done(function (response) {
+            if (!response || !response.success || !response.data) {
+                $error.text((response && response.message) ? response.message : 'Unable to create restriction.');
+                return;
+            }
+
+            const id = String(response.data.id);
+            const text = response.data.text;
+
+            if ($restrictionsSelect.find('option[value="' + id + '"]').length === 0) {
+                const option = new Option(text, id, true, true);
+                $restrictionsSelect.append(option);
+            }
+
+            const selected = $restrictionsSelect.val() || [];
+            if (selected.indexOf(id) === -1) {
+                selected.push(id);
+            }
+            $restrictionsSelect.val(selected).trigger('change');
+
+            $input.val('');
+            $('#new-restriction-wrap').addClass('d-none');
+
+            if (typeof toastr !== 'undefined') {
+                toastr.success(response.message || 'Restriction created successfully.');
+            }
+        }).fail(function (xhr) {
+            let message = 'Unable to create restriction. Please try again.';
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                const firstKey = Object.keys(xhr.responseJSON.errors)[0];
+                message = xhr.responseJSON.errors[firstKey][0] || message;
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+            $error.text(message);
+        }).always(function () {
+            $btn.prop('disabled', false);
+        });
+    };
+
+    $('#add-restriction-btn').on('click', createRestriction);
+    $('#new-restriction-name').on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            createRestriction();
+        }
+    });
+
+    const toggleMobileApp = () => {
+        const selected = $('#create-ticket-type option:selected');
+        const isMobile = selected.data('mobile') == 1;
+        const $wrapper = $('#mobile-app-wrapper');
+        const $select = $('#mobile-app-select');
+        if (isMobile) {
+            $wrapper.removeClass('d-none');
+            $select.prop('required', true);
+        } else {
+            $wrapper.addClass('d-none');
+            $select.prop('required', false).val('');
+        }
+    };
+
+    const syncSeatTo = () => {
+        const count = parseInt($('#no-of-tickets').val(), 10);
+        const from = parseInt($('#seat-from').val(), 10);
+        if (!Number.isNaN(count) && count > 0 && !Number.isNaN(from)) {
+            $('#seat-to').val(from + count - 1);
+        }
+    };
+
+    const updateConvertedValue = () => {
+        const selected = $('#create-currency option:selected');
+        const rate = parseFloat(selected.data('rate')) || 1;
+        let amount = parseFloat($('#create-amount').val());
+        let cents = parseInt($('#create-cents').val(), 10);
+        if (Number.isNaN(amount) || amount < 0) amount = 0;
+        if (Number.isNaN(cents) || cents < 0) cents = 0;
+        if (cents > 99) {
+            cents = 99;
+            $('#create-cents').val(99);
+        }
+        const localValue = Math.round((amount + (cents / 100)) * 100) / 100;
+        const usdValue = rate > 0 ? (localValue / rate) : localValue;
+        $('#create-converted-value').text('$' + usdValue.toFixed(2) + ' USD');
+    };
+
+    $('#create-ticket-type').on('change', toggleMobileApp);
+    $('#no-of-tickets, #seat-from').on('input change', syncSeatTo);
+    $('#create-currency, #create-amount, #create-cents').on('input change', updateConvertedValue);
+
+    toggleMobileApp();
+    updateConvertedValue();
+
+    @if ($errors->any())
+        var createModal = new bootstrap.Modal(document.getElementById('create-ticket-modal'));
+        createModal.show();
+    @endif
 });
 
 function get_available_tickets(val) {
@@ -520,7 +812,7 @@ function get_available_tickets(val) {
         success: function (data) {
             if (data.status === true) {
                 toastr.success(data.message);
-                $('#no-of-tickets').val(data.seats).attr({ max: data.seats, min: 0 });
+                $('#no-of-tickets').val(data.seats).attr({ max: data.seats, min: 1 });
             } else {
                 toastr.error(data.message);
             }
@@ -574,47 +866,74 @@ const approval_warning = (val, created_by) => {
     });
 };
 
-const rejection_warning = (val, created_by) => {
-    const approveBtn = $('#approve-btn-' + val);
-    const rejectBtn = $('#reject-btn-' + val);
+const openRejectModal = (ticketId, createdBy) => {
+    $('#reject-ticket-id').val(ticketId);
+    $('#reject-created-by').val(createdBy);
+    $('#reject-reason').val('');
+    $('#reject-reason-error').text('');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('reject-ticket-modal')).show();
+};
+
+$('#confirm-reject-ticket').on('click', function () {
+    const ticketId = $('#reject-ticket-id').val();
+    const createdBy = $('#reject-created-by').val();
+    const reason = $.trim($('#reject-reason').val());
+    const $btn = $(this);
+    const approveBtn = $('#approve-btn-' + ticketId);
+    const rejectBtn = $('#reject-btn-' + ticketId);
+
+    $('#reject-reason-error').text('');
+    if (reason.length < 5) {
+        $('#reject-reason-error').text('Please enter a rejection reason (at least 5 characters).');
+        $('#reject-reason').trigger('focus');
+        return;
+    }
+
+    $btn.prop('disabled', true);
     approveBtn.prop('disabled', true);
     rejectBtn.prop('disabled', true);
 
-    swal({
-        title: 'Reject this ticket listing?',
-        text: 'The reseller will be notified of the rejection.',
-        icon: 'warning',
-        buttons: true,
-        dangerMode: true,
-    }).then((willReject) => {
-        if (!willReject) {
-            approveBtn.prop('disabled', false);
-            rejectBtn.prop('disabled', false);
-            return;
-        }
-
-        $.ajax({
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            url: "{{ url('tickets/reject_tickets') }}",
-            data: { ticket_id: val, created_by: created_by },
-            type: 'GET',
-            dataType: 'json',
-            success: function (data) {
-                if (data.status === true) {
-                    swal({ title: 'Ticket Rejected', text: data.message, icon: 'info', button: 'OK' }).then(() => location.reload());
-                } else {
-                    approveBtn.prop('disabled', false);
-                    rejectBtn.prop('disabled', false);
-                    toastr.error(data.message);
-                }
-            },
-            error: function () {
+    $.ajax({
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        url: "{{ url('tickets/reject_tickets') }}",
+        data: {
+            ticket_id: ticketId,
+            created_by: createdBy,
+            rejection_reason: reason
+        },
+        type: 'POST',
+        dataType: 'json',
+        success: function (data) {
+            if (data.status === true) {
+                bootstrap.Modal.getInstance(document.getElementById('reject-ticket-modal')).hide();
+                swal({
+                    title: 'Ticket Rejected',
+                    text: data.message || 'Reseller has been notified.',
+                    icon: 'info',
+                    button: 'OK'
+                }).then(() => location.reload());
+            } else {
+                $btn.prop('disabled', false);
                 approveBtn.prop('disabled', false);
                 rejectBtn.prop('disabled', false);
-                toastr.error('Unable to reject ticket.');
+                toastr.error(data.message || 'Unable to reject ticket.');
             }
-        });
+        },
+        error: function (xhr) {
+            $btn.prop('disabled', false);
+            approveBtn.prop('disabled', false);
+            rejectBtn.prop('disabled', false);
+            let message = 'Unable to reject ticket.';
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                const firstKey = Object.keys(xhr.responseJSON.errors)[0];
+                message = xhr.responseJSON.errors[firstKey][0] || message;
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                message = xhr.responseJSON.message;
+            }
+            $('#reject-reason-error').text(message);
+            toastr.error(message);
+        }
     });
-};
+});
 </script>
 @endpush
