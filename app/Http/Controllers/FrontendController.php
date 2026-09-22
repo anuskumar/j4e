@@ -17,13 +17,16 @@ use App\Models\TicketsGenerated;
 use App\Models\User;
 use App\Models\RestrictionModel;
 use App\Models\VenueSeating;
+use App\Services\EventPageViewerService;
 use App\Services\TicketSplitTypeService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -944,6 +947,10 @@ class FrontendController extends Controller
             }
             unset($item);
 
+            $viewerId = (string) ($request->cookie('event_viewer_id') ?: Str::uuid());
+            Cookie::queue(cookie('event_viewer_id', $viewerId, 60 * 24 * 365, null, null, false, false));
+            $viewerStats = app(EventPageViewerService::class)->ping((int) $id, $viewerId);
+
             return view('customer.show_details_show', compact(
                 'settings',
                 'id',
@@ -963,9 +970,25 @@ class FrontendController extends Controller
                 'lowestPrice',
                 'listingCount',
                 'totalAvailableSeats',
-                'maxQuantityOption'
+                'maxQuantityOption',
+                'viewerStats'
             ));
 
+           }
+
+           public function eventPageViewerPing(Request $request, $id)
+           {
+               $eventExists = Events::where('id', $id)->exists();
+               if (! $eventExists) {
+                   return response()->json(['message' => 'Event not found.'], 404);
+               }
+
+               $viewerId = (string) ($request->cookie('event_viewer_id') ?: Str::uuid());
+               $stats = app(EventPageViewerService::class)->ping((int) $id, $viewerId);
+
+               return response()
+                   ->json($stats)
+                   ->cookie(cookie('event_viewer_id', $viewerId, 60 * 24 * 365, null, null, false, false));
            }
 
            public function filterTickets(Request $request)

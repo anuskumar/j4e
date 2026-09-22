@@ -7,7 +7,7 @@
 }
 
 .customer-site-banner__trust {
-    background: #7e0982;
+    background: #022D5F;
     color: #fff;
     font-size: 13px;
     padding: 8px 0;
@@ -40,9 +40,9 @@
 }
 
 .customer-site-banner__types {
-    background: rgb(34, 30, 105);
-    background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: #022D5F;
+    background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     overflow: visible;
     position: relative;
     z-index: 200;
@@ -55,8 +55,8 @@
 }
 
 .customer-site-banner__hero {
-    background: rgb(34, 30, 105);
-    background: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%);
+    background: #022D5F;
+    background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
     padding: 28px 0 36px;
     color: #fff;
 }
@@ -121,9 +121,13 @@
     border-radius: 999px;
     min-height: 44px;
     padding: 0 18px;
-    max-width: 320px;
+    max-width: 100%;
     width: 100%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.event-list-hero-filters .customer-site-banner__hero-filter {
+    margin-top: 12px;
 }
 
 .header-event-types {
@@ -222,7 +226,7 @@
     border: none;
     border-radius: 0 0 12px 12px;
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
-    background: rgba(34, 30, 105, 0.98);
+    background: rgba(2, 45, 95, 0.98);
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;

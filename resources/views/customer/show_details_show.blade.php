@@ -127,9 +127,9 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        border: 1px solid #e8d0ea;
-        background: #faf5fb;
-        color: #7e0982;
+        border: 1px solid rgba(21, 101, 192, 0.25);
+        background: #eff6ff;
+        color: #022D5F;
         border-radius: 999px;
         padding: 9px 16px;
         font-size: 13px;
@@ -142,11 +142,11 @@
 
     .event-photos-btn:hover,
     .event-photos-btn:focus {
-        background: #7e0982;
-        border-color: #7e0982;
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        border-color: #1565C0;
         color: #fff;
         text-decoration: none;
-        box-shadow: 0 6px 16px rgba(126, 9, 130, 0.22);
+        box-shadow: 0 6px 16px rgba(2, 45, 95, 0.22);
         outline: none;
     }
 
@@ -158,7 +158,7 @@
         height: 22px;
         padding: 0 6px;
         border-radius: 999px;
-        background: rgba(126, 9, 130, 0.12);
+        background: rgba(21, 101, 192, 0.12);
         color: inherit;
         font-size: 11px;
         font-weight: 700;
@@ -167,6 +167,103 @@
     .event-photos-btn:hover .event-photos-btn__count,
     .event-photos-btn:focus .event-photos-btn__count {
         background: rgba(255, 255, 255, 0.22);
+    }
+
+    .event-header-bar__aside {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .event-viewers-strip {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 0 0 10px;
+    }
+
+    .event-viewers {
+        display: inline-flex;
+        align-items: stretch;
+        gap: 10px;
+        max-width: 100%;
+        padding: 6px;
+        border-radius: 18px;
+        background: linear-gradient(90deg, rgba(2, 45, 95, 0.06) 0%, rgba(21, 101, 192, 0.1) 100%);
+        border: 1px solid rgba(21, 101, 192, 0.16);
+        box-shadow: 0 6px 18px rgba(2, 45, 95, 0.06);
+    }
+
+    .event-viewers__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        max-width: 320px;
+        padding: 10px 16px 10px 12px;
+        border-radius: 14px;
+        background: #fff;
+        border: 1px solid rgba(21, 101, 192, 0.1);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    .event-viewers__icon-wrap {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        font-size: 12px;
+        position: relative;
+    }
+
+    .event-viewers__icon-wrap--live::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #22c55e;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+        animation: eventViewerPulse 1.8s ease-out infinite;
+    }
+
+    .event-viewers__copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        line-height: 1.25;
+        min-width: 0;
+    }
+
+    .event-viewers__value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #022D5F;
+        letter-spacing: -0.01em;
+    }
+
+    .event-viewers__label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #64748b;
+        text-transform: none;
+        letter-spacing: 0;
+        white-space: normal;
+    }
+
+    @keyframes eventViewerPulse {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+        70% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
 
     .event-photos-modal .modal-dialog {
@@ -263,10 +360,35 @@
             flex-wrap: wrap;
         }
 
+        .event-header-bar__aside {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .event-viewers-strip {
+            margin-bottom: 12px;
+        }
+
+        .event-viewers {
+            width: 100%;
+            border-radius: 16px;
+            justify-content: stretch;
+        }
+
+        .event-viewers__item {
+            flex: 1 1 0;
+            min-width: 0;
+            justify-content: flex-start;
+            padding: 8px 10px;
+        }
+
+        .event-viewers__label {
+            white-space: normal;
+        }
+
         .event-photos-btn {
             width: 100%;
             justify-content: center;
-            margin-top: 4px;
         }
 
         .event-photos-grid {
@@ -763,6 +885,159 @@
         color: #9d174d;
     }
 
+    .ticket-qty-modal .modal-dialog {
+        max-width: 420px;
+    }
+
+    .ticket-qty-modal .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+        padding: 8px 4px 4px;
+    }
+
+    .ticket-qty-modal__title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #111827;
+        text-align: center;
+        margin: 12px 0 20px;
+    }
+
+    .ticket-qty-modal__select {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #111827;
+        background: #fff;
+        appearance: auto;
+    }
+
+    .ticket-qty-modal__select:focus {
+        outline: none;
+        border-color: #1565C0;
+        box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.2);
+    }
+
+    .ticket-qty-modal__together {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 14px 14px 14px 12px;
+        background: #f3f4f6;
+        border-radius: 12px;
+    }
+
+    .ticket-qty-modal__together-icon {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #1565C0;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+
+    .ticket-qty-modal__together-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ticket-qty-modal__together-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .ticket-qty-modal__together-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .ticket-qty-modal__together-hint {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 6px 0 0;
+        line-height: 1.4;
+    }
+
+    .ticket-qty-toggle {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+
+    .ticket-qty-toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .ticket-qty-toggle__slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: #d1d5db;
+        border-radius: 999px;
+        transition: background 0.2s ease;
+    }
+
+    .ticket-qty-toggle__slider::before {
+        content: '';
+        position: absolute;
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s ease;
+    }
+
+    .ticket-qty-toggle input:checked + .ticket-qty-toggle__slider {
+        background: #1565C0;
+    }
+
+    .ticket-qty-toggle input:checked + .ticket-qty-toggle__slider::before {
+        transform: translateX(20px);
+    }
+
+    .ticket-qty-modal__continue {
+        display: block;
+        width: 100%;
+        margin-top: 20px;
+        min-height: 50px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        font-size: 17px;
+        font-weight: 700;
+        transition: filter 0.2s ease, transform 0.15s ease;
+    }
+
+    .ticket-qty-modal__continue:hover,
+    .ticket-qty-modal__continue:focus {
+        background: linear-gradient(90deg, #022D5F 0%, #1565C0 100%);
+        color: #fff;
+        filter: brightness(1.06);
+        outline: none;
+    }
+
     .no-results-box {
         border: 1px dashed #d1d5db;
         border-radius: 12px;
@@ -814,7 +1089,32 @@
     <div class="ticket-picker-page__top">
     @php
         $galleryImages = ($event_images ?? collect())->filter(fn ($img) => !empty($img->image))->values();
+        $viewerStats = $viewerStats ?? ['current' => 1, 'past_hour' => 1];
     @endphp
+
+    <div class="event-viewers-strip">
+        <div class="event-viewers" id="event-viewers" data-event-id="{{ $id }}" aria-live="polite">
+            <div class="event-viewers__item">
+                <span class="event-viewers__icon-wrap event-viewers__icon-wrap--live" aria-hidden="true">
+                    <i class="fas fa-user-friends"></i>
+                </span>
+                <span class="event-viewers__copy">
+                    <span class="event-viewers__value" id="event-viewers-current">{{ (int) ($viewerStats['current'] ?? 1) }}</span>
+                    <span class="event-viewers__label">People currently viewing this event</span>
+                </span>
+            </div>
+            <div class="event-viewers__item">
+                <span class="event-viewers__icon-wrap" aria-hidden="true">
+                    <i class="fas fa-eye"></i>
+                </span>
+                <span class="event-viewers__copy">
+                    <span class="event-viewers__value" id="event-viewers-hour">{{ (int) ($viewerStats['past_hour'] ?? 1) }}</span>
+                    <span class="event-viewers__label">People who viewed this event in the past hour</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
     <div class="event-header-bar">
         <img src="{{ $eventImageUrl }}" alt="{{ $event_datas->event_name }}" class="event-header-bar__thumb"
             onerror="this.onerror=null;this.src='{{ $defaultEventImg }}';">
@@ -837,14 +1137,16 @@
             </p>
         </div>
         @if ($galleryImages->count())
-            <button type="button"
-                class="event-photos-btn"
-                data-toggle="modal"
-                data-target="#eventPhotosModal">
-                <i class="far fa-images"></i>
-                See event photos
-                <span class="event-photos-btn__count">{{ $galleryImages->count() }}</span>
-            </button>
+            <div class="event-header-bar__aside">
+                <button type="button"
+                    class="event-photos-btn"
+                    data-toggle="modal"
+                    data-target="#eventPhotosModal">
+                    <i class="far fa-images"></i>
+                    See event photos
+                    <span class="event-photos-btn__count">{{ $galleryImages->count() }}</span>
+                </button>
+            </div>
         @endif
     </div>
 
@@ -1067,6 +1369,51 @@
 
 </div>
 
+<div class="modal fade ticket-qty-modal" id="ticketQtyModal" tabindex="-1" role="dialog" aria-labelledby="ticketQtyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body px-4 pb-4 pt-3">
+                <h2 class="ticket-qty-modal__title" id="ticketQtyModalLabel">How many tickets?</h2>
+
+                <label class="sr-only" for="ticket-qty-select">Number of tickets</label>
+                <select id="ticket-qty-select" class="ticket-qty-modal__select">
+                    @php
+                        $qtySelectMax = max(1, (int) ($maxQuantityOption ?? 6));
+                        $qtySelectMax = min(10, max($qtySelectMax, 6));
+                    @endphp
+                    @for ($q = 1; $q <= $qtySelectMax; $q++)
+                        <option value="{{ $q }}" {{ $q === 2 ? 'selected' : '' }}>
+                            {{ $q }} ticket{{ $q > 1 ? 's' : '' }}
+                        </option>
+                    @endfor
+                </select>
+
+                <div class="ticket-qty-modal__together">
+                    <span class="ticket-qty-modal__together-icon" aria-hidden="true">
+                        <i class="fas fa-couch"></i>
+                    </span>
+                    <div class="ticket-qty-modal__together-body">
+                        <div class="ticket-qty-modal__together-row">
+                            <p class="ticket-qty-modal__together-label">We want to be seated together</p>
+                            <label class="ticket-qty-toggle" for="ticket-qty-together">
+                                <input type="checkbox" id="ticket-qty-together" checked>
+                                <span class="ticket-qty-toggle__slider"></span>
+                            </label>
+                        </div>
+                        <p class="ticket-qty-modal__together-hint">
+                            We will find you the best available tickets based on your search criteria.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button" class="ticket-qty-modal__continue" id="ticket-qty-continue">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (($galleryImages ?? collect())->count())
 <div class="modal fade event-photos-modal" id="eventPhotosModal" tabindex="-1" role="dialog" aria-labelledby="eventPhotosModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -1109,6 +1456,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentTiming = @json($selectedTimingId ? (string) $selectedTimingId : 'all');
     let currentQuantity = 1;
     let quantitySelected = false;
+    let seatedTogether = true;
     let customQuantityMode = false;
     let currentMinPrice = 0;
     let currentMaxPrice = Number.MAX_SAFE_INTEGER;
@@ -1330,23 +1678,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showQuantityRequiredNotice() {
-        if (typeof swal === 'function') {
-            swal({
-                title: 'Quantity required',
-                text: 'Please select a quantity before booking.',
-                icon: 'warning',
-                button: 'OK',
-            });
-        } else if (typeof toastr !== 'undefined') {
-            toastr.warning('Please select a quantity before booking.');
-        } else {
-            alert('Please select a quantity before booking.');
-        }
-
-        if (quantityButton) {
-            quantityButton.classList.add('filter-pill--required');
-            quantityButton.focus();
-        }
+        openTicketQtyModal();
     }
 
     function updateBookButtons() {
@@ -1572,6 +1904,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (buyInput && quantitySelected) {
                     buyInput.value = currentQuantity;
                 }
+
+                const qtyEl = ticket.querySelector('.ticket-card__qty');
+                if (qtyEl && quantitySelected) {
+                    if (seatedTogether && currentQuantity > 1) {
+                        qtyEl.textContent = currentQuantity + ' tickets together';
+                    } else {
+                        qtyEl.textContent = currentQuantity + ' ticket' + (currentQuantity > 1 ? 's' : '');
+                    }
+                } else if (qtyEl) {
+                    qtyEl.textContent = availability == 1 ? '1 ticket' : availability + ' tickets';
+                }
             }
         });
 
@@ -1626,8 +1969,90 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function confirmTicketQuantity(qty, together) {
+        const availableMax = getMaxAvailableForZone(currentZone);
+        let nextQty = parseInt(qty, 10) || 1;
+
+        if (availableMax > 0 && nextQty > availableMax) {
+            nextQty = availableMax;
+        }
+
+        currentQuantity = Math.max(1, nextQty);
+        seatedTogether = !!together;
+        quantitySelected = true;
+        customQuantityMode = currentQuantity > maxQuantityCap;
+        rebuildQuantityOptions();
+        updateQuantityLabel();
+        applyFilters();
+    }
+
+    function openTicketQtyModal() {
+        const modalEl = document.getElementById('ticketQtyModal');
+        const selectEl = document.getElementById('ticket-qty-select');
+        const togetherEl = document.getElementById('ticket-qty-together');
+        if (!modalEl || !selectEl) {
+            return;
+        }
+
+        const availableMax = getMaxAvailableForZone(currentZone);
+        const optionMax = Math.max(1, Math.min(10, availableMax || {{ (int) ($maxQuantityOption ?? 6) }}));
+        const desired = quantitySelected ? currentQuantity : Math.min(2, optionMax);
+
+        selectEl.innerHTML = '';
+        for (let q = 1; q <= optionMax; q++) {
+            const option = document.createElement('option');
+            option.value = String(q);
+            option.textContent = q + ' ticket' + (q > 1 ? 's' : '');
+            if (q === desired) {
+                option.selected = true;
+            }
+            selectEl.appendChild(option);
+        }
+
+        if (togetherEl) {
+            togetherEl.checked = seatedTogether;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalEl).modal('show');
+        } else {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function closeTicketQtyModal() {
+        const modalEl = document.getElementById('ticketQtyModal');
+        if (!modalEl) {
+            return;
+        }
+
+        if (window.jQuery) {
+            window.jQuery(modalEl).modal('hide');
+        } else {
+            modalEl.classList.remove('show');
+            modalEl.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    const ticketQtyContinue = document.getElementById('ticket-qty-continue');
+    if (ticketQtyContinue) {
+        ticketQtyContinue.addEventListener('click', function () {
+            const selectEl = document.getElementById('ticket-qty-select');
+            const togetherEl = document.getElementById('ticket-qty-together');
+            confirmTicketQuantity(
+                selectEl ? selectEl.value : 2,
+                togetherEl ? togetherEl.checked : true
+            );
+            closeTicketQtyModal();
+        });
+    }
+
     rebuildQuantityOptions();
     applyFilters();
+    openTicketQtyModal();
 
     const image = document.getElementById('hero-venue-image');
     const zoomInBtn = document.getElementById('zoom-in');
@@ -1684,6 +2109,64 @@ document.addEventListener('DOMContentLoaded', function () {
             updateTransform();
         });
     }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var viewersRoot = document.getElementById('event-viewers');
+    if (!viewersRoot) {
+        return;
+    }
+
+    var eventId = viewersRoot.getAttribute('data-event-id');
+    var currentEl = document.getElementById('event-viewers-current');
+    var hourEl = document.getElementById('event-viewers-hour');
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    var pingUrl = @json(url('event-page-viewers')) + '/' + encodeURIComponent(eventId);
+
+    function renderViewerStats(stats) {
+        if (!stats) {
+            return;
+        }
+        if (currentEl && typeof stats.current !== 'undefined') {
+            currentEl.textContent = String(stats.current);
+        }
+        if (hourEl && typeof stats.past_hour !== 'undefined') {
+            hourEl.textContent = String(stats.past_hour);
+        }
+    }
+
+    function pingViewers() {
+        fetch(pingUrl, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken ? csrfToken.getAttribute('content') : ''
+            },
+            credentials: 'same-origin'
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Viewer ping failed');
+                }
+                return response.json();
+            })
+            .then(renderViewerStats)
+            .catch(function () {
+                // Keep last known counts if the ping fails.
+            });
+    }
+
+    pingViewers();
+    setInterval(pingViewers, 30000);
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            pingViewers();
+        }
+    });
 });
 </script>
 

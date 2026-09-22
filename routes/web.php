@@ -547,6 +547,7 @@ Route::controller(FrontendController::class)->group(function () {
     Route::get('booking_failed', 'booking_failed');
     Route::get('view_invoice/{id}', 'view_invoice')->middleware('auth');
     Route::get('show_details_show/{id}', 'show_details_show');
+    Route::post('event-page-viewers/{id}', 'eventPageViewerPing')->name('event.page.viewers.ping');
     Route::get('show_booking_details_show/{id}', 'show_booking_details_show')->middleware('auth');
     Route::get('invoice/pdf/{id}', 'downloadInvoicePdf')->middleware('auth')->name('invoice.pdf');
     Route::post('update-facevalue-ticket', 'updatefacevalueticket')->middleware('auth');

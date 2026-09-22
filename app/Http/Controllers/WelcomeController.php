@@ -122,8 +122,10 @@ class WelcomeController extends Controller
                 'event.artists',
                 'event.priority as priority',
                 'event.venue',
+                'venue.id as venue_id',
                 'location.id as location_id',
                 'cities.id as city_id',
+                'countries.id as country_id',
                 'countries.country_name as country_name',
                 'cities.name as city_name',
                 'location.location_name as location_name',
@@ -196,6 +198,51 @@ class WelcomeController extends Controller
             ->sortBy('sort')
             ->values();
 
+        $dateFilters = $listings
+            ->map(function ($item) {
+                $event = $item->event;
+                $timing = $item->timing;
+                $singleDay = $event->event_from_date == $event->event_to_date;
+                $eventDate = $timing->event_date
+                    ?? ($singleDay ? $event->event_to_date : $event->event_from_date);
+
+                if (empty($eventDate)) {
+                    return null;
+                }
+
+                $normalized = date('Y-m-d', strtotime($eventDate));
+
+                return [
+                    'id' => $normalized,
+                    'label' => date('d M Y', strtotime($normalized)),
+                    'sort' => $normalized,
+                ];
+            })
+            ->filter()
+            ->unique('id')
+            ->sortBy('sort')
+            ->values();
+
+        $venueFilters = $data
+            ->filter(fn ($event) => !empty($event->venue_id) && filled($event->venue_name))
+            ->map(fn ($event) => [
+                'id' => $event->venue_id,
+                'label' => $event->venue_name,
+            ])
+            ->unique('id')
+            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        $countryFilters = $data
+            ->filter(fn ($event) => !empty($event->country_id) && filled($event->country_name))
+            ->map(fn ($event) => [
+                'id' => $event->country_id,
+                'label' => $event->country_name,
+            ])
+            ->unique('id')
+            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
         // Get locations for filter
         $locationQuery = Events::
         leftjoin('event_type','event_type.id','event.event_type')
@@ -245,6 +292,9 @@ class WelcomeController extends Controller
             'data',
             'listings',
             'timingFilters',
+            'dateFilters',
+            'venueFilters',
+            'countryFilters',
             'event_tag',
             'location',
             'data1',

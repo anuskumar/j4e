@@ -81,8 +81,10 @@
 .site-footer.footer,
 .site-footer .footer-top,
 .site-footer .footer-bottom {
-    background: rgb(34, 30, 105) !important;
-    background-image: linear-gradient(90deg, rgba(34, 30, 105, 1) 5%, rgba(54, 8, 94, 1) 65%, rgba(103, 29, 207, 1) 100%) !important;
+    --footer-blue-start: #022D5F;
+    --footer-blue-end: #1565C0;
+    background: var(--footer-blue-start) !important;
+    background-image: linear-gradient(90deg, var(--footer-blue-start) 0%, var(--footer-blue-end) 100%) !important;
     background-size: cover !important;
     background-position: center !important;
 }
@@ -165,7 +167,7 @@
 
 .site-footer .footer-contact-info i {
     width: 18px;
-    color: #c4b5fd;
+    color: #90caf9;
 }
 
 .site-footer .footer-contact-info a {
@@ -178,15 +180,20 @@
 }
 
 .fabutton, .twibutton, .insbutton {
-    background-image: linear-gradient(to bottom, #8a3ab9, #ff2d55);
+    background-image: linear-gradient(to bottom, #1565C0, #022D5F);
     color: white;
-    border: 1px solid white;
+    border: 1px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
     width: 38px;
     height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.fabutton:hover, .twibutton:hover, .insbutton:hover {
+    color: #fff;
+    filter: brightness(1.08);
 }
 
 @media (max-width: 768px) {

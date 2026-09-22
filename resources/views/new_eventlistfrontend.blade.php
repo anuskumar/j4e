@@ -35,37 +35,40 @@
                 </p>
             </div>
             <div class="col-lg-6">
-                <div class="row g-2">
-                    @if($location->count())
-                    <div class="col-md-6">
+                <div class="row g-2 event-list-hero-filters">
+                    <div class="col-md-4">
                         <div class="customer-site-banner__hero-filter">
-                            <label for="location-select">Filter by city</label>
-                            <select class="form-control" id="location-select">
-                                <option value="">All Cities</option>
-                                @foreach ($location as $loc)
-                                    @if($loc->id)
-                                        <option value="{{ $loc->id }}">
-                                            {{ trim(($loc->city_name ?? '') . (!empty($loc->city_name) && !empty($loc->country_name) ? ', ' : '') . ($loc->country_name ?? '')) }}
-                                        </option>
-                                    @endif
+                            <label for="date-select">Date</label>
+                            <select class="form-control" id="date-select">
+                                <option value="">All Dates</option>
+                                @foreach (($dateFilters ?? collect()) as $dateFilter)
+                                    <option value="{{ $dateFilter['id'] }}">{{ $dateFilter['label'] }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
-                    @endif
-                    @if($timingFilters->count())
-                    <div class="{{ $location->count() ? 'col-md-6' : 'col-md-12' }}">
+                    <div class="col-md-4">
                         <div class="customer-site-banner__hero-filter">
-                            <label for="timing-select">Filter by timing</label>
-                            <select class="form-control" id="timing-select">
-                                <option value="">All Timings</option>
-                                @foreach ($timingFilters as $timingFilter)
-                                    <option value="{{ $timingFilter['id'] }}">{{ $timingFilter['label'] }}</option>
+                            <label for="venue-select">Venue</label>
+                            <select class="form-control" id="venue-select">
+                                <option value="">All Venues</option>
+                                @foreach (($venueFilters ?? collect()) as $venueFilter)
+                                    <option value="{{ $venueFilter['id'] }}">{{ $venueFilter['label'] }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
-                    @endif
+                    <div class="col-md-4">
+                        <div class="customer-site-banner__hero-filter">
+                            <label for="country-select">Country</label>
+                            <select class="form-control" id="country-select">
+                                <option value="">All Countries</option>
+                                @foreach (($countryFilters ?? collect()) as $countryFilter)
+                                    <option value="{{ $countryFilter['id'] }}">{{ $countryFilter['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,6 +129,9 @@
                         @endphp
                         <article
                             class="event-list-card"
+                            data-date="{{ $eventDate ? date('Y-m-d', strtotime($eventDate)) : '' }}"
+                            data-venue-id="{{ $val->venue_id ?? $val->venue ?? '' }}"
+                            data-country-id="{{ $val->country_id ?? '' }}"
                             data-location-id="{{ $val->city_id ?? '' }}"
                             data-timing-id="{{ $timing->id ?? '' }}"
                         >
@@ -182,7 +188,7 @@
 
                 <div class="event-list-empty d-none" id="event-list-empty-filter">
                     <h4>No showtimes match these filters</h4>
-                    <p>Try a different city or timing, or clear the filters.</p>
+                    <p>Try a different date, venue, or country, or clear the filters.</p>
                     <button type="button" class="btn btn-primary" id="clear-list-filters">Show All</button>
                 </div>
             @else
@@ -198,21 +204,24 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var locationSelect = document.getElementById('location-select');
-    var timingSelect = document.getElementById('timing-select');
+    var dateSelect = document.getElementById('date-select');
+    var venueSelect = document.getElementById('venue-select');
+    var countrySelect = document.getElementById('country-select');
     var cards = document.querySelectorAll('.event-list-card');
     var emptyFilter = document.getElementById('event-list-empty-filter');
     var clearBtn = document.getElementById('clear-list-filters');
 
     function applyFilters() {
-        var locationId = locationSelect ? locationSelect.value : '';
-        var timingId = timingSelect ? timingSelect.value : '';
+        var dateValue = dateSelect ? dateSelect.value : '';
+        var venueId = venueSelect ? venueSelect.value : '';
+        var countryId = countrySelect ? countrySelect.value : '';
         var visibleCount = 0;
 
         cards.forEach(function (card) {
-            var matchesLocation = !locationId || String(card.dataset.locationId) === String(locationId);
-            var matchesTiming = !timingId || String(card.dataset.timingId) === String(timingId);
-            var matches = matchesLocation && matchesTiming;
+            var matchesDate = !dateValue || String(card.dataset.date) === String(dateValue);
+            var matchesVenue = !venueId || String(card.dataset.venueId) === String(venueId);
+            var matchesCountry = !countryId || String(card.dataset.countryId) === String(countryId);
+            var matches = matchesDate && matchesVenue && matchesCountry;
             card.style.display = matches ? '' : 'none';
             if (matches) {
                 visibleCount++;
@@ -224,22 +233,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    if (locationSelect) {
-        locationSelect.addEventListener('change', applyFilters);
-    }
-
-    if (timingSelect) {
-        timingSelect.addEventListener('change', applyFilters);
-    }
+    [dateSelect, venueSelect, countrySelect].forEach(function (select) {
+        if (select) {
+            select.addEventListener('change', applyFilters);
+        }
+    });
 
     if (clearBtn) {
         clearBtn.addEventListener('click', function () {
-            if (locationSelect) {
-                locationSelect.value = '';
-            }
-            if (timingSelect) {
-                timingSelect.value = '';
-            }
+            if (dateSelect) dateSelect.value = '';
+            if (venueSelect) venueSelect.value = '';
+            if (countrySelect) countrySelect.value = '';
             applyFilters();
         });
     }
