@@ -30,15 +30,15 @@
                     <div class="notifyimg {{ $notification->icon_bg }}">
                         <i class="la {{ $notification->icon }}"></i>
                     </div>
-                    <div class="ms-3">
+                    <div class="notification-body ms-0">
                         <h5 class="notification-label mb-1">{{ $notification->title }}</h5>
                         @if (!empty($notification->message))
-                            <p class="notification-subtext mb-1 text-muted tx-12">{{ Str::limit($notification->message, 80) }}</p>
+                            <p class="notification-subtext mb-1 text-muted tx-12">{{ Str::limit($notification->message, 90) }}</p>
                         @endif
                         <div class="notification-subtext">{{ $notification->time_ago }}</div>
                     </div>
-                    <div class="ms-auto">
-                        <i class="las la-angle-right text-end text-muted"></i>
+                    <div class="notification-chevron">
+                        <i class="las la-angle-right text-muted"></i>
                     </div>
                 </a>
             @empty

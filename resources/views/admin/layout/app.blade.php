@@ -72,6 +72,102 @@
             font-weight: 700;
             line-height: 18px;
             text-align: center;
+            z-index: 2;
+        }
+
+        .main-header-notification {
+            position: relative;
+        }
+
+        .main-header-notification .dropdown-menu {
+            display: none;
+            width: 360px;
+            max-width: min(360px, calc(100vw - 24px));
+            position: absolute !important;
+            top: 52px !important;
+            right: -10px !important;
+            left: auto !important;
+            bottom: auto !important;
+            inset: auto  -10px auto auto !important;
+            padding: 0;
+            margin: 0;
+            border: 1px solid #dde5ef;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+            z-index: 1050 !important;
+            overflow: hidden;
+            transform: none !important;
+        }
+
+        .main-header-notification.show > .dropdown-menu {
+            display: block !important;
+        }
+
+        .main-header-notification .menu-header-content {
+            padding: 14px 16px;
+            align-items: center;
+        }
+
+        .main-header-notification .Notification-scroll {
+            max-height: 320px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .main-header-notification .main-notification-list > a {
+            align-items: flex-start;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .main-header-notification .notifyimg {
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .main-header-notification .notifyimg i {
+            float: none;
+            width: auto;
+            height: auto;
+            line-height: 1;
+            font-size: 18px;
+        }
+
+        .main-header-notification .notification-body {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .main-header-notification .notification-label {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.35;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .main-header-notification .notification-subtext {
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .main-header-notification .notification-chevron {
+            flex: 0 0 auto;
+            margin-top: 4px;
+        }
+
+        .main-header-notification .notification-chevron i {
+            height: auto !important;
+            line-height: 1 !important;
+            font-size: 14px !important;
         }
         
         /* Ensure Feather icons are visible */
@@ -576,9 +672,6 @@
     <a href="#top" id="back-to-top"><i class="las la-angle-double-up"></i></a>
     <!--- JQuery min js --->
     <script src="{{ asset('admin_assets/plugins/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('admin_assets/js/summernote.min.js') }}"></script>
-
-    @stack('scripts')
 
     <!--- Datepicker js --->
     <script src="{{ asset('admin_assets/plugins/jquery-ui/ui/widgets/datepicker.js') }}"></script>
@@ -586,6 +679,9 @@
     <!--- Bootstrap Bundle js --->
     <script src="{{ asset('admin_assets/plugins/bootstrap/popper.min.js') }}"></script>
     <script src="{{ asset('admin_assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('admin_assets/js/summernote.min.js') }}"></script>
+
+    @stack('scripts')
 
     <!--- Ionicons js --->
     <script src="{{ asset('admin_assets/plugins/ionicons/ionicons.js') }}"></script>
