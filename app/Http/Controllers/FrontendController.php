@@ -17,6 +17,7 @@ use App\Models\TicketsGenerated;
 use App\Models\User;
 use App\Models\RestrictionModel;
 use App\Models\VenueSeating;
+use App\Services\TicketSplitTypeService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -244,27 +245,41 @@ class FrontendController extends Controller
                     ->where('under_purchase_hold', 0)
                     ->count();
 
-                if ($check >= $buy_count) {
-                    $data = TicketsGenerated::where('event_tickets', $event_ticket_id)
-                        ->where('is_sold', 0)
-                        ->where('under_purchase_hold', 0)
-                        ->orderBy('id')
-                        ->take($buy_count)
-                        ->lockForUpdate()
-                        ->get();
-
-                    foreach ($data as $val) {
-                        $dat = TicketsGenerated::find($val->id);
-                        $dat->user_id = Auth::user()->id;
-                        $dat->under_purchase_hold = 1;
-                        $dat->purchase_hold_time = date('Y-m-d H:i:s');
-                        $dat->save();
-                    }
-                } else {
+                if ($check < $buy_count) {
                     DB::rollBack();
                     return redirect()->back()->withErrors([
                         "Only {$check} ticket(s) are available right now. Please reduce quantity and try again.",
                     ]);
+                }
+
+                $splitName = EventTickets::query()
+                    ->leftJoin('split_types', 'split_types.id', 'event_tickets.split_type')
+                    ->where('event_tickets.id', $event_ticket_id)
+                    ->value('split_types.split_name');
+
+                $splitService = app(TicketSplitTypeService::class);
+                if (! $splitService->isPurchaseAllowed($splitName, $check, $buy_count)) {
+                    DB::rollBack();
+                    return redirect()->back()->withErrors([
+                        $splitService->denialReason($splitName, $check, $buy_count)
+                            ?? 'This quantity is not allowed for this listing.',
+                    ]);
+                }
+
+                $data = TicketsGenerated::where('event_tickets', $event_ticket_id)
+                    ->where('is_sold', 0)
+                    ->where('under_purchase_hold', 0)
+                    ->orderBy('id')
+                    ->take($buy_count)
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($data as $val) {
+                    $dat = TicketsGenerated::find($val->id);
+                    $dat->user_id = Auth::user()->id;
+                    $dat->under_purchase_hold = 1;
+                    $dat->purchase_hold_time = date('Y-m-d H:i:s');
+                    $dat->save();
                 }
 
                 DB::commit();
@@ -316,6 +331,19 @@ class FrontendController extends Controller
                        $maxAllowed = $currentHeld + $freePoolCount;
                        $desired = min(max(1, (int) $validated['ticket_count']), $maxAllowed);
 
+                       $splitName = EventTickets::query()
+                           ->leftJoin('split_types', 'split_types.id', 'event_tickets.split_type')
+                           ->where('event_tickets.id', $eventTicketId)
+                           ->value('split_types.split_name');
+
+                       $splitService = app(TicketSplitTypeService::class);
+                       if (! $splitService->isPurchaseAllowed($splitName, $maxAllowed, $desired)) {
+                           throw new \RuntimeException(
+                               'split_denied|' . ($splitService->denialReason($splitName, $maxAllowed, $desired)
+                                   ?? 'This quantity is not allowed for this listing.')
+                           );
+                       }
+
                        if ($desired > $currentHeld) {
                            $need = $desired - $currentHeld;
                            $toAdd = TicketsGenerated::where('event_tickets', $eventTicketId)
@@ -359,6 +387,13 @@ class FrontendController extends Controller
                            'code' => 'hold_expired',
                            'message' => 'Your ticket hold has expired. Please select tickets again.',
                            'redirect' => url('ticket_purchase_expired'),
+                       ], 422);
+                   }
+                   if (str_starts_with($e->getMessage(), 'split_denied|')) {
+                       return response()->json([
+                           'ok' => false,
+                           'code' => 'split_denied',
+                           'message' => substr($e->getMessage(), strlen('split_denied|')),
                        ], 422);
                    }
                    throw $e;

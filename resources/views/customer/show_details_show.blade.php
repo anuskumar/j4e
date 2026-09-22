@@ -678,6 +678,31 @@
         gap: 6px;
     }
 
+    .ticket-card__split-reason {
+        display: none;
+        font-size: 12px;
+        color: #9d174d;
+        font-weight: 600;
+        margin: 6px 0 0;
+        align-items: flex-start;
+        gap: 6px;
+        line-height: 1.35;
+    }
+
+    .ticket-card__split-reason.is-visible {
+        display: flex;
+    }
+
+    .ticket-card--split-blocked {
+        border-color: #f9a8d4;
+        background: #fff7fb;
+    }
+
+    .ticket-card--split-blocked .btn-book {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
     .ticket-card__price-block {
         text-align: right;
         flex-shrink: 0;
@@ -971,7 +996,9 @@
                             data-availability="{{ $item['availability'] }}"
                             data-zone="{{ $dat->seating_type_name }}"
                             data-price="{{ $ticketPrice }}"
-                            data-timing-id="{{ $item['timing_id'] ?? '' }}">
+                            data-timing-id="{{ $item['timing_id'] ?? '' }}"
+                            data-split-name="{{ $dat->split_type_name ?? 'Any' }}"
+                            data-split-ok="1">
                             <div class="ticket-card__top">
                                 <div>
                                     <h3 class="ticket-card__section">{{ $item['section_label'] }}</h3>
@@ -1016,6 +1043,7 @@
                                             {{ $item['availability'] }} tickets remaining in this listing
                                         </p>
                                     @endif
+                                    <p class="ticket-card__split-reason" aria-live="polite"></p>
                                 </div>
                                 <div class="ticket-card__price-block">
                                     @if ($item['face_value'] > $ticketPrice)
@@ -1326,12 +1354,19 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.btn-book').forEach(function (button) {
             const card = button.closest('.ticket-container');
             const isVisible = card && card.style.display !== 'none';
-            const canBook = quantitySelected && isVisible;
+            const splitOk = !card || card.getAttribute('data-split-ok') !== '0';
+            const canBook = quantitySelected && isVisible && splitOk;
 
-            button.disabled = !isVisible;
-            button.classList.toggle('btn-book--blocked', !quantitySelected && isVisible);
+            button.disabled = !isVisible || !splitOk;
+            button.classList.toggle('btn-book--blocked', (!quantitySelected || !splitOk) && isVisible);
             button.setAttribute('aria-disabled', canBook ? 'false' : 'true');
-            button.title = quantitySelected ? '' : 'Please select quantity first';
+            if (!quantitySelected) {
+                button.title = 'Please select quantity first';
+            } else if (!splitOk) {
+                button.title = 'Selected quantity is not allowed for this listing';
+            } else {
+                button.title = '';
+            }
         });
     }
 
@@ -1435,6 +1470,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function evaluateSplitRule(splitName, available, buyCount) {
+        const name = String(splitName || 'Any').trim().toLowerCase();
+        const remaining = available - buyCount;
+
+        if (buyCount < 1 || buyCount > available) {
+            return {
+                allowed: false,
+                reason: 'Only ' + available + ' ticket(s) are available in this listing.',
+            };
+        }
+
+        if (name === 'none') {
+            if (remaining === 0) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Seller requires all ' + available + ' tickets to be purchased together.',
+            };
+        }
+
+        if (name === 'avoid leaving one ticket') {
+            if (remaining !== 1) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave 1 ticket — seller does not allow leaving one ticket.',
+            };
+        }
+
+        if (name === 'avoid leaving one or three tickets') {
+            if (remaining !== 1 && remaining !== 3) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave ' + remaining + ' ticket(s) — seller does not allow leaving one or three tickets.',
+            };
+        }
+
+        if (name === 'avoid leaving odd numbers') {
+            if (remaining % 2 === 0) {
+                return { allowed: true, reason: '' };
+            }
+            return {
+                allowed: false,
+                reason: 'Buying ' + buyCount + ' would leave ' + remaining + ' ticket(s) — seller does not allow leaving an odd number of tickets.',
+            };
+        }
+
+        // Any / unknown
+        return { allowed: true, reason: '' };
+    }
+
     function applyFilters() {
         const tickets = document.querySelectorAll('.ticket-container');
         let visibleCount = 0;
@@ -1444,12 +1534,36 @@ document.addEventListener('DOMContentLoaded', function () {
             const timingId = ticket.getAttribute('data-timing-id') || '';
             const availability = parseInt(ticket.getAttribute('data-availability'), 10);
             const price = parseFloat(ticket.getAttribute('data-price'));
+            const splitName = ticket.getAttribute('data-split-name') || 'Any';
+            const reasonEl = ticket.querySelector('.ticket-card__split-reason');
 
             let shouldShow = true;
             if (currentTiming !== 'all' && String(timingId) !== String(currentTiming)) shouldShow = false;
             if (shouldShow && currentZone !== 'all' && zone !== currentZone) shouldShow = false;
             if (shouldShow && quantitySelected && availability < currentQuantity) shouldShow = false;
             if (shouldShow && (price < currentMinPrice || price > currentMaxPrice)) shouldShow = false;
+
+            let splitOk = true;
+            let splitReason = '';
+            if (shouldShow && quantitySelected) {
+                const splitCheck = evaluateSplitRule(splitName, availability, currentQuantity);
+                splitOk = splitCheck.allowed;
+                splitReason = splitCheck.reason || '';
+            }
+
+            ticket.setAttribute('data-split-ok', splitOk ? '1' : '0');
+            ticket.classList.toggle('ticket-card--split-blocked', shouldShow && quantitySelected && !splitOk);
+
+            if (reasonEl) {
+                if (shouldShow && quantitySelected && !splitOk) {
+                    reasonEl.innerHTML = '<i class="fas fa-exclamation-circle"></i><span></span>';
+                    reasonEl.querySelector('span').textContent = splitReason;
+                    reasonEl.classList.add('is-visible');
+                } else {
+                    reasonEl.classList.remove('is-visible');
+                    reasonEl.innerHTML = '';
+                }
+            }
 
             ticket.style.display = shouldShow ? 'block' : 'none';
 
@@ -1495,6 +1609,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (currentQuantity > availability) {
                 e.preventDefault();
                 alert('Only ' + availability + ' ticket(s) are available in this listing.');
+                return;
+            }
+
+            const splitName = card.getAttribute('data-split-name') || 'Any';
+            const splitCheck = evaluateSplitRule(splitName, availability, currentQuantity);
+            if (!splitCheck.allowed) {
+                e.preventDefault();
+                alert(splitCheck.reason || 'This quantity is not allowed for this listing.');
                 return;
             }
 
